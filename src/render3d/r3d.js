@@ -13,14 +13,15 @@ import { drawGround2D, label } from '../render/draw.js';
 import { drawHUD, drawKeycap } from '../render/hud.js';
 import { ICONS, KIND_ICON } from '../render/icons.js';
 import { buildCity, U, bh } from './build.js';
-import { buildings as buildingsList_ } from '../world/map.js';
+import { buildings as buildingsList_, lamps as lampsList } from '../world/map.js';
 const buildingsList=()=>buildingsList_;
 import { S, player, cam, keys, view } from '../core/state.js';
 import { checkpoints } from '../game/blitz.js';
 import { pf } from '../render/style97.js';
 import { loadCarModels, carModel, repaint } from './models.js';
 import { loadMapProps, coneMesh, loadCharacters, charsReady, makeCharacter } from './props.js';
-import { swapScene, updateEnv, renderReal, initTextures } from './realista.js';
+import { swapScene, updateEnv, renderReal, renderPlain, initTextures } from './realista.js';
+import { initLights, setLightQuality, updateLights, lightsOn } from './luzes.js';
 
 export const R={ok:false,on:false,retro:false};
 // Filtro 97 agora é opcional (desligado por padrão): chave nova pra quem já tinha ligado na 1.5.0
@@ -70,7 +71,7 @@ export function init3D(){
     for(const s of city.special3d){scene.add(s.mesh);scene.add(s.crowd);scene.add(s.lightBoxes);scene.add(s.fieldLight);}
     // mar em volta
         water=makeSea();scene.add(water);
-    neon=buildNeon();scene.add(neon.group);
+    neon=buildNeon();scene.add(neon.group);initLights(scene,neon.signs);
     // LOD do chão: o mapa todo em baixa resolução, por baixo dos pedaços detalhados (nunca aparece buraco)
     const lt=new THREE.CanvasTexture(makeLowres(true));lt.colorSpace=THREE.SRGBColorSpace;lt.anisotropy=renderer.capabilities.getMaxAnisotropy();
     const lg=new THREE.PlaneGeometry(W,H);lg.rotateX(-Math.PI/2);
@@ -83,7 +84,7 @@ export function init3D(){
     initPeople();initParticles();
     loadCarModels().then(ok=>{if(ok)rebuildCars();});
     // árvores, postes, casas e cones (props.js): troca as peças feitas por código quando chegam
-    loadMapProps(scene).then(r=>{mapProps=r;applyProps();for(const g of cpMeshes.values())scene.remove(g);cpMeshes.clear();}).catch(e=>console.warn('Modelos do mapa:',e));
+    loadMapProps(scene).then(r=>{mapProps=r;applyProps();movePools();for(const g of cpMeshes.values())scene.remove(g);cpMeshes.clear();}).catch(e=>console.warn('Modelos do mapa:',e));
     loadCharacters().catch(e=>console.warn('Personagens:',e));
     R.ok=true;DBG.renderer=renderer;DBG.scene=scene;
     applyQuality(quality);
@@ -138,7 +139,7 @@ function buildNeon(){
     // letreiro próprio do prédio (bingo, foto 1 hora...): entra como um tipo novo de neon
     const k=b.sign?'sign:'+b.sign.text:b.kind;if(b.sign&&!NEON[k])NEON[k]=[b.sign.text,b.sign.col,b.sign.col2];
     if(!NEON[k])continue;(byKind[k]||(byKind[k]=[])).push(b);}
-  const list=[];
+  const list=[],signs=[];
   for(const [k,bs] of Object.entries(byKind)){
     const [text,col,col2]=NEON[k];
     const pos=[],uv=[],idx=[];let v=0;
@@ -154,9 +155,12 @@ function buildNeon(){
       gpos.push(cx-w/2,cy-h/2,z, cx+w/2,cy-h/2,z, cx+w/2,cy+h/2,z, cx-w/2,cy+h/2,z);gidx.push(gv,gv+1,gv+2,gv,gv+2,gv+3);gv+=4;}
     const gg=new THREE.BufferGeometry();gg.setAttribute('position',new THREE.Float32BufferAttribute(gpos,3));gg.setAttribute('uv',new THREE.Float32BufferAttribute(Array(bs.length).fill([0,0,1,0,1,1,0,1]).flat(),2));gg.setIndex(gidx);gg.computeBoundingSphere();
     const m1=new THREE.Mesh(geo,mat),m2=new THREE.Mesh(gg,glow);m2.renderOrder=4;group.add(m1);group.add(m2);
-    list.push({k,mat,glow});
+    const ent={k,mat,glow,on:0};list.push(ent);
+    // posição de cada letreiro pra luz colorida que ele joga na fachada e na calçada (luzes.js)
+    const lc=new THREE.Color(col);
+    for(const b of bs){const x0=b.x0*U,x1=b.x1*U,w0=Math.min((x1-x0)*0.9,6);signs.push({x:(x0+x1)/2,y:bh(b)+0.06+w0/8,z:b.y1*U,col:lc,on:()=>ent.on});}
   }
-  return {group,list};
+  return {group,list,signs};
 }
 function hexRgb(h){const c=new THREE.Color(h);return Math.round(c.r*255)+','+Math.round(c.g*255)+','+Math.round(c.b*255);}
 function updateNeon(dk){
@@ -164,7 +168,7 @@ function updateNeon(dk){
   for(const n of neon.list){
     let on=dk>0.35?1:0;
     if(on&&(n.k==='farmacia'||n.k==='lanchonete'||n.k==='sign:BINGO ESTRELA')){const t=S.gameTime*(n.k==='farmacia'?1.6:0.7);on=(Math.floor(t)%5===4&&Math.floor(t*8)%2)?0.35:1;}
-    const lvl=on?1:0.55+0.25*(1-dk);n.mat.color.setScalar(on?1.25*on:lvl);
+    n.on=on;const lvl=on?1:0.55+0.25*(1-dk);n.mat.color.setScalar(on?1.25*on:lvl);
     n.glow.opacity=on&&quality>=2?0.32*on*clamp((dk-0.35)*3,0,1):0;
   }
 }
@@ -335,11 +339,17 @@ function applyProps(){
   for(const m of mapProps.meshes)m.visible=on;
   for(const k of ['trees','lamps','houses'])if(mapProps.done[k])for(const m of city.swap[k])m.visible=!on;
 }
+// com os postes de modelo, a poça de luz no chão vai pra baixo da cúpula (o braço fica em cima da rua)
+function movePools(){
+  const M=new THREE.Matrix4(),P=new THREE.Vector3(),Q=new THREE.Quaternion(),S3=new THREE.Vector3(8,1,8);
+  lampsList.forEach((l,i)=>{if(!l.arm)return;M.compose(P.set(l.x*U+l.arm.x,0.03,l.y*U+l.arm.z),Q,S3);city.pools.setMatrixAt(i,M);});
+  for(const m of city.pools.list){m.instanceMatrix.needsUpdate=true;m.computeBoundingSphere();}
+}
 // refaz todos os carros (quando os modelos terminam de carregar ou a qualidade muda)
 function rebuildCars(){for(const g of carMeshes.values())scene.remove(g);carMeshes.clear();}
 function syncCars(night){
   const seen=new Set();
-  beamMat.opacity=0.55*night;tailMat.opacity=0.35*night;tailMatBrake.opacity=0.25+0.55*night;
+  beamMat.opacity=(lightsOn()?0.22:0.55)*night;tailMat.opacity=0.35*night;tailMatBrake.opacity=0.25+0.55*night;
   for(const c of S.cars){
     let g=carMeshes.get(c);if(!g){g=makeCar(c);carMeshes.set(c,g);}
     seen.add(c);
@@ -564,7 +574,7 @@ function updateSky(cx,cz){
   wm.specular.setScalar(0.22*(1-dk)+0.1);
   if(water.userData.u)water.userData.u.uTime.value=S.gameTime;
   updateNeon(dk);
-  mats.lightPool.opacity=(R.retro?0.22:0.34)*dk;
+  mats.lightPool.opacity=(R.retro?0.22:0.34)*dk*(lightsOn()?0.45:1); // com luz de verdade o desenho no chão só completa
   mats.lampHead.emissiveIntensity=dk>0.05?1.5*dk:0;
   // estádio: torcida e refletores
   for(const s of city.special3d){
@@ -617,7 +627,8 @@ export function applyQuality(q,manual){
   // realista: sombras de borda suave; saindo dele, os materiais Lambert voltam
   const st=q===3?THREE.PCFSoftShadowMap:THREE.PCFShadowMap;
   if(renderer.shadowMap.type!==st){renderer.shadowMap.type=st;scene.traverse(o=>{if(o.material)(Array.isArray(o.material)?o.material:[o.material]).forEach(m=>m.needsUpdate=true);});}
-  if(q!==3){swapScene(scene,false);scene.environment=null;}
+  if(q<2){swapScene(scene,false);scene.environment=null;}
+  setLightQuality(q);
   if(sun.shadow.mapSize.x!==ms){sun.shadow.mapSize.set(ms,ms);if(sun.shadow.map){sun.shadow.map.dispose();sun.shadow.map=null;}}
   if(renderer.shadowMap.enabled!==sh){renderer.shadowMap.enabled=sh;sun.castShadow=sh;scene.traverse(o=>{if(o.material)(Array.isArray(o.material)?o.material:[o.material]).forEach(m=>m.needsUpdate=true);});[brakeOn,brakeOff,headMat,wreckMat,beamMat,...sirR,...sirB].forEach(m=>m.needsUpdate=true);if(R.ok)warmUp();}
   sizeKey='';
@@ -667,12 +678,13 @@ export function render3D(signalState){
     overlayTex.needsUpdate=true;
   }
   syncCars(night);syncCheckpoints();syncPeople();syncParticles();syncTracers();
-  if(quality===3){ // realista: materiais com reflexo e o céu como luz ambiente (a luz de cima/baixo fica só de apoio)
+  {const now=performance.now();updateLights(tx,(vz0+vz1)/2,night,Math.min(0.1,(now-(R.lt||now))/1000));R.lt=now;}
+  if(quality>=2){ // alta e realista: materiais com reflexo e o céu como luz ambiente (a luz de cima/baixo fica só de apoio)
     // o céu ilumina ~π vezes mais que a HemisphereLight na mesma cor: 0,32 deixa a sombra do sol com o contraste certo.
     // De noite o céu é quase preto: sobe o ambiente (luar) e as poças de luz dos postes ficam mais discretas (o bloom já realça)
     swapScene(scene,true);updateEnv(renderer,scene,skyNow,sun);
     hemi.intensity*=lerp(0.15,0.55,night);scene.environmentIntensity=lerp(0.32,1.2,night);mats.lightPool.opacity*=0.4;}
-  if(R.retro)retroPass();else if(quality===3)renderReal(renderer,scene,camera,night);else renderer.render(scene,camera);
+  if(R.retro)retroPass();else if(quality===3)renderReal(renderer,scene,camera,night);else if(quality===2)renderPlain(renderer,scene,camera,night);else renderer.render(scene,camera);
   // HUD e avisos por cima, em 2D
   const g=ctx;g.setTransform(1,0,0,1,0,0);g.clearRect(0,0,CW*DPR,CH*DPR);g.setTransform(DPR,0,0,DPR,0,0);
   drawPrompts(g);

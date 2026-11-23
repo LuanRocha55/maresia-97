@@ -24,6 +24,8 @@ function lambertize(root) {
     if (!o.isMesh) return;
     const mk = m => new THREE.MeshLambertMaterial({ map: m.map || null, color: m.color ? m.color.clone() : 0xffffff, transparent: !!m.transparent, opacity: m.opacity ?? 1 });
     o.material = Array.isArray(o.material) ? o.material.map(mk) : mk(o.material);
+    // um pouco de brilho no reflexo (alta e realista): roupa, telhado e tronco não ficam chapados
+    (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => { m.userData.pbr = { r: 0.7 }; });
     o.castShadow = true;
   });
 }
@@ -88,11 +90,16 @@ export async function loadMapProps(scene) {
     for (const p of m.parts) { const a = p.g.attributes.position; for (let i = 0; i < a.count; i++) if (a.getY(i) < m.box.min.y + m.size.y * 0.08) { base.x += a.getX(i); base.z += a.getZ(i); n++; } }
     if (n) base.multiplyScalar(1 / n);
     const armAng = Math.atan2(m.center.z - base.z, m.center.x - base.x);
+    // até onde o braço chega (pra luz sair da cúpula, em cima da rua, e não do pé do poste)
+    const ax = Math.cos(armAng), az = Math.sin(armAng); let reach = 0;
+    for (const p of m.parts) { const a = p.g.attributes.position; for (let i = 0; i < a.count; i++) reach = Math.max(reach, (a.getX(i) - base.x) * ax + (a.getZ(i) - base.z) * az); }
+    reach *= 3.0 / m.size.y;
     const mats = [];
     for (const l of lamps) {
       let dir = null;
       for (let d = 1; d <= 3 && !dir; d++) for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) if (tileAt(l.x + dx * d * T, l.y + dy * d * T) === ROAD) { dir = [dx, dy]; break; }
       const ang = dir ? Math.atan2(dir[1], dir[0]) : 0;
+      l.arm = { x: Math.cos(ang) * reach * 0.85, z: Math.sin(ang) * reach * 0.85 }; // luzes.js
       mats.push(place(m, l.x * U, l.y * U, -(ang - armAng), 3.0 / m.size.y, new THREE.Vector3(base.x, 0, base.z)));
     }
     all.push(...instance(m, mats, scene));

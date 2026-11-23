@@ -347,9 +347,9 @@ Você volta com vida cheia, sem estrelas e com 2 segundos de invencibilidade.
 
 | Modo | O que muda |
 |---|---|
-| 3D realista | como a alta, mais texturas fotográficas no chão e nas paredes (asfalto rachado, paralelepípedo, areia, grama), reflexos (carros, vidros, mar), o céu iluminando a cidade, sombras suaves e brilho nas luzes à noite. Precisa de placa de vídeo melhor |
-| 3D alta | resolução cheia (até 2x em telas de alta densidade), sombras grandes todo quadro |
-| 3D média | resolução normal, sombras menores atualizadas quadro sim, quadro não |
+| 3D realista | como a alta, mais luzes acesas ao mesmo tempo, sombras suaves e brilho (bloom) nas luzes à noite. Precisa de placa de vídeo melhor |
+| 3D alta | resolução cheia (até 2x em telas de alta densidade), sombras grandes todo quadro, texturas fotográficas no chão e nas paredes, reflexos (carros, vidros, mar), o céu iluminando a cidade e luzes de verdade (postes, faróis, sirene, neon, fogo) |
+| 3D média | resolução normal, sombras menores atualizadas quadro sim, quadro não, postes e faróis iluminando (sem reflexo) |
 | 3D leve | resolução reduzida, sem sombras |
 | Clássico (2D) | visual de cima em Canvas 2D, o mais leve |
 

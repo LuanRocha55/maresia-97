@@ -1,10 +1,10 @@
-// Gráficos "3D realista" (qualidade 3). A cidade continua com os mesmos modelos; o que muda é a luz:
+// Gráficos com reflexo: "3D alta" (qualidade 2) e "3D realista" (qualidade 3). A cidade continua com os mesmos modelos; o que muda é a luz:
 //  - materiais com reflexo (PBR): lataria com verniz, vidro e mar refletindo o céu, asfalto fosco
 //  - o céu da hora do dia vira um mapa de ambiente (ilumina e aparece nos reflexos, do sol do meio-dia à noite)
 //  - sombras de borda suave
 //  - texturas fotográficas (Poly Haven, CC0) no chão e nas paredes: grão e relevo por cima do desenho do jogo
 //  - brilho (bloom) em neon, faróis e postes à noite, e tone mapping de cinema (ACES)
-// Os outros níveis de qualidade não passam por aqui: os materiais Lambert originais ficam guardados
+// A alta usa os materiais e o céu, sem bloom (renderPlain). Média e leve não passam por aqui: os materiais Lambert originais ficam guardados
 // e voltam quando sai do realista.
 import * as THREE from '../../vendor/three/three.module.min.js';
 import { EffectComposer } from '../../vendor/three/addons/postprocessing/EffectComposer.js';
@@ -219,4 +219,12 @@ export function renderReal(renderer, scene, camera, dk) {
   renderer.toneMapping = tm; renderer.toneMappingExposure = ex;
 }
 const _s = new THREE.Vector2();
+// qualidade alta: os mesmos materiais com reflexo e o mesmo tone mapping, desenhando direto na tela
+// (sem bloom e sem o antisserrilhado extra do realista, que são o que mais pesa)
+export function renderPlain(renderer, scene, camera, dk) {
+  const tm = renderer.toneMapping, ex = renderer.toneMappingExposure;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = THREE.MathUtils.lerp(0.95, 1.25, dk);
+  renderer.render(scene, camera);
+  renderer.toneMapping = tm; renderer.toneMappingExposure = ex;
+}
 
