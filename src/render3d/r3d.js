@@ -633,18 +633,34 @@ export function render3D(signalState){
   const dist=24/clamp(camZ,0.5,1.3);
   {const sp=player.car?Math.abs(player.car.fwdSpeed()):0,fov=42+clamp((sp-150)/500,0,1)*5;
     if(Math.abs(camera.fov-fov)>0.02){camera.fov=lerp(camera.fov,fov,0.06);camera.updateProjectionMatrix();}}
-  const tx=cam.x*U, tz=cam.y*U;
+  let tx=cam.x*U, tz=cam.y*U;
   const shx=(Math.random()-.5)*S.shake*0.05, shz=(Math.random()-.5)*S.shake*0.05;
+  let hw,vz0,vz1,vx0,vx1;
+  if(R.cam34){
+    // PROTÓTIPO câmera 3/4: atrás do carro, ~45°, gira com a direção com um atraso nas curvas
+    const pc=player.car, sp=pc?Math.abs(pc.fwdSpeed()):0;
+    const now=performance.now(), dtc=Math.min(0.1,(now-(R.ct||now))/1000);R.ct=now;
+    if(R.yaw===undefined)R.yaw=pc?pc.a:-Math.PI/2;
+    else if(pc&&sp>8&&!R.yawHold)R.yaw+=Math.atan2(Math.sin(pc.a-R.yaw),Math.cos(pc.a-R.yaw))*(1-Math.exp(-dtc*3.5));
+    const fx=Math.cos(R.yaw),fz=Math.sin(R.yaw);
+    const px=player.x*U,pz=player.y*U;
+    const back=pc?8.5+sp/80:7, up=pc?7.5+sp/120:7, ahead=pc?3+sp/100:1.5;
+    camera.position.set(px-fx*back+shx,up,pz-fz*back+shz);camera.lookAt(px+fx*ahead,0,pz+fz*ahead);
+    // o que aparece na tela fica mais à frente: carrega um quadrado em volta desse ponto
+    const cx=px+fx*ahead*3,cz=pz+fz*ahead*3, r=Math.max(34,back*3.2);
+    hw=r;vx0=cx-r;vx1=cx+r;vz0=cz-r;vz1=cz+r;tx=cx;tz=cz;
+  }else{
   camera.position.set(tx+shx,dist*0.92,tz+dist*0.62+shz);camera.lookAt(tx,0,tz-1);
-  const night=darkness();
   // área do chão que aparece na tela (a câmera olha inclinada: mais longe pra cima, perto embaixo)
-  const hw=1.62*dist*Math.tan(THREE.MathUtils.degToRad(camera.fov/2))*camera.aspect+2;
-  const vz0=tz-0.75*dist-2, vz1=tz+0.45*dist+2;
+  hw=1.62*dist*Math.tan(THREE.MathUtils.degToRad(camera.fov/2))*camera.aspect+2;
+  vz0=tz-0.75*dist-2;vz1=tz+0.45*dist+2;vx0=tx-hw;vx1=tx+hw;
+  }
+  const night=darkness();
   setShadowBox(Math.max(hw,(vz1-vz0)/2)+2);
   updateSky(tx,(vz0+vz1)/2);
   updateSignals(signalState);
   const pc=player.car, ahead=pc?{x:(pc.vx||0)*U*1.2,z:(pc.vy||0)*U*1.2}:null;
-  updateGround(tx-hw,tx+hw,vz0,vz1,ahead&&Math.hypot(ahead.x,ahead.z)>2?ahead:null);
+  updateGround(vx0,vx1,vz0,vz1,ahead&&Math.hypot(ahead.x,ahead.z)>2?ahead:null);
   // camada de detalhes do chão: centrada um pouco à frente da câmera, presa numa grade
   const ocx=Math.round(tx/4)*4, ocz=Math.round((tz-6)/4)*4;
   if(frameN%2===0||!overlayMesh.userData.ok){overlayMesh.userData.ok=true;

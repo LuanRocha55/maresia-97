@@ -1,3 +1,4 @@
+import { R } from '../render3d/r3d.js';
 // Loop de atualização do mundo, colisões e pedestres
 import { CH } from '../core/canvas.js';
 import { rand, randi, pick, clamp, lerp, hyp, fmtMoney } from '../core/utils.js';
@@ -46,7 +47,8 @@ export function update(dt){
     if(c.burnT>0&&Math.floor(S.gameTime*2)%2===0&&!c._warn){msg('O carro vai explodir! SAI (F)!',2);c._warn=true;}
   } else if(player.state==='play'){
     let mx=(rt?1:0)-(lf?1:0),my=(dn?1:0)-(up?1:0);
-    if(mx||my){const l=hyp(mx,my);mx/=l;my/=l;const sp=(keys['ShiftLeft']||keys['ShiftRight'])?160:95;
+    if(mx||my){const l=hyp(mx,my);mx/=l;my/=l;
+      if(R.cam34&&R.yaw!==undefined){const fx=Math.cos(R.yaw),fy=Math.sin(R.yaw),ax=mx,ay=my;mx=fx*(-ay)+(-fy)*ax;my=fy*(-ay)+fx*ax;}const sp=(keys['ShiftLeft']||keys['ShiftRight'])?160:95;
       player.a=Math.atan2(my,mx);const nx=player.x+mx*sp*dt,ny=player.y+my*sp*dt;
       if(!solidAt(nx,player.y))player.x=nx;if(!solidAt(player.x,ny))player.y=ny;player.anim+=dt*sp*0.12;}
     // com mouse: o personagem olha pra mira (anda com WASD e mira com o mouse)
