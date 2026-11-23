@@ -5,6 +5,17 @@ O número segue o padrão `MAIOR.MENOR.CORREÇÃO`:
 - **MENOR** — novidade (sistema, missão, veículo, reorganização)
 - **CORREÇÃO** — conserto de bug ou ajuste pequeno
 
+## 1.12.0 — 23/11/2026
+**Luz de verdade: a cidade reflete e ilumina** (a luz deixa de ser chapada em qualquer hora)
+- **Postes, faróis, sirene, neon e fogo viram luzes de verdade**: iluminam o chão, as paredes, os carros e as pessoas, em vez de só uma mancha pintada no chão
+  - Postes: luz de sódio alaranjada saindo da cúpula, em cima da rua (os mais perto da câmera; trocam suave, sem piscar)
+  - Faróis: o seu carro e os carros mais perto jogam um facho que clareia o asfalto, as calçadas e quem estiver na frente
+  - Sirene: a viatura mais perto na perseguição pinta as paredes e os carros de vermelho e azul
+  - Neon dos comércios (farmácia, hospital, bingo...): a fachada e a calçada pegam a cor do letreiro, piscando junto
+  - Explosões, carro pegando fogo e tiros clareiam em volta
+- **3D alta agora tem reflexo**: lataria com verniz, vidros e mar refletindo o céu da hora, brilho do sol nas superfícies, texturas no chão e nas paredes (antes só o realista tinha). O realista continua com o brilho (bloom), sombras suaves e mais luzes
+- 3D média ganha postes e faróis iluminando (sem reflexo); 3D leve fica como era
+- Pessoas, árvores e casas de modelo ganham um pouco de brilho na luz
 ## 1.11.0 — 23/11/2026
 **Guanabara, 1997: a cidade ganha cara de Rio** (primeira etapa do [design](docs/design.md), ainda no mapa antigo)
 - **Nomes novos**, seguindo a regra dos nomes do design: Jacarandá (era Jardim Maresia), Morro do Cajueiro, Barra Sul, Praia do Recanto, Vila dos Pescadores e Cais do Porto. Avenidas: Via Expressa, Av. das Nações, Av. Aurora, Estrada dos Tropeiros, Av. do Cais. Ruas e becos com nome de samba, feira e choro no lugar dos nomes cearenses
