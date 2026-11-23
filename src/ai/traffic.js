@@ -173,11 +173,11 @@ export function updateTraffic(c,dt){
 
 // ---------- spawn de carros nas ruas ----------
 const MIX={
-  centro:['jegue','taxi','taxi','luxo','suv','busao','camin','moto','jegue'],
+  centro:['jegue','taxi','taxi','luxo','suv','busao','camin','moto','jegue','lotacao'],
   rico:['brisa','brisa','luxo','luxo','suv','suv','taxi','bugue'],
-  velha:['jegue','jegue','moto','moto','taxi'],
-  cajueiro:['jegue','moto','moto','camin','jegue','moto'],
-  jardim:['jegue','suv','taxi','moto','camin','jegue'],
+  velha:['jegue','jegue','moto','moto','taxi','lotacao'],
+  cajueiro:['jegue','moto','moto','camin','jegue','moto','lotacao'],
+  jardim:['jegue','suv','taxi','moto','camin','jegue','lotacao'],
   orla:['bugue','bugue','brisa','jegue','taxi','suv','luxo'],
   porto:['caminhao','caminhao','camin','jegue','caminhao'],
 };

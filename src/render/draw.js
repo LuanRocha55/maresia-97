@@ -62,6 +62,11 @@ export function drawCar(g,c){
     g.fillStyle=shade(col,1.15);g.fillRect(-hl+4,-hw+3,L-10,Wd-6);
     g.fillStyle='#9fd3e8';g.fillRect(hl-7,-hw+3,4,Wd-6);
     g.fillStyle='rgba(255,255,255,0.5)';for(let i=0;i<6;i++)g.fillRect(-hl+10+i*11,-hw+5,6,Wd-10);
+  } else if(c.type==='lotacao'){ // van: teto branco com bagageiro, faixas verde e amarela nas laterais
+    g.fillStyle='#9fd3e8';g.fillRect(hl-9,-hw+3,5,Wd-6);
+    g.fillStyle=shade(col,1.06);g.fillRect(-hl+3,-hw+3,L-13,Wd-6);
+    g.fillStyle='#3a3a3d';for(let i=0;i<5;i++)g.fillRect(-hl+6+i*7,-hw+4,1.5,Wd-8);g.fillRect(-hl+6,-hw+4,29,1.2);g.fillRect(-hl+6,hw-5.2,29,1.2);
+    g.fillStyle='#2e8b3a';g.fillRect(-hl+1,-hw,L-2,1.6);g.fillRect(-hl+1,hw-1.6,L-2,1.6);
   } else if(c.type==='camin'){
     g.fillStyle=shade(col,0.55);g.fillRect(-hl+3,-hw+3,L*0.45,Wd-6); // caçamba
     g.fillStyle='rgba(0,0,0,0.25)';g.fillRect(-hl+5,-hw+5,L*0.45-4,Wd-10);

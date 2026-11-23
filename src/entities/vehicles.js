@@ -17,6 +17,7 @@ export const CT={
   guincho:{name:'Guincho',len:52,wid:22,maxSpd:240,accel:190,brake:420,grip:7,turn:2.1,hp:220,mass:2.2,val:700,colors:['#f9a825']},
   luxo:{name:'Sedã Executivo',len:44,wid:20,maxSpd:390,accel:310,brake:560,grip:8.4,turn:2.6,hp:120,mass:1.3,val:1100,colors:['#111111','#2c3e50','#ecf0f1','#7f8c8d','#4a0e0e']},
   suv:{name:'Utilitário',len:44,wid:22,maxSpd:320,accel:260,brake:500,grip:7.8,turn:2.4,hp:160,mass:1.6,val:800,colors:['#ffffff','#1c2833','#566573','#7b241c','#1d3557']},
+  lotacao:{name:'Lotação',len:52,wid:22,maxSpd:250,accel:170,brake:400,grip:7,turn:2.0,hp:200,mass:2,val:600,colors:['#f2f0e8']},
   caminhao:{name:'Caminhão Baú',len:72,wid:24,maxSpd:210,accel:120,brake:320,grip:7,turn:1.8,hp:300,mass:3.5,val:900,colors:['#e0e0e0','#f5b041','#5dade2']},
   viatura:{name:'Viatura',len:40,wid:19,maxSpd:390,accel:330,brake:560,grip:8.6,turn:2.9,hp:150,mass:1.3,val:1200,colors:['#20242c']},
   // forças que entram com o procurado alto

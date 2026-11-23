@@ -312,16 +312,58 @@ function lajeTop(G,x0,z0,x1,z1,H,r){
     G.box(px,pz,px+0.05,pz+0.05,H,H+0.45+r()*0.2,'#6b4a3a','#6b4a3a',false);   // vergalhão
   if(r()<0.35){const y=H+0.06;G.box(x0+0.2,z1-0.5,x0+1.3,z1-0.2,y,y+0.03,'#ffffff','#ffffff',false);} // roupa no varal
 }
-// quiosque de madeira da Praia do Recanto: balcão, quatro esteios e telhado de palha
-function quiosque(G,x0,z0,x1,z1,b){
-  const wood='#7a5232',dark='#5a3a22',straw='#cfa75e',cx=(x0+x1)/2,cz=(z0+z1)/2;
-  G.box(x0+0.25,z0+0.25,x1-0.25,z1-0.25,0,0.95,'#c9a27a',wood,true,0.7);           // balcão
-  G.box(x0+0.15,z1-0.4,x1-0.15,z1-0.15,0.95,1.02,'#e2c9a2','#e2c9a2',false);       // tampo
-  for(const [px,pz] of [[x0+0.1,z0+0.1],[x1-0.25,z0+0.1],[x0+0.1,z1-0.25],[x1-0.25,z1-0.25]])G.box(px,pz,px+0.15,pz+0.15,0,2.1,dark,dark);
-  gable(G,x0-0.35,z0-0.35,x1+0.35,z1+0.35,2.1,0.75,straw);
-  G.box(cx-0.9,z1+0.1,cx+0.9,z1+0.14,1.55,1.95,b.roof,b.roof,false);               // placa colorida na frente
-  G.box(x0+0.4,z1+0.3,x0+0.75,z1+0.65,0,0.55,'#f2f2ee','#d0d0c8');G.box(x1-0.75,z1+0.3,x1-0.4,z1+0.65,0,0.55,'#f2f2ee','#d0d0c8'); // isopor
+// quiosque de madeira da Praia do Recanto: deque, esteios roliços, balcão de tábua branca com tampo azul,
+// telhado de palha de quatro águas com franja, placa de madeira na frente (cor do quiosque, sem nome),
+// cocos verdes empilhados, mesinha e cadeiras de plástico na areia
+export function quiosque(G,x0,z0,x1,z1,b){
+  const wood='#8a5a32',dark='#5e3a1e',plank='#efe7d4',blue='#2f8fcf',straw=C('#d9b45a'),straw2=C('#c49a43'),cx=(x0+x1)/2;
+  const r=mulberry(Math.floor((b.seed||0.5)*1e9)+11);
+  G.box(x0+0.05,z0+0.05,x1-0.05,z1-0.05,0,0.08,'#a87a4c','#7a5232');                          // deque
+  // balcão em U aberto atrás: frente e laterais de tábua branca com sarrafos de madeira, tampo azul
+  const bx0=x0+0.3,bx1=x1-0.3,bz0=z0+0.35,bz1=z1-0.3,t=0.14,yb=0.95;
+  G.box(bx0,bz1-t,bx1,bz1,0.08,yb,null,plank,true,0.75);G.box(bx0,bz0,bx0+t,bz1-t,0.08,yb,null,plank,true,0.75);G.box(bx1-t,bz0,bx1,bz1-t,0.08,yb,null,plank,true,0.75);
+  for(let k=0;k<=6;k++){const x=bx0+(bx1-bx0)*k/6-0.03;G.box(x,bz1,x+0.06,bz1+0.02,0.08,yb,wood,wood,false);}       // sarrafos da frente
+  G.box(bx0-0.06,bz1-t-0.04,bx1+0.06,bz1+0.1,yb,yb+0.07,blue,'#2577ad',false);                                       // tampo azul (frente)
+  G.box(bx0-0.06,bz0-0.04,bx0+t+0.04,bz1-t-0.04,yb,yb+0.07,blue,'#2577ad',false);G.box(bx1-t-0.04,bz0-0.04,bx1+0.06,bz1-t-0.04,yb,yb+0.07,blue,'#2577ad',false);
+  // prateleira no fundo com garrafas coloridas
+  G.box(bx0+0.2,z0+0.12,bx1-0.2,z0+0.3,0.08,1.35,'#c8a57a',wood,true,0.8);
+  const BOT=['#2e8b3a','#c62828','#f0c419','#f4f4f0','#6d3b1f'];for(let k=0;k<9;k++){const x=bx0+0.3+k*(bx1-bx0-0.6)/8;G.cyl(x,z0+0.24,0.045,1.35,1.55,BOT[k%5],BOT[k%5],6);}
+  // esteios roliços até a palha
+  const ph=2.05;for(const [px,pz] of [[x0+0.17,z0+0.17],[x1-0.17,z0+0.17],[x0+0.17,z1-0.17],[x1-0.17,z1-0.17]])G.cyl(px,pz,0.085,0.08,ph,null,dark,7);
+  // telhado de palha de quatro águas, beiral largo
+  const o=0.5,rx0=x0-o,rz0=z0-o,rx1=x1+o,rz1=z1+o,rh=0.85,inset=Math.min((rz1-rz0),(rx1-rx0))/2*0.85,zm=(rz0+rz1)/2;
+  const top=ph+rh,ra=[rx0+inset,top,zm],rb=[rx1-inset,top,zm];
+  G.face([rx0,ph,rz1],[rx1,ph,rz1],rb,ra,0,0.75,0.66,straw);                       // água da frente
+  G.face([rx1,ph,rz0],[rx0,ph,rz0],ra,rb,0,0.75,-0.66,straw2);                     // água de trás
+  G.tri([rx0,ph,rz0],[rx0,ph,rz1],ra,-0.66,0.75,0,straw2.clone().multiplyScalar(0.95));G.tri([rx1,ph,rz1],[rx1,ph,rz0],rb,0.66,0.75,0,straw.clone().multiplyScalar(0.92));
+  G.box(ra[0]-0.05,zm-0.07,rb[0]+0.05,zm+0.07,top-0.04,top+0.07,'#a8823a','#a8823a',false);                     // cumeeira amarrada
+  // franja: pontas de palha penduradas em volta do beiral (comprimentos sorteados)
+  const fr=(ax,az,bx2,bz,nx,nz)=>{const n=Math.max(6,Math.round(Math.hypot(bx2-ax,bz-az)/0.16));
+    for(let k=0;k<n;k++){const u0=k/n,u1=(k+1)/n,um=(u0+u1)/2,len=0.22+r()*0.16,col=(k%2?straw:straw2).clone().multiplyScalar(0.9+r()*0.15);
+      const p0=[ax+(bx2-ax)*u0,ph+0.02,az+(bz-az)*u0],p1=[ax+(bx2-ax)*u1,ph+0.02,az+(bz-az)*u1],pm=[ax+(bx2-ax)*um+nx*0.04,ph-len,az+(bz-az)*um+nz*0.04];
+      G.tri(p0,pm,p1,nx,0.2,nz,col);}};
+  fr(rx0,rz1,rx1,rz1,0,1);fr(rx1,rz0,rx0,rz0,0,-1);fr(rx0,rz0,rx0,rz1,-1,0);fr(rx1,rz1,rx1,rz0,1,0);
+  // placa de madeira em cima da frente: moldura e quadro pintado na cor do quiosque (o nome fica pra depois)
+  const sw=Math.min(1.5,(x1-x0)*0.5),sz=rz1-0.3,sy=ph+0.12;
+  G.box(cx-sw/2-0.06,sz-0.06,cx+sw/2+0.06,sz+0.04,sy-0.06,sy+0.5,wood,wood,true);
+  G.box(cx-sw/2,sz+0.04,cx+sw/2,sz+0.06,sy,sy+0.44,null,b.roof,false);
+  G.box(cx-sw/2+0.1,sz+0.06,cx+sw/2-0.1,sz+0.075,sy+0.15,sy+0.29,null,'#f6f1e3',false);                        // faixa clara (onde vai o nome)
+  for(const s of [-1,1])G.box(cx+s*sw*0.42-0.04,sz-0.05,cx+s*sw*0.42+0.04,sz+0.03,ph,sy,dark,dark);            // pés da placa
+  // cocos verdes empilhados no canto da frente
+  const ccx=x0+0.55,ccz=z1+0.42;for(const [dx,dz,dy] of [[0,0,0],[0.26,0.05,0],[0.12,0.24,0],[-0.14,0.2,0],[0.12,0.1,0.2],[0.02,0.08,0.38]])ball(G,ccx+dx,0.13+dy,ccz+dz,0.14,r()<0.5?'#7cb342':'#8bc34a');
+  // mesinha e duas cadeiras de plástico branco na areia
+  const tx=x1-0.1,tz=z1+0.95;G.cyl(tx,tz,0.36,0.62,0.66,'#f4f4f0','#dcdcd6',12);G.cyl(tx,tz,0.05,0,0.62,null,'#dcdcd6',6);
+  for(const [dx,dz] of [[-0.62,0],[0.62,0]]){const ax=tx+dx,az=tz+dz,f=Math.sign(dx);
+    G.box(ax-0.2,az-0.2,ax+0.2,az+0.2,0.36,0.42,'#f4f4f0','#e2e2dc',false);G.box(ax+f*0.16,az-0.2,ax+f*0.22,az+0.2,0.42,0.85,'#f4f4f0','#e2e2dc',false);
+    for(const [lx,lz] of [[-0.17,-0.17],[0.17,-0.17],[-0.17,0.17],[0.17,0.17]])G.box(ax+lx-0.025,az+lz-0.025,ax+lx+0.025,az+lz+0.025,0,0.36,null,'#d9d9d2',false);}
+  G.box(x1-0.55,z1+0.25,x1-0.2,z1+0.55,0,0.45,'#f2f2ee','#d0d0c8');                                              // isopor
 }
+// bola facetada (coco, boia): icosaedro com faces planas
+const ICO=new THREE.IcosahedronGeometry(1,1).attributes.position.array;
+function ball(G,x,y,z,rad,hex){const c0=C(hex);
+  for(let i=0;i<ICO.length;i+=9){const v=k=>[x+ICO[i+k]*rad,y+ICO[i+k+1]*rad*0.92,z+ICO[i+k+2]*rad];
+    const a=v(0),bb=v(3),c=v(6),nx=(a[0]+bb[0]+c[0])/3-x,ny=(a[1]+bb[1]+c[1])/3-y,nz=(a[2]+bb[2]+c[2])/3-z,l=Math.hypot(nx,ny,nz);
+    G.tri(a,bb,c,nx/l,ny/l,nz/l,c0.clone().multiplyScalar(0.85+0.15*Math.max(0,ny/l)));}}
 // orelhão: concha (meia cúpula) aberta pra frente
 function orelhao(G,x,z){
   const R=0.42,yb=1.25,seg=9,col=C('#f08c00'),inner=C('#f5b04a');
