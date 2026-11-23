@@ -5,17 +5,24 @@ O número segue o padrão `MAIOR.MENOR.CORREÇÃO`:
 - **MENOR** — novidade (sistema, missão, veículo, reorganização)
 - **CORREÇÃO** — conserto de bug ou ajuste pequeno
 
+## 1.15.1 — 23/11/2026
+**Câmera a pé que acompanha, e polícia sem atraso**
+
+- **A pé** a câmera segue macia, um pouco à frente de onde você anda, e gira devagar pra trás do jogador quando ele muda de rumo (andar pra trás não faz ela dar meia-volta). Mirar com o mouse não gira a câmera. W anda pra frente da tela, A e D pros lados, e o rumo não muda no meio do passo enquanto a câmera gira
+- **Polícia sem atraso**: na missão "Fuga pela Beira-Mar" a polícia começava sem saber onde você estava e saía rodando pro lado errado. Agora ela já sabe. E quando perde você de vista, corre pro último lugar onde te viu (antes ia a 150, devagar como quem vasculha) e enxerga um pouco mais longe (620 em vez de 480), já que a câmera nova mostra mais da rua
+- **Erro na tela** agora mostra também o arquivo e a linha onde aconteceu, pra achar mais fácil. Um ponto de missão que podia dar "Cannot read properties of null (reading 'x')" quando não achava rua em bairro aberto foi protegido
+
 ## 1.15.0 — 23/11/2026
 **Câmera 3/4 atrás do carro** (a de cima continua na tecla C)
 
 ![dirigindo com a câmera nova](docs/capturas/1.15.0/1-dirigindo.jpg)
 
 - **Câmera nova por padrão**: fica atrás do carro, inclinada, e gira junto com ele. Nas curvas ela vem com um pouco de atraso, e quanto mais rápido, mais ela se afasta. De ré ela não dá meia-volta
-- **A pé** a câmera fica na última direção do carro e sobe um pouco, pra mirar com o mouse. W anda pra frente da tela, A e D pros lados
 - **Prédio no caminho**: quando um prédio ficaria entre a câmera e o carro (encostado numa parede, por exemplo), a câmera sobe e chega mais perto até enxergar de novo
 - **Minimapa gira junto** com a câmera (a frente fica pra cima) e o **N** anda pela borda apontando pro norte
 - **Seta do alvo** aponta certo mesmo com o alvo atrás da câmera
 - **Carros e pedestres** não nascem mais na frente da câmera lá longe (a vista nova enxerga mais longe pra frente)
+- **A pé** a câmera fica na última direção do carro. W anda pra frente da tela, A e D pros lados
 - **C** troca entre a 3/4 e a câmera de cima de antes. A escolha fica salva
 
 ## 1.14.1 — 23/11/2026

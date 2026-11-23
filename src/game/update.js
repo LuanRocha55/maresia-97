@@ -48,9 +48,14 @@ export function update(dt){
     let mx=(rt?1:0)-(lf?1:0),my=(dn?1:0)-(up?1:0);
     if(mx||my){const l=hyp(mx,my);mx/=l;my/=l;
       // câmera 3/4: W anda pra onde a câmera olha, A/D pros lados da tela
-      if(view.r34&&!S.interior){const fx=Math.cos(view.yaw),fy=Math.sin(view.yaw),ax=mx,ay=my;mx=fx*(-ay)-fy*ax;my=fy*(-ay)+fx*ax;}const sp=(keys['ShiftLeft']||keys['ShiftRight'])?160:95;
+      // A direção da câmera é "travada" no instante em que a combinação de teclas muda: assim a câmera
+      // pode girar pra trás do jogador enquanto ele anda sem mudar o rumo no meio do caminho (nada de andar em círculo)
+      if(view.r34&&!S.interior){const key=mx+','+my;if(player.inKey!==key){player.inKey=key;player.inYaw=view.yaw;}
+        const fx=Math.cos(player.inYaw),fy=Math.sin(player.inYaw),ax=mx,ay=my;mx=fx*(-ay)-fy*ax;my=fy*(-ay)+fx*ax;}
+      player.walkT=S.gameTime;player.moveA=Math.atan2(my,mx);const sp=(keys['ShiftLeft']||keys['ShiftRight'])?160:95;
       player.a=Math.atan2(my,mx);const nx=player.x+mx*sp*dt,ny=player.y+my*sp*dt;
       if(!solidAt(nx,player.y))player.x=nx;if(!solidAt(player.x,ny))player.y=ny;player.anim+=dt*sp*0.12;}
+    else player.inKey=null;
     // com mouse: o personagem olha pra mira (anda com WASD e mira com o mouse)
     if(mouse.active){const m=mouseWorld();player.a=Math.atan2(m.y-player.y,m.x-player.x);}
   }

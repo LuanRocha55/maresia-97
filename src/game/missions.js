@@ -7,6 +7,7 @@ import { sfxTone, sfxWin } from '../audio/audio.js';
 import { Car } from '../entities/vehicles.js';
 import { Ped } from '../entities/peds.js';
 import { addHeat, msg, big, spawnTraffic } from './world.js';
+import { reportPlayer } from '../ai/police.js';
 import { update } from './update.js';
 import { S, player } from '../core/state.js';
 import { isOpenAt, isOpenZone } from './blitz.js';
@@ -24,6 +25,7 @@ function spawnGang(){
 export function roadPointFar(dmin,dmax){
   let best=null;
   for(let i=0;i<160;i++){const p=randomRoadPoint();if(!isOpenAt(p.x,p.y))continue;const d=hyp(p.x-player.x,p.y-player.y);if(d>=dmin&&d<=dmax)return{x:p.x,y:p.y};if(!best||Math.abs(d-dmin)<Math.abs(hyp(best.x-player.x,best.y-player.y)-dmin))best=p;}
+  if(!best)best=randomRoadPoint(); // nenhum ponto em bairro aberto sorteado: fica com qualquer rua
   return{x:best.x,y:best.y};
 }
 export function sidewalkPointFar(dmin,dmax){
@@ -57,7 +59,7 @@ export const MISSIONS=[
       m.onDestroyed=(c)=>{m.left--;msg('Faltam '+m.left+'.');};},
     update(m,dt){m.time-=dt;if(m.time<=0)return'fail';if(m.left<=0)return'done';m.text='Bate nas caminhonetes verdes até pegarem fogo. Faltam '+m.left+'.';},
     target(m){let b=null,bd=1e9;for(const c of m.gang){if(c.burnT>0||c.wreck)continue;const d=hyp(c.x-player.x,c.y-player.y);if(d<bd){bd=d;b=c;}}return b;}},
-  {title:'Fuga pela Beira-Mar',start(m){player.heat=Math.max(player.heat,280);m.time=150;m.reward=4000;m.stage=0;
+  {title:'Fuga pela Beira-Mar',start(m){player.heat=Math.max(player.heat,280);reportPlayer();m.time=150;m.reward=4000;m.stage=0;
       m.text='Os home tão na tua cola! Despista a polícia (zera as estrelas).';msg('Dica: a Pintura Express apaga as estrelas.');},
     update(m,dt){m.time-=dt;if(m.time<=0)return'fail';if(player.heat<=0)return'done';},
     target(m){return null;}},

@@ -1,6 +1,6 @@
 {
   "name": "maresia-97",
-  "version": "1.15.0",
+  "version": "1.15.1",
   "private": true,
   "description": "Jogo top-down de mundo aberto em JavaScript e Canvas 2D",
   "type": "module",

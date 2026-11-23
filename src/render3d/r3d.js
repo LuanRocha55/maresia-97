@@ -660,10 +660,19 @@ export function render3D(signalState){
     else if(pc&&sp>8){
       // de ré a câmera não dá meia-volta: só segue o carro andando pra frente
       if(pc.fwdSpeed()>0)R.yaw+=Math.atan2(Math.sin(pc.a-R.yaw),Math.cos(pc.a-R.yaw))*(1-Math.exp(-dtc*3.2));}
+    else if(!pc&&S.gameTime-(player.walkT||-9)<0.15){
+      // a pé: a câmera vai pra trás de onde o jogador está andando (mirar com o mouse não gira a câmera).
+      // Andando pra trás (rumo à câmera) ela não dá meia-volta
+      const da=Math.atan2(Math.sin(player.moveA-R.yaw),Math.cos(player.moveA-R.yaw));
+      if(Math.abs(da)<1.9)R.yaw+=da*(1-Math.exp(-dtc*2.4));}
     view.yaw=R.yaw;
     const fx=Math.cos(R.yaw),fz=Math.sin(R.yaw);
-    const px=player.x*U,pz=player.y*U;
-    let back=pc?8+sp/90:5.5, up=pc?8+sp/90:10, ahead=pc?2+sp/150:1;
+    // ponto que a câmera segue: no carro, colado; a pé, vem macio e um pouco à frente de onde ele anda
+    {const walking=!pc&&S.gameTime-(player.walkT||-9)<0.15, lx=player.x*U+(walking?Math.cos(player.moveA)*1.2:0), lz=player.y*U+(walking?Math.sin(player.moveA)*1.2:0);
+      if(pc||R.fx===undefined||Math.hypot(lx-R.fx,lz-R.fz)>6){R.fx=lx;R.fz=lz;}
+      else{const kf=1-Math.exp(-dtc*5);R.fx=lerp(R.fx,lx,kf);R.fz=lerp(R.fz,lz,kf);}}
+    const px=R.fx,pz=R.fz;
+    let back=pc?8+sp/90:6.5, up=pc?8+sp/90:8.5, ahead=pc?2+sp/150:1.5;
     // prédio no caminho entre a câmera e o jogador: a câmera sobe e chega mais perto (fica mais "de cima")
     // (testa do jeito normal até o mais de cima e fica com o primeiro que enxerga o jogador)
     let want=1;for(const l of [0,0.25,0.5,0.75,0.9]){if(!occluded(px,pz,fx,fz,back*(1-0.85*l),up*(1+0.4*l))){want=l;break;}}
