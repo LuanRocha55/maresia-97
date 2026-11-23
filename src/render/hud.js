@@ -98,7 +98,12 @@ export function drawHUD(g,tgt){
   const now=performance.now();fdt=Math.min(0.1,(now-lastFrame)/1000);lastFrame=now;
   // seta pro alvo (fora da tela)
   if(tgt){const pp=view.project(tgt.x,tgt.y,0);const sx=pp.x, sy=pp.y;
-    if(sx<20||sx>CW-20||sy<20||sy>CH-20){const a=Math.atan2(sy-CH/2,sx-CW/2);const r=Math.min(CW,CH)/2-50;
+    if(pp.behind||sx<20||sx>CW-20||sy<20||sy>CH-20){
+      // direção na tela: projeta o jogador e um ponto um pouco à frente dele, rumo ao alvo
+      // (funciona com a câmera girada e com o alvo atrás da câmera, onde a projeção dele inverte)
+      const dd=Math.max(1,hyp(tgt.x-player.x,tgt.y-player.y)), q0=view.project(player.x,player.y,0),
+        q1=view.project(player.x+(tgt.x-player.x)/dd*64,player.y+(tgt.y-player.y)/dd*64,0);
+      const a=Math.atan2(q1.y-q0.y,q1.x-q0.x);const r=Math.min(CW,CH)/2-50;
       const ax=CW/2+Math.cos(a)*Math.min(r*1.6,Math.abs((CW/2-40)/Math.cos(a))||r), ay=CH/2+Math.sin(a)*Math.min(r*1.6,Math.abs((CH/2-40)/Math.sin(a))||r);
       const X=clamp(ax,40,CW-40),Y=clamp(ay,60,CH-60);
       g.save();g.translate(X,Y);g.rotate(a);g.fillStyle=C97.orelhao;g.strokeStyle='#000';g.lineWidth=3;g.lineJoin='miter';
@@ -189,20 +194,26 @@ export function drawHUD(g,tgt){
   bevel(g,mx-4,my2-4,MS+8,MS+8,'#000',true,3);
   g.save();g.beginPath();g.rect(mx,my2,MS,MS);g.clip();
   const ptx=player.x/T,pty=player.y/T;g.imageSmoothingEnabled=false;
-  g.drawImage(mini,ptx-VIEW/2,pty-VIEW/2,VIEW,VIEW,mx,my2,MS,MS);
-  g.drawImage(lockMask(),(ptx-VIEW/2)*2,(pty-VIEW/2)*2,VIEW*2,VIEW*2,mx,my2,MS,MS);
-  const toM=(x,y)=>[mx+(x/T-ptx+VIEW/2)*MS/VIEW,my2+(y/T-pty+VIEW/2)*MS/VIEW];
+  // câmera 3/4: o minimapa gira junto, com a frente da câmera pra cima
+  const rot=view.r34&&!S.interior?-(view.yaw+Math.PI/2):0, rc=Math.cos(rot), rs=Math.sin(rot), MC=[mx+MS/2,my2+MS/2];
+  {const V2=rot?VIEW*1.42:VIEW, M2=MS*V2/VIEW;
+    g.save();g.translate(MC[0],MC[1]);g.rotate(rot);
+    g.drawImage(mini,ptx-V2/2,pty-V2/2,V2,V2,-M2/2,-M2/2,M2,M2);
+    g.drawImage(lockMask(),(ptx-V2/2)*2,(pty-V2/2)*2,V2*2,V2*2,-M2/2,-M2/2,M2,M2);g.restore();}
+  const toM=(x,y)=>{const dx=(x/T-ptx)*MS/VIEW,dy=(y/T-pty)*MS/VIEW;return[MC[0]+dx*rc-dy*rs,MC[1]+dx*rs+dy*rc];};
   const inMini=p=>!(p[0]<mx-8||p[0]>mx+MS+8||p[1]<my2-8||p[1]>my2+MS+8);
   {const ringing=!S.mission&&!S.job&&S.phoneCd<=0;for(const ph of phones){const p=toM(ph.x,ph.y);if(!inMini(p))continue;g.globalAlpha=ringing?1:0.4;drawIcon(g,'phone',p[0],p[1],12);g.globalAlpha=1;}}
   for(const b of buildings){const k=KIND_ICON[b.kind];if(!k)continue;const p=toM((b.x0+b.x1)/2,(b.y0+b.y1)/2);if(!inMini(p))continue;drawIcon(g,k,p[0],p[1],14);}
   for(const sp of jobSpots()){if(!sp.terminal&&!sp.ponto)continue;const p=toM(sp.x,sp.y);if(!inMini(p))continue;drawIcon(g,sp.terminal?'terminal':'taxi',p[0],p[1],14);}
   if(S.waypoint&&!S.mission&&!S.job){const p=toM(S.waypoint.x,S.waypoint.y);drawIcon(g,'waypoint',clamp(p[0],mx+7,mx+MS-7),clamp(p[1],my2+7,my2+MS-7),14);}
   for(const c of S.cars){if(c.ai!=='police')continue;const p=toM(c.x,c.y);g.fillStyle=Math.floor(S.gameTime*6)%2?'#ff3030':'#3a6bff';g.fillRect(p[0]-3,p[1]-3,6,6);g.strokeStyle='#000';g.lineWidth=1;g.strokeRect(p[0]-3,p[1]-3,6,6);}
-  {const pp=toM(player.x,player.y);g.save();g.translate(pp[0],pp[1]);g.rotate(player.a);g.fillStyle='#fff';g.strokeStyle='#000';g.lineWidth=2;g.beginPath();g.moveTo(7,0);g.lineTo(-5,-5);g.lineTo(-5,5);g.closePath();g.stroke();g.fill();g.restore();}
+  {const pp=toM(player.x,player.y);g.save();g.translate(pp[0],pp[1]);g.rotate(player.a+rot);g.fillStyle='#fff';g.strokeStyle='#000';g.lineWidth=2;g.beginPath();g.moveTo(7,0);g.lineTo(-5,-5);g.lineTo(-5,5);g.closePath();g.stroke();g.fill();g.restore();}
   if(tgt){const p=toM(tgt.x,tgt.y);const cp=[clamp(p[0],mx+5,mx+MS-5),clamp(p[1],my2+5,my2+MS-5)];g.fillStyle=C97.orelhao;g.fillRect(cp[0]-4,cp[1]-4,8,8);g.strokeStyle='#000';g.lineWidth=2;g.strokeRect(cp[0]-4,cp[1]-4,8,8);}
   g.restore();
   // N em cima do minimapa
-  g.fillStyle='#000';g.fillRect(mx+MS/2-9,my2-12,18,16);ptxt(g,'N',mx+MS/2,my2+1,13,C97.orelhao,'center',false);
+  // (com o minimapa girando, o N anda pela borda apontando pro norte)
+  {const nx=rs,ny=-rc,k=(MS/2)/Math.max(Math.abs(nx),Math.abs(ny)),NX=MC[0]+nx*k,NY=MC[1]+ny*k;
+    g.fillStyle='#000';g.fillRect(NX-9,NY-8,18,16);ptxt(g,'N',NX,NY+5,13,C97.orelhao,'center',false);}
   ptxt(g,'P pausa · M mapa',CW-16,CH-14,11,'rgba(236,232,223,0.55)','right');
   if(S.saveFlash>0){g.globalAlpha=clamp(S.saveFlash,0,1);ptxt(g,'✔ JOGO SALVO',mx,my2-16,13,C97.grana);g.globalAlpha=1;}
   drawDamage(g);
@@ -225,7 +236,7 @@ const CONTROLS=[
   ['WASD / setas','dirigir ou andar'],['ESPAÇO','freio de mão (carro) / soco (a pé)'],['F ou ENTER','entrar, sair, roubar carro'],
   ['SHIFT','correr a pé'],['H','buzina'],['Q / E ou 1-4','trocar arma'],['X','atirar do carro pra frente'],
   ['MOUSE','mira · esquerdo atira · direito entra/sai · roda troca arma'],['M ou TAB','mapa (guia de ruas)'],['J','empregos: táxi, motoboy, busão, guincho, vigilante'],
-  ['G','gráficos (3D alta, média, leve, clássico)'],['V','liga/desliga o Filtro 97'],['N','som'],['P ou ESC','pausa'],['F3','desempenho'],
+  ['C','câmera: 3/4 atrás do carro ou de cima'],['G','gráficos (3D alta, média, leve, clássico)'],['V','liga/desliga o Filtro 97'],['N','som'],['P ou ESC','pausa'],['F3','desempenho'],
 ];
 const TIPS=['Orelhão amarelo tocando = missão no bip.','PINTURA EXPRESS ($500 por estrela) apaga a polícia.','OFICINA DO ZÉ compra carro roubado.','ARMAS DO TONHÃO vende arma · POSTO conserta o carro ($150).'];
 export function drawTitle(){

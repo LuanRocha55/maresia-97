@@ -8,7 +8,7 @@ import { rand, randi, pick, clamp, hyp } from '../core/utils.js';
 import { T, SAND, SIDE, GRASS, DX, DY, hospitalSpot, tileAt } from '../world/map.js';
 import { CT, TRAFFIC_MIX, Car } from '../entities/vehicles.js';
 import { Ped } from '../entities/peds.js';
-import { S, player, cam } from '../core/state.js';
+import { S, player, cam, view } from '../core/state.js';
 
 export function heatStars(){return clamp(Math.floor((player.heat+50)/100),0,6);}
 export function addHeat(v){reportPlayer();const before=heatStars();player.heat=clamp(player.heat+v,0,660);const now=heatStars();
@@ -27,7 +27,10 @@ export function policeUnit(stars){
 export const UNIT_COLOR={viatura:'#20242c',swat:'#15171c',fbi:'#0b0b0d',exercito:'#4b5320',blindado:'#3d4419'};
 export function msg(t,dur){S.messages.push({t,life:dur||3.5});if(S.messages.length>4)S.messages.shift();}
 export function big(t,sub,col,dur){S.bigMsg={t,sub,col:col||'#ffd84a',life:dur||3,max:dur||3};}
-export function onScreen(x,y,m){m=m||80;const hw=CW/2/cam.zoom+m, hh=CH/2/cam.zoom+m;return Math.abs(x-cam.x)<hw&&Math.abs(y-cam.y)<hh;}
+export function onScreen(x,y,m){m=m||80;
+  // câmera 3/4: a tela não é um retângulo em volta do jogador, então pergunta pra projeção
+  if(view.r34){const p=view.project(x,y,0);return !p.behind&&p.x>-m&&p.x<CW+m&&p.y>-m&&p.y<CH+m;}
+  const hw=CW/2/cam.zoom+m, hh=CH/2/cam.zoom+m;return Math.abs(x-cam.x)<hw&&Math.abs(y-cam.y)<hh;}
 export function viewR(){return hyp(CW,CH)/2/cam.zoom+70;}
 
 export function resetWorld(){

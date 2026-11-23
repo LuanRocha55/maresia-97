@@ -25,7 +25,7 @@ import { initPeople, beginPeople, putPerson, endPeople, lookOf, withHelmet, PLAY
 import { swapScene, updateEnv, renderReal, renderPlain, initTextures } from './realista.js';
 import { initLights, setLightQuality, updateLights, lightsOn } from './luzes.js';
 
-export const R={ok:false,on:false,retro:false};
+export const R={ok:false,on:false,retro:false,cam34:true};
 // Filtro 97 agora é opcional (desligado por padrão): chave nova pra quem já tinha ligado na 1.5.0
 try{R.retro=localStorage.getItem('aq_retro2')==='1';}catch(e){}
 export const DBG={};
@@ -213,7 +213,7 @@ export function cycleGfx(){
 
 // troca entre 3D e clássico
 export function set3D(on){
-  R.on=on&&R.ok;
+  R.on=on&&R.ok;if(!R.on)view.r34=false;
   document.getElementById('gl').style.display=R.on?'block':'none';
   if(R.on)view3d();else{view.project=(x,y)=>({x:(x-cam.x)*cam.zoom+CW/2,y:(y-cam.y)*cam.zoom+CH/2});view.unproject=(sx,sy)=>({x:cam.x+(sx-CW/2)/cam.zoom,y:cam.y+(sy-CH/2)/cam.zoom});}
 }
@@ -620,6 +620,20 @@ function adapt(){
     try{localStorage.setItem('aq_gfx','3d'+quality);}catch(e){}
     R.notice='Gráficos ajustados pra rodar mais leve: qualidade '+QNAMES[quality]+' (G troca).';}
 }
+// altura dos prédios por tile (pra saber se um prédio fica entre a câmera 3/4 e o jogador)
+let hgrid=null;
+function occluded(px,pz,fx,fz,back,up){
+  if(!hgrid){hgrid=new Float32Array(W*H);
+    for(const b of buildingsList_){if(b.kind==='canopy')continue;const h=bh(b);
+      for(let y=Math.floor(b.y0/T);y<Math.ceil(b.y1/T);y++)for(let x=Math.floor(b.x0/T);x<Math.ceil(b.x1/T);x++)
+        if(x>=0&&y>=0&&x<W&&y<H&&hgrid[y*W+x]<h)hgrid[y*W+x]=h;}}
+  // linhas da traseira do carro (rente ao chão) até a câmera: no meio e dos dois lados
+  const sx=-fz*0.9, sz=fx*0.9, ox=px-fx*0.7, oz=pz-fz*0.7, bk=back-0.7;
+  for(let i=1;i<=12;i++){const t=i/12, ry=0.25+(up-0.25)*t;
+    for(const o of [0,1,-1]){const gx=Math.floor(ox-fx*bk*t+sx*o), gz=Math.floor(oz-fz*bk*t+sz*o);
+      if(gx<0||gz<0||gx>=W||gz>=H)continue;if(hgrid[gz*W+gx]>ry)return 1;}}
+  return 0;
+}
 export function render3D(signalState){
   frameN++;adapt();
   if(R.notice){S.messages.push({t:R.notice,life:4});R.notice=null;}
@@ -633,18 +647,48 @@ export function render3D(signalState){
   const dist=24/clamp(camZ,0.5,1.3);
   {const sp=player.car?Math.abs(player.car.fwdSpeed()):0,fov=42+clamp((sp-150)/500,0,1)*5;
     if(Math.abs(camera.fov-fov)>0.02){camera.fov=lerp(camera.fov,fov,0.06);camera.updateProjectionMatrix();}}
-  const tx=cam.x*U, tz=cam.y*U;
+  let tx=cam.x*U, tz=cam.y*U;
   const shx=(Math.random()-.5)*S.shake*0.05, shz=(Math.random()-.5)*S.shake*0.05;
+  let hw,vz0,vz1,vx0,vx1;
+  view.r34=!!(R.cam34&&!S.interior);
+  if(view.r34){
+    // câmera 3/4: atrás do carro, inclinada, gira com a direção dele com um atraso nas curvas.
+    // A pé ela fica parada na última direção e sobe um pouco (mais fácil de mirar com o mouse).
+    const pc=player.car, sp=pc?Math.abs(pc.fwdSpeed()):0;
+    const now=performance.now(), dtc=Math.min(0.1,(now-(R.ct||now))/1000);R.ct=now;
+    if(R.yaw===undefined)R.yaw=pc?pc.a:-Math.PI/2;
+    else if(pc&&sp>8){
+      // de ré a câmera não dá meia-volta: só segue o carro andando pra frente
+      if(pc.fwdSpeed()>0)R.yaw+=Math.atan2(Math.sin(pc.a-R.yaw),Math.cos(pc.a-R.yaw))*(1-Math.exp(-dtc*3.2));}
+    view.yaw=R.yaw;
+    const fx=Math.cos(R.yaw),fz=Math.sin(R.yaw);
+    const px=player.x*U,pz=player.y*U;
+    let back=pc?8+sp/90:5.5, up=pc?8+sp/90:10, ahead=pc?2+sp/150:1;
+    // prédio no caminho entre a câmera e o jogador: a câmera sobe e chega mais perto (fica mais "de cima")
+    // (testa do jeito normal até o mais de cima e fica com o primeiro que enxerga o jogador)
+    let want=1;for(const l of [0,0.25,0.5,0.75,0.9]){if(!occluded(px,pz,fx,fz,back*(1-0.85*l),up*(1+0.4*l))){want=l;break;}}
+    R.lift=lerp(R.lift||0,want,1-Math.exp(-dtc*(want>(R.lift||0)?8:1.5)));
+    back*=1-0.85*R.lift;up*=1+0.4*R.lift;
+    // entrar/sair do carro e acelerar: a distância muda suave
+    const k=1-Math.exp(-dtc*4);
+    if(R.cb===undefined){R.cb=back;R.cu=up;R.ca=ahead;}
+    R.cb=lerp(R.cb,back,k);R.cu=lerp(R.cu,up,k);R.ca=lerp(R.ca,ahead,k);
+    camera.position.set(px-fx*R.cb+shx,R.cu,pz-fz*R.cb+shz);camera.lookAt(px+fx*R.ca,0,pz+fz*R.ca);
+    // o que aparece na tela fica mais à frente: carrega um quadrado em volta desse ponto
+    const cx=px+fx*14,cz=pz+fz*14, r=34;
+    hw=r;vx0=cx-r;vx1=cx+r;vz0=cz-r;vz1=cz+r;tx=cx;tz=cz;
+  }else{
   camera.position.set(tx+shx,dist*0.92,tz+dist*0.62+shz);camera.lookAt(tx,0,tz-1);
-  const night=darkness();
   // área do chão que aparece na tela (a câmera olha inclinada: mais longe pra cima, perto embaixo)
-  const hw=1.62*dist*Math.tan(THREE.MathUtils.degToRad(camera.fov/2))*camera.aspect+2;
-  const vz0=tz-0.75*dist-2, vz1=tz+0.45*dist+2;
+  hw=1.62*dist*Math.tan(THREE.MathUtils.degToRad(camera.fov/2))*camera.aspect+2;
+  vz0=tz-0.75*dist-2;vz1=tz+0.45*dist+2;vx0=tx-hw;vx1=tx+hw;
+  }
+  const night=darkness();
   setShadowBox(Math.max(hw,(vz1-vz0)/2)+2);
   updateSky(tx,(vz0+vz1)/2);
   updateSignals(signalState);
   const pc=player.car, ahead=pc?{x:(pc.vx||0)*U*1.2,z:(pc.vy||0)*U*1.2}:null;
-  updateGround(tx-hw,tx+hw,vz0,vz1,ahead&&Math.hypot(ahead.x,ahead.z)>2?ahead:null);
+  updateGround(vx0,vx1,vz0,vz1,ahead&&Math.hypot(ahead.x,ahead.z)>2?ahead:null);
   // camada de detalhes do chão: centrada um pouco à frente da câmera, presa numa grade
   const ocx=Math.round(tx/4)*4, ocz=Math.round((tz-6)/4)*4;
   if(frameN%2===0||!overlayMesh.userData.ok){overlayMesh.userData.ok=true;

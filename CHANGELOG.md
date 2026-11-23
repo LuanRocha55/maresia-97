@@ -5,6 +5,19 @@ O número segue o padrão `MAIOR.MENOR.CORREÇÃO`:
 - **MENOR** — novidade (sistema, missão, veículo, reorganização)
 - **CORREÇÃO** — conserto de bug ou ajuste pequeno
 
+## 1.15.0 — 23/11/2026
+**Câmera 3/4 atrás do carro** (a de cima continua na tecla C)
+
+![dirigindo com a câmera nova](docs/capturas/1.15.0/1-dirigindo.jpg)
+
+- **Câmera nova por padrão**: fica atrás do carro, inclinada, e gira junto com ele. Nas curvas ela vem com um pouco de atraso, e quanto mais rápido, mais ela se afasta. De ré ela não dá meia-volta
+- **A pé** a câmera fica na última direção do carro e sobe um pouco, pra mirar com o mouse. W anda pra frente da tela, A e D pros lados
+- **Prédio no caminho**: quando um prédio ficaria entre a câmera e o carro (encostado numa parede, por exemplo), a câmera sobe e chega mais perto até enxergar de novo
+- **Minimapa gira junto** com a câmera (a frente fica pra cima) e o **N** anda pela borda apontando pro norte
+- **Seta do alvo** aponta certo mesmo com o alvo atrás da câmera
+- **Carros e pedestres** não nascem mais na frente da câmera lá longe (a vista nova enxerga mais longe pra frente)
+- **C** troca entre a 3/4 e a câmera de cima de antes. A escolha fica salva
+
 ## 1.14.1 — 23/11/2026
 **Correção: tela congelava com fumaça ou faísca na tela** ("_M is not defined")
 - A 1.14.0 apagou junto com os bonecos antigos umas variáveis que a fumaça, as faíscas e o fogo também usavam. A tela travava (o som seguia) assim que aparecia qualquer partícula, como a poeira da moto na areia
