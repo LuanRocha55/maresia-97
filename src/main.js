@@ -100,6 +100,8 @@ function frame(now){
     if(!S.started||S.paused)drawTitle();
   }catch(e){
     S.errCount++;S.lastErr=(e&&e.message)||String(e);
+    // onde foi (arquivo:linha do primeiro trecho do jogo na pilha), pra dar pra achar o erro pelo print
+    {const m=((e&&e.stack)||'').match(/src\/[\w\/]+\.js:\d+/);if(m)S.lastErr+='  ['+m[0].slice(4)+']';}
     console.error(e);
     try{sanitize(true);}catch(_){}
   }

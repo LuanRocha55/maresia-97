@@ -17,6 +17,8 @@ O número segue o padrão `MAIOR.MENOR.CORREÇÃO`:
 - **Seta do alvo** aponta certo mesmo com o alvo atrás da câmera
 - **Carros e pedestres** não nascem mais na frente da câmera lá longe (a vista nova enxerga mais longe pra frente)
 - **C** troca entre a 3/4 e a câmera de cima de antes. A escolha fica salva
+- **Polícia sem atraso**: na missão "Fuga pela Beira-Mar" a polícia começava sem saber onde você estava e saía rodando pro lado errado. Agora ela já sabe. E quando perde você de vista, corre pro último lugar onde te viu (antes ia a 150, devagar como quem vasculha) e enxerga um pouco mais longe (620 em vez de 480), já que a câmera nova mostra mais da rua
+- **Erro na tela** agora mostra também o arquivo e a linha onde aconteceu, pra achar mais fácil. Um ponto de missão que podia dar "Cannot read properties of null (reading 'x')" quando não achava rua em bairro aberto foi protegido
 
 ## 1.14.1 — 23/11/2026
 **Correção: tela congelava com fumaça ou faísca na tela** ("_M is not defined")

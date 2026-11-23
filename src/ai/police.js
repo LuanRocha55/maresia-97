@@ -41,7 +41,7 @@ export function updatePoliceBrain(dt){
   if(stars===0){intel.seenT=99;return;}
   // alguém está te vendo?
   const t=tgtObj();
-  for(const c of S.cars){if(c.ai!=='police'&&c.ai!=='block')continue;const d=hyp(c.x-t.x,c.y-t.y);if(d<170||(d<480&&los(c.x,c.y,t.x,t.y))){reportPlayer();break;}}
+  for(const c of S.cars){if(c.ai!=='police'&&c.ai!=='block')continue;const d=hyp(c.x-t.x,c.y-t.y);if(d<220||(d<620&&los(c.x,c.y,t.x,t.y))){reportPlayer();break;}}
   for(const p of S.peds){if(!p.cop||p.state==='dead')continue;const d=hyp(p.x-t.x,p.y-t.y);if(d<350&&los(p.x,p.y,t.x,t.y)){reportPlayer();break;}}
   flowT-=dt;if(flowT<=0){computeFlow();flowT=0.35;}
   flowBT-=dt;if(flowBT<=0&&playerSeenRecently()){const p=predicted();bfs(flowB,p.x,p.y);flowBT=0.5;}
@@ -82,7 +82,9 @@ export function updatePolice(c,dt){
   } else { // perdeu de vista: vasculha a área
     tx=intel.searchX;ty=intel.searchY;
   }
-  let desired=seen?200+stars*45+(c.type==='fbi'?90:0):150;
+  // sem te ver: corre pro último lugar onde te viram; só vasculha devagar quando já chegou lá
+  const searching=!seen&&hyp(intel.lastX-c.x,intel.lastY-c.y)<=180;
+  let desired=seen?200+stars*45+(c.type==='fbi'?90:0):searching?150:200+stars*30;
   if(d<90&&player.car&&player.car.speed<60)desired=60;
   if(!player.car&&d<160)desired=Math.min(desired,Math.max(0,(d-70)*1.5));
   driveTo(c,tx,ty,desired,dt,true);
