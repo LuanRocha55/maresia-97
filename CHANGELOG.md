@@ -5,6 +5,10 @@ O número segue o padrão `MAIOR.MENOR.CORREÇÃO`:
 - **MENOR** — novidade (sistema, missão, veículo, reorganização)
 - **CORREÇÃO** — conserto de bug ou ajuste pequeno
 
+## 1.14.1 — 23/11/2026
+**Correção: tela congelava com fumaça ou faísca na tela** ("_M is not defined")
+- A 1.14.0 apagou junto com os bonecos antigos umas variáveis que a fumaça, as faíscas e o fogo também usavam. A tela travava (o som seguia) assim que aparecia qualquer partícula, como a poeira da moto na areia
+
 ## 1.14.0 — 23/11/2026
 **Gente de 97 e motos novas, feitas pro jogo** (sem modelo pronto, sem marca real)
 

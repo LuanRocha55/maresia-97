@@ -464,6 +464,7 @@ function fxMesh(add){
   const geo=new THREE.PlaneGeometry(1,1);const al=new THREE.InstancedBufferAttribute(new Float32Array(MAXFX),1);al.setUsage(THREE.DynamicDrawUsage);geo.setAttribute('aAlpha',al);
   const im=new THREE.InstancedMesh(geo,m,MAXFX);im.count=0;im.frustumCulled=false;im.renderOrder=3;im.instanceMatrix.setUsage(THREE.DynamicDrawUsage);im.setColorAt(0,new THREE.Color(1,1,1));scene.add(im);return im;
 }
+const _M=new THREE.Matrix4(),_p=new THREE.Vector3(),_s=new THREE.Vector3();
 function initParticles(){FX={add:fxMesh(true),norm:fxMesh(false)};}
 const colCache={};
 function parseCol(str){if(colCache[str])return colCache[str];const m=str.match(/rgba?\((\d+),(\d+),(\d+)/);const c=m?new THREE.Color(m[1]/255,m[2]/255,m[3]/255):new THREE.Color(str&&str[0]==='#'?str:'#fff');colCache[str]=c;return c;}
