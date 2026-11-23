@@ -19,6 +19,7 @@ import { S, player, cam, keys, view } from '../core/state.js';
 import { checkpoints } from '../game/blitz.js';
 import { pf } from '../render/style97.js';
 import { loadCarModels, carModel, repaint } from './models.js';
+import { rioModel } from './rio97.js';
 import { loadMapProps, coneMesh, loadCharacters, charsReady, makeCharacter } from './props.js';
 import { swapScene, updateEnv, renderReal, renderPlain, initTextures } from './realista.js';
 import { initLights, setLightQuality, updateLights, lightsOn } from './luzes.js';
@@ -261,7 +262,7 @@ function mergeBoxes(list){
     for(let i=0;i<P.count;i++){pos.push(P.getX(i)*sx+x,P.getY(i)*sy+y,P.getZ(i)*sz+z);nor.push(N.getX(i),N.getY(i),N.getZ(i));col.push(c.r,c.g,c.b);}}
   const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setAttribute('normal',new THREE.Float32BufferAttribute(nor,3));g.setAttribute('color',new THREE.Float32BufferAttribute(col,3));
   g.computeBoundingSphere();return g;}
-const HEIGHTS={busao:1.15,caminhao:1.25,camin:0.5,suv:0.55,moto:0.3,guincho:0.55,viatura:0.42,swat:0.85,fbi:0.4,exercito:0.45,blindado:0.8};
+const HEIGHTS={lotacao:0.7,busao:1.15,caminhao:1.25,camin:0.5,suv:0.55,moto:0.3,guincho:0.55,viatura:0.42,swat:0.85,fbi:0.4,exercito:0.45,blindado:0.8};
 const carGeo={};
 function carParts(c){
   const key=c.type+'|'+c.t.len+'|'+c.t.wid;if(carGeo[key])return carGeo[key];
@@ -302,8 +303,9 @@ function part(g,col,dims,opt){const m=new THREE.Mesh(boxG,mat(col,opt));m.scale.
 function makeCar(c){
   const g=new THREE.Group(), P=carParts(c);
   g.userData.col=c.color;
+  // viatura e lotação de 97 (feitas por código, leves: valem em todas as qualidades); os outros usam o
   // modelo 3D (Kenney) quando tem e já carregou; senão, o carro de caixas
-  const M=useModels()?carModel(c.type,c.color,P.L):null;
+  const M=rioModel(c.type,P.L,P.Wd)||(useModels()?carModel(c.type,c.color,P.L):null);
   let ly=0; // quanto subir/descer faróis e lanternas pra encaixar no modelo
   if(M){g.add(M.root);g.userData.model=M;ly=M.top*0.42-(0.18+P.h*0.65);}
   else{
