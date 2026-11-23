@@ -1,4 +1,4 @@
-// Arena Maresia: dia de jogo todo dia das 15h30 às 18h, com torcida, gols e aposta
+// Estádio do Jacarandá: dia de jogo todo dia das 15h30 às 18h, com torcida, gols e aposta
 // (times inventados)
 import { rand, pick, hyp, fmtMoney } from '../core/utils.js';
 import { T, special, tileAt, PARK } from '../world/map.js';
@@ -7,12 +7,12 @@ import { sfxNoise, sfxTone } from '../audio/audio.js';
 import { msg, big } from './world.js';
 import { S, player } from '../core/state.js';
 
-export const HOME={name:'Maresia FC',colors:['#1565c0','#ffffff']};
+export const HOME={name:'Jacarandá FC',colors:['#1565c0','#ffffff']};
 const AWAY=[
   {name:'Tubarões do Porto',colors:['#455a64','#ff7043']},
   {name:'Cajueiro EC',colors:['#2e7d32','#fdd835']},
-  {name:'Unidos da Orla',colors:['#e53935','#ffffff']},
-  {name:'Jangadeiros',colors:['#6a1b9a','#fdd835']},
+  {name:'Unidos do Recanto',colors:['#e53935','#ffffff']},
+  {name:'Colônia AC',colors:['#6a1b9a','#fdd835']},
 ];
 export const MATCH_START=15.5, MATCH_END=18;
 // dia do calendário do jogo: avança quando o relógio passa da meia-noite, seja andando, dormindo
@@ -41,7 +41,7 @@ function goal(home){
 function endMatch(){
   const m=match();m.ended=true;
   const res=m.hs>m.as?'vitória do '+HOME.name:m.hs<m.as?'vitória do '+opponent().name:'empate';
-  if(near(1600)||m.bet||m.watched)msg('Fim de jogo na Arena: '+HOME.name+' '+m.hs+' x '+m.as+' '+opponent().name+' ('+res+')',5);
+  if(near(1600)||m.bet||m.watched)msg('Fim de jogo no Estádio: '+HOME.name+' '+m.hs+' x '+m.as+' '+opponent().name+' ('+res+')',5);
   if(m.bet){if(m.hs>m.as){const v=m.bet*2.5;player.money+=v;big('APOSTA GANHA','+'+fmtMoney(v),'#7dff6b',2.5);}else msg('Perdeu a aposta de '+fmtMoney(m.bet)+'.',3);m.bet=0;}
 }
 

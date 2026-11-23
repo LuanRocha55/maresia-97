@@ -120,7 +120,7 @@ function makeSea(){
 // ---------- letreiros dos comércios: pintados de dia, neon aceso à noite ----------
 const NEON={farmacia:['FARMÁCIA','#3dff6e','cruz'],lanchonete:['LANCHES','#ff3b30','#ffd21f'],mercadinho:['MERCADINHO','#ff4fd8'],padaria:['PADARIA','#ffae2b'],
   lojaposto:['POSTO','#ffd21f','#ff3b30'],armas:['TONHÃO','#ff3b30'],ze:['OFICINA DO ZÉ','#ff9a1f'],pintura:['PINTURA','#38e8ff'],pintura2:['PINTURA','#38e8ff'],
-  hospital:['HOSPITAL','#ff4040'],policia:['POLÍCIA','#4d7dff']};
+  hospital:['HOSPITAL','#ff4040'],policia:['CARCERAGEM CENTRAL','#4d7dff']};
 function neonTex(text,col,col2){
   const c=document.createElement('canvas');c.width=512;c.height=128;const g=c.getContext('2d');
   g.fillStyle='rgba(8,8,12,0.92)';g.fillRect(6,10,500,108);g.strokeStyle='#000';g.lineWidth=6;g.strokeRect(6,10,500,108);
@@ -134,20 +134,23 @@ function neonTex(text,col,col2){
 }
 function buildNeon(){
   const group=new THREE.Group(),byKind={};
-  for(const b of buildingsList()){const n=NEON[b.kind];if(!n)continue;(byKind[b.kind]||(byKind[b.kind]=[])).push(b);}
+  for(const b of buildingsList()){
+    // letreiro próprio do prédio (bingo, foto 1 hora...): entra como um tipo novo de neon
+    const k=b.sign?'sign:'+b.sign.text:b.kind;if(b.sign&&!NEON[k])NEON[k]=[b.sign.text,b.sign.col,b.sign.col2];
+    if(!NEON[k])continue;(byKind[k]||(byKind[k]=[])).push(b);}
   const list=[];
   for(const [k,bs] of Object.entries(byKind)){
     const [text,col,col2]=NEON[k];
     const pos=[],uv=[],idx=[];let v=0;
     for(const b of bs){const x0=b.x0*U,x1=b.x1*U,z1=b.y1*U,H=bh(b);
-      const w=Math.min((x1-x0)*0.9,k==='hospital'||k==='policia'?6:5),h=w/4,cx=(x0+x1)/2,y0=H+0.06,z=z1-0.12;
+      const w=Math.min((x1-x0)*0.9,k==='hospital'||k==='policia'||k.startsWith('sign:')?6:5),h=w/4,cx=(x0+x1)/2,y0=H+0.06,z=z1-0.12;
       pos.push(cx-w/2,y0,z, cx+w/2,y0,z, cx+w/2,y0+h,z, cx-w/2,y0+h,z);uv.push(0,0,1,0,1,1,0,1);idx.push(v,v+1,v+2,v,v+2,v+3);v+=4;
     }
     const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));geo.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));geo.setIndex(idx);geo.computeBoundingSphere();
     const mat=new THREE.MeshBasicMaterial({map:neonTex(text,col,col2),transparent:true,side:THREE.DoubleSide,fog:true});
     const glow=new THREE.MeshBasicMaterial({map:radialTex(hexRgb(col)),transparent:true,opacity:0,depthWrite:false,blending:THREE.AdditiveBlending,fog:false});
     const gpos=[],gidx=[];let gv=0;
-    for(const b of bs){const x0=b.x0*U,x1=b.x1*U,z1=b.y1*U,H=bh(b);const w0=Math.min((x1-x0)*0.9,k==='hospital'||k==='policia'?6:5),w=w0*1.3,h=w0*0.5,cx=(x0+x1)/2,cy=H+0.06+w0/8,z=z1+0.05;
+    for(const b of bs){const x0=b.x0*U,x1=b.x1*U,z1=b.y1*U,H=bh(b);const w0=Math.min((x1-x0)*0.9,k==='hospital'||k==='policia'||k.startsWith('sign:')?6:5),w=w0*1.3,h=w0*0.5,cx=(x0+x1)/2,cy=H+0.06+w0/8,z=z1+0.05;
       gpos.push(cx-w/2,cy-h/2,z, cx+w/2,cy-h/2,z, cx+w/2,cy+h/2,z, cx-w/2,cy+h/2,z);gidx.push(gv,gv+1,gv+2,gv,gv+2,gv+3);gv+=4;}
     const gg=new THREE.BufferGeometry();gg.setAttribute('position',new THREE.Float32BufferAttribute(gpos,3));gg.setAttribute('uv',new THREE.Float32BufferAttribute(Array(bs.length).fill([0,0,1,0,1,1,0,1]).flat(),2));gg.setIndex(gidx);gg.computeBoundingSphere();
     const m1=new THREE.Mesh(geo,mat),m2=new THREE.Mesh(gg,glow);m2.renderOrder=4;group.add(m1);group.add(m2);
@@ -160,7 +163,7 @@ function updateNeon(dk){
   if(!neon)return;
   for(const n of neon.list){
     let on=dk>0.35?1:0;
-    if(on&&(n.k==='farmacia'||n.k==='lanchonete')){const t=S.gameTime*(n.k==='farmacia'?1.6:0.7);on=(Math.floor(t)%5===4&&Math.floor(t*8)%2)?0.35:1;}
+    if(on&&(n.k==='farmacia'||n.k==='lanchonete'||n.k==='sign:BINGO ESTRELA')){const t=S.gameTime*(n.k==='farmacia'?1.6:0.7);on=(Math.floor(t)%5===4&&Math.floor(t*8)%2)?0.35:1;}
     const lvl=on?1:0.55+0.25*(1-dk);n.mat.color.setScalar(on?1.25*on:lvl);
     n.glow.opacity=on&&quality>=2?0.32*on*clamp((dk-0.35)*3,0,1):0;
   }

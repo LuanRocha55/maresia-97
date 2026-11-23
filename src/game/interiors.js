@@ -28,7 +28,7 @@ function sleepTo(h){return ()=>{S.tod=h;player.health=100;S.cars=S.cars.filter(c
 
 // ---- cardápio de cada lugar ----
 const PLACES = {
-  estadio:   { title:'ARENA MARESIA', sub:'', items:()=>stadiumItems() },
+  estadio:   { title:'ESTÁDIO DO JACARANDÁ', sub:'', items:()=>stadiumItems() },
   farmacia:  { title:'FARMÁCIA', sub:'Remédio pra quem levou pancada', items:()=>[heal(30,25,'Curativo  (+30 vida)'),heal(100,80,'Kit completo  (vida cheia)'),colete] },
   mercadinho:{ title:'MERCADINHO', sub:'Tem de tudo um pouco', items:()=>[food('Refrigerante',10,5),food('Biscoito recheado',20,10),food('Marmita',50,25),
       {label:'Raspadinha  (chance de ganhar $250)',price:10,run:()=>{if(Math.random()<0.12){player.money+=250;big('GANHOU!','+$250 na raspadinha','#7dff6b',2);}else msg('Não foi dessa vez.',2);}}] },
@@ -41,10 +41,10 @@ const PLACES = {
       {label:'Curso de direção  (carro mais firme nas curvas)',price:400,disabled:()=>player.skills.direcao,why:'Já fez',run:()=>{player.skills.direcao=true;}},
       {label:'Curso de primeiros socorros  (renasce com meio colete)',price:600,disabled:()=>player.skills.socorros,why:'Já fez',run:()=>{player.skills.socorros=true;}}] },
   armas:     { title:'ARMAS DO TONHÃO', sub:'Sem perguntas', items:()=>[ammo('pistola'),ammo('escopeta'),ammo('smg'),colete] },
-  policia:   { title:'DELEGACIA', sub:'Pagar fiança limpa a ficha (até 2 estrelas)', items:()=>[
+  policia:   { title:'CARCERAGEM CENTRAL', sub:'Pagar fiança limpa a ficha (até 2 estrelas)', items:()=>[
       {label:'Pagar fiança  ($300 por estrela)',price:()=>heatStars()*300,disabled:()=>heatStars()===0||heatStars()>2,why:()=>heatStars()===0?'Ficha limpa':'Procurado demais',run:()=>{player.heat=0;for(const c of S.cars)if(c.ai==='police')c.ai='traffic';}},
       {label:'Se entregar',price:0,disabled:()=>heatStars()===0,why:'Ficha limpa',run:()=>{closeMenu();busted();}}] },
-  casa:      { title:'SUA CASA', sub:'Teu cantinho em Vila Maresia', items:()=>[
+  casa:      { title:'SUA CASA', sub:'Teu cantinho no Jacarandá', items:()=>[
       {label:'Salvar o jogo',price:0,station:'mesa',run:()=>{saveGame(false);}},
       {label:'Dormir até de manhã (8h)',price:0,station:'cama',disabled:()=>heatStars()>0,why:'Procurado',run:sleepTo(8)},
       {label:'Dormir até de noite (20h)',price:0,station:'cama',disabled:()=>heatStars()>0,why:'Procurado',run:sleepTo(20)}] },

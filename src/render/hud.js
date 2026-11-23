@@ -243,7 +243,7 @@ export function drawTitle(){
   g.font=lf(ls);const mw=g.measureText('MARESIA').width;
   impact(g,'97',lx+mw+ls*0.28,bar+ls*1.05,ls,C97.sodio,'left');
   const logoB=bar+ls*1.45; // embaixo do logo
-  g.save();g.font=pf(20*s);const sub='SOL, SAL E SIRENE  ·  ',yr='1997';
+  g.save();g.font=pf(20*s);const sub='GUANABARA  ·  ',yr='1997';
   let sx=lx+ls*0.1;const sy=logoB;
   for(const ch of sub){ptxt(g,ch,sx,sy,20*s,C97.cal);g.font=pf(20*s);sx+=g.measureText(ch).width+6*s;}
   for(const ch of yr){ptxt(g,ch,sx,sy,20*s,C97.sodio);g.font=pf(20*s);sx+=g.measureText(ch).width+6*s;}

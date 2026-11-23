@@ -57,7 +57,7 @@ export const MISSIONS=[
       m.onDestroyed=(c)=>{m.left--;msg('Faltam '+m.left+'.');};},
     update(m,dt){m.time-=dt;if(m.time<=0)return'fail';if(m.left<=0)return'done';m.text='Bate nas caminhonetes verdes até pegarem fogo. Faltam '+m.left+'.';},
     target(m){let b=null,bd=1e9;for(const c of m.gang){if(c.burnT>0||c.wreck)continue;const d=hyp(c.x-player.x,c.y-player.y);if(d<bd){bd=d;b=c;}}return b;}},
-  {title:'Fuga pela Orla',start(m){player.heat=Math.max(player.heat,280);m.time=150;m.reward=4000;m.stage=0;
+  {title:'Fuga pela Beira-Mar',start(m){player.heat=Math.max(player.heat,280);m.time=150;m.reward=4000;m.stage=0;
       m.text='Os home tão na tua cola! Despista a polícia (zera as estrelas).';msg('Dica: a Pintura Express apaga as estrelas.');},
     update(m,dt){m.time-=dt;if(m.time<=0)return'fail';if(player.heat<=0)return'done';},
     target(m){return null;}},

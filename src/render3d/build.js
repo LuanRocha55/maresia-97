@@ -11,6 +11,7 @@ export const U=1/T;                         // px -> unidade
 export const HSCALE=2.2/T;                  // altura "2D" -> unidade
 export const bh=b=>Math.max(0.35,b.h*HSCALE);
 
+const C=hex=>new THREE.Color(hex);
 // ---------- montador de geometria com cor por vértice ----------
 export class Geo{
   constructor(){this.p=[];this.n=[];this.c=[];}
@@ -32,11 +33,36 @@ export class Geo{
     this.wall([x0,y0,z1],[x0,y1,z1],[x0,y1,z0],[x0,y0,z0],-1,0,0,sc(2),ao); // oeste
     this.wall([x1,y0,z0],[x1,y1,z0],[x1,y1,z1],[x1,y0,z1],1,0,0,sc(3),ao);  // leste
   }
+  // quadrilátero que acerta sozinho o sentido (pra normal apontar pra n)
+  face(a,b,c,d,nx,ny,nz,col){
+    const ux=b[0]-a[0],uy=b[1]-a[1],uz=b[2]-a[2],vx=c[0]-a[0],vy=c[1]-a[1],vz=c[2]-a[2];
+    const cx=uy*vz-uz*vy,cy=uz*vx-ux*vz,cz=ux*vy-uy*vx;
+    if(cx*nx+cy*ny+cz*nz<0)this.quad(a,d,c,b,nx,ny,nz,col);else this.quad(a,b,c,d,nx,ny,nz,col);
+  }
+  // prisma: polígono convexo (pontos [x,z]) erguido de y0 a y1; top=null deixa aberto
+  prism(pts,y0,y1,top,side,shade=true){
+    const n=pts.length,cx=pts.reduce((s,p)=>s+p[0],0)/n,cz=pts.reduce((s,p)=>s+p[1],0)/n,sc=C(side);
+    for(let i=0;i<n;i++){const a=pts[i],b=pts[(i+1)%n];let nx=b[1]-a[1],nz=-(b[0]-a[0]);
+      const mx=(a[0]+b[0])/2-cx,mz=(a[1]+b[1])/2-cz;if(nx*mx+nz*mz<0){nx=-nx;nz=-nz;}const l=Math.hypot(nx,nz)||1;nx/=l;nz/=l;
+      const k=shade?0.78+0.14*(nx*0.5+nz*0.5+1)/2:1;
+      this.face([a[0],y0,a[1]],[a[0],y1,a[1]],[b[0],y1,b[1]],[b[0],y0,b[1]],nx,0,nz,sc.clone().multiplyScalar(k));}
+    if(top){const tc=C(top);for(let i=1;i<n-1;i++){const a=pts[0],b=pts[i],c=pts[i+1];
+      const v=[[a[0],y1,a[1]],[b[0],y1,b[1]],[c[0],y1,c[1]]];const cr=(b[0]-a[0])*(c[1]-a[1])-(b[1]-a[1])*(c[0]-a[0]);
+      if(cr>0)this.tri(v[0],v[2],v[1],0,1,0,tc);else this.tri(v[0],v[1],v[2],0,1,0,tc);}}
+  }
+  // caixa girada (ângulo a em torno do eixo Y), medidas locais a partir do centro
+  obox(cx,cz,a,hw,hd,y0,y1,top,side){const c=Math.cos(a),s=Math.sin(a),P=(x,z)=>[cx+x*c-z*s,cz+x*s+z*c];
+    this.prism([P(-hw,-hd),P(hw,-hd),P(hw,hd),P(-hw,hd)],y0,y1,top,side);}
+  // cilindro (caixa d'água, poste grosso)
+  cyl(cx,cz,r,y0,y1,top,side,seg=10){const pts=[];for(let i=0;i<seg;i++){const a=i/seg*Math.PI*2;pts.push([cx+Math.cos(a)*r,cz+Math.sin(a)*r]);}this.prism(pts,y0,y1,top,side,false);}
+  // plano dos dois lados (rede, lona)
+  sheet(a,b,c,d,col){const ux=b[0]-a[0],uy=b[1]-a[1],uz=b[2]-a[2],vx=d[0]-a[0],vy=d[1]-a[1],vz=d[2]-a[2];
+    let nx=uy*vz-uz*vy,ny=uz*vx-ux*vz,nz=ux*vy-uy*vx;const l=Math.hypot(nx,ny,nz)||1;nx/=l;ny/=l;nz/=l;
+    this.quad(a,b,c,d,nx,ny,nz,col);this.quad(a,d,c,b,-nx,-ny,-nz,col.clone().multiplyScalar(0.8));}
   mesh(mat){const g=new THREE.BufferGeometry();
     g.setAttribute('position',new THREE.Float32BufferAttribute(this.p,3));g.setAttribute('normal',new THREE.Float32BufferAttribute(this.n,3));g.setAttribute('color',new THREE.Float32BufferAttribute(this.c,3));
     g.computeBoundingSphere();return new THREE.Mesh(g,mat);}
 }
-const C=hex=>new THREE.Color(hex);
 
 // ---------- setores: a cidade é cortada em blocos de 32x32 tiles pra GPU só desenhar o que está à vista ----------
 const SEC=32;
@@ -144,27 +170,31 @@ export function buildCity(scene,mats){
     if(b.kind==='canopy'){ // cobertura do posto: pilares + laje fina
       for(const [px,pz] of [[x0+0.3,z0+0.3],[x1-0.5,z0+0.3],[x0+0.3,z1-0.5],[x1-0.5,z1-0.5]])G.box(px,pz,px+0.2,pz+0.2,0,H,'#9e9e9e','#9e9e9e');
       G.box(x0,z0,x1,z1,H,H+0.25,'#f2f2ee','#c9342a',false);continue;}
-    const pitched=['casa','casario','casinha','mansao'].includes(b.style)&&b.kind==='b';
+    if(b.style==='barraca'){quiosque(G,x0,z0,x1,z1,b);continue;} // Praia do Recanto: quiosque de madeira
+    // no morro, 3 em cada 4 casinhas têm laje (com caixa d'água e ferro pra cima, esperando o próximo andar)
+    const laje=b.style==='casinha'&&b.kind==='b'&&(b.seed*7%1)<0.75;
+    const pitched=['casa','casario','casinha','mansao'].includes(b.style)&&b.kind==='b'&&!laje;
     const isPOI=b.kind!=='b';
     const small=['conteiner','barraca','salva-vidas'].includes(b.style);
     const r=mulberry(Math.floor((b.seed||0.5)*1e9)+3);
-    G.box(x0,z0,x1,z1,0,H,(isPOI||pitched)?null:(b.roof||b.wall),b.wall,true,H>3?0.72:0.62);
+    G.box(x0,z0,x1,z1,0,H,(isPOI||pitched)?null:laje?'#a29c92':(b.roof||b.wall),b.wall,true,H>3?0.72:0.62);
+    if(laje)lajeTop(G,x0,z0,x1,z1,H,r);
     windows(Gw,Gl,b,x0,z0,x1,z1,H);
     if(!small){
       // rodapé mais escuro em volta da base
       const base=C(b.wall).multiplyScalar(0.55);G.box(x0-0.03,z0-0.03,x1+0.03,z1+0.03,0,0.16,null,base,true);
       // platibanda/beiral: moldura clara em volta do topo dos prédios de telhado plano
-      if(!pitched&&!isPOI&&b.style!=='galpao')ring(G,x0,z0,x1,z1,H-0.1,H+0.12,0.12,C(b.wall).lerp(C('#ffffff'),0.35));
+      if(!pitched&&!isPOI&&!laje&&b.style!=='galpao')ring(G,x0,z0,x1,z1,H-0.1,H+0.12,0.12,C(b.wall).lerp(C('#ffffff'),0.35));
     }
     if(isPOI&&AWNING[b.kind])awning(G,x0,x1,z1,H,AWNING[b.kind]);
-    if(pitched){const rh=Math.min(1.2,Math.min(x1-x0,z1-z0)*0.35);gable(G,x0,z0,x1,z1,H,rh,b.roof);
+    if(pitched){const rh=Math.min(1.2,Math.min(x1-x0,z1-z0)*0.35);gable(G,x0,z0,x1,z1,H,rh,b.style==='casinha'?'#9a9a94':b.roof); // no morro, telha de amianto
       // antena de TV em algumas casas (no meio da cumeeira)
       if(r()<0.35){const ax=(x0+x1)/2+(r()-0.5)*0.6,az=(z0+z1)/2;G.box(ax-0.02,az-0.02,ax+0.02,az+0.02,H+rh*0.9,H+rh+0.8,'#555','#555',false);
         G.box(ax-0.35,az-0.015,ax+0.35,az+0.015,H+rh+0.62,H+rh+0.66,'#666','#666',false);G.box(ax-0.25,az-0.015,ax+0.25,az+0.015,H+rh+0.72,H+rh+0.75,'#666','#666',false);}}
     else if(isPOI){ // telhado com placa: malha separada com textura
       const geo=new THREE.PlaneGeometry(x1-x0,z1-z0);geo.rotateX(-Math.PI/2);
       const m=new THREE.Mesh(geo,new THREE.MeshLambertMaterial({map:roofTexture(b)}));m.position.set((x0+x1)/2,H+0.01,(z0+z1)/2);m.receiveShadow=true;scene.add(m);
-    } else if(!small){ // caixa d'água, ar-condicionado e aquecedor solar no telhado
+    } else if(!small&&!laje){ // caixa d'água, ar-condicionado e aquecedor solar no telhado
       const n=Math.floor(r()*3)+((x1-x0)*(z1-z0)>40?2:0);
       for(let k=0;k<n;k++){const px=x0+0.5+r()*Math.max(0.1,x1-x0-1.5),pz=z0+0.5+r()*Math.max(0.1,z1-z0-1.5),q=r();
         if(q<0.4)G.box(px,pz,px+0.7,pz+0.7,H,H+0.6,'#4f8fd3','#2f6fb3');
@@ -180,9 +210,17 @@ export function buildCity(scene,mats){
   for(const s of BUS_STOPS){const x=(s.x+s.side.x*s.off)*U,z=(s.y+s.side.y*s.off)*U;const horiz=s.side.x===0;G=SG.at(x,z);
     const w=horiz?1.4:0.4,d=horiz?0.4:1.4;G.box(x-w,z-d,x+w,z+d,1.5,1.62,'#1565c0','#1565c0');
     for(const [px,pz] of [[x-w,z-d],[x+w-0.1,z+d-0.1]])G.box(px,pz,px+0.1,pz+0.1,0,1.5,'#cfd8dc','#cfd8dc');}
-  for(const ph of phones){const x=ph.x*U,z=ph.y*U;G=SG.at(x,z);G.box(x-0.05,z-0.05,x+0.05,z+0.05,0,1.3,'#555','#555');G.box(x-0.35,z-0.35,x+0.35,z+0.35,1.3,1.75,'#f2a900','#f2a900');}
-  // guindastes do porto
-  for(const d of decor)if(d.type==='guindaste'){const x=d.x*U,z=d.y*U;G=SG.at(x,z);G.box(x-1.2,z-0.8,x+1.2,z+0.8,0,6,'#f9a825','#f9a825');G.box(x-0.3,z-0.3,x+0.3,z+5,6,6.6,'#f9a825','#f9a825');}
+  // orelhão: poste e a concha laranja (o "orelhão" de verdade)
+  for(const ph of phones){const x=ph.x*U,z=ph.y*U;G=SG.at(x,z);G.box(x-0.05,z-0.05,x+0.05,z+0.05,0,1.95,'#555','#555');orelhao(G,x,z);}
+  // guindastes do porto: pórtico com duas pernas e a lança por cima do mar
+  for(const d of decor)if(d.type==='guindaste'){const x=d.x*U,z=d.y*U;G=SG.at(x,z);const Y='#f2a516',Yd='#d48a0c';
+    for(const lx of [-1.3,1.1])for(const lz of [-1.6,0.4])G.box(x+lx,z+lz,x+lx+0.22,z+lz+0.22,0,6.2,Yd,Y);
+    for(const lz of [-1.6,0.4])G.box(x-1.35,z+lz-0.02,x+1.37,z+lz+0.24,5.6,5.85,Y,Y);
+    G.box(x-0.35,z-4.2,x+0.35,z+6.5,6.2,6.75,Y,Y);                       // lança
+    G.box(x-0.6,z-4.4,x+0.6,z-3.2,6.75,7.6,'#4a4f55','#3a3f45');         // contrapeso
+    G.box(x-0.5,z-0.9,x+0.5,z+0.1,6.75,7.5,'#e8e2d0','#c9c3b2');         // cabine
+    G.box(x-0.03,z+4.6,x+0.03,z+4.66,3.2,6.2,'#222','#222');G.box(x-0.25,z+4.4,x+0.25,z+4.86,2.9,3.2,'#333','#333');}
+  buildRio(scene,SG,mats);
 
   const city=SG.meshes(mats.city);for(const m of city){m.castShadow=true;m.receiveShadow=true;scene.add(m);}
   const win=SGw.meshes(mats.glass);for(const m of win)scene.add(m);
@@ -261,6 +299,99 @@ export function buildCity(scene,mats){
   return {city,win,lit,pools,heads,heads3,bulbs,special3d,
     // o que os modelos 3D (props.js) substituem quando carregam
     swap:{houses,trees:treeMeshes,lamps:[...poles.list,...heads.list]}};
+}
+
+// ---------- Guanabara 97: peças de cada bairro ----------
+// laje do morro: piso de concreto, caixa d'água azul redonda e ferros esperando o próximo andar
+function lajeTop(G,x0,z0,x1,z1,H,r){
+  G.box(x0,z0,x1,z1,H,H+0.06,'#8f8a80','#8f8a80',false);
+  if(r()<0.85){const tx=x0+0.45+r()*Math.max(0.05,x1-x0-1.3),tz=z0+0.45+r()*Math.max(0.05,z1-z0-1.3);
+    G.box(tx-0.05,tz-0.05,tx+0.85,tz+0.85,H,H+0.25,'#7a756c','#7a756c');           // base de tijolo
+    G.cyl(tx+0.4,tz+0.4,0.36,H+0.25,H+0.85,'#2d6fc2','#2b66b5');G.cyl(tx+0.4,tz+0.4,0.38,H+0.85,H+0.93,'#3a7fd6','#2b66b5');}
+  if(r()<0.7)for(const [px,pz] of [[x0+0.12,z0+0.12],[x1-0.18,z0+0.12],[x0+0.12,z1-0.18],[x1-0.18,z1-0.18]])
+    G.box(px,pz,px+0.05,pz+0.05,H,H+0.45+r()*0.2,'#6b4a3a','#6b4a3a',false);   // vergalhão
+  if(r()<0.35){const y=H+0.06;G.box(x0+0.2,z1-0.5,x0+1.3,z1-0.2,y,y+0.03,'#ffffff','#ffffff',false);} // roupa no varal
+}
+// quiosque de madeira da Praia do Recanto: balcão, quatro esteios e telhado de palha
+function quiosque(G,x0,z0,x1,z1,b){
+  const wood='#7a5232',dark='#5a3a22',straw='#cfa75e',cx=(x0+x1)/2,cz=(z0+z1)/2;
+  G.box(x0+0.25,z0+0.25,x1-0.25,z1-0.25,0,0.95,'#c9a27a',wood,true,0.7);           // balcão
+  G.box(x0+0.15,z1-0.4,x1-0.15,z1-0.15,0.95,1.02,'#e2c9a2','#e2c9a2',false);       // tampo
+  for(const [px,pz] of [[x0+0.1,z0+0.1],[x1-0.25,z0+0.1],[x0+0.1,z1-0.25],[x1-0.25,z1-0.25]])G.box(px,pz,px+0.15,pz+0.15,0,2.1,dark,dark);
+  gable(G,x0-0.35,z0-0.35,x1+0.35,z1+0.35,2.1,0.75,straw);
+  G.box(cx-0.9,z1+0.1,cx+0.9,z1+0.14,1.55,1.95,b.roof,b.roof,false);               // placa colorida na frente
+  G.box(x0+0.4,z1+0.3,x0+0.75,z1+0.65,0,0.55,'#f2f2ee','#d0d0c8');G.box(x1-0.75,z1+0.3,x1-0.4,z1+0.65,0,0.55,'#f2f2ee','#d0d0c8'); // isopor
+}
+// orelhão: concha (meia cúpula) aberta pra frente
+function orelhao(G,x,z){
+  const R=0.42,yb=1.25,seg=9,col=C('#f08c00'),inner=C('#f5b04a');
+  for(let i=0;i<seg;i++){const a0=-Math.PI*0.15+i/seg*Math.PI*1.3,a1=-Math.PI*0.15+(i+1)/seg*Math.PI*1.3;
+    for(let j=0;j<3;j++){const b0=j/3*Math.PI/2,b1=(j+1)/3*Math.PI/2;
+      const P=(a,bb)=>[x+Math.cos(a)*Math.cos(bb)*R,yb+Math.sin(bb)*R*1.25,z-Math.sin(a)*Math.cos(bb)*R];
+      const p=[P(a0,b0),P(a1,b0),P(a1,b1),P(a0,b1)],am=(a0+a1)/2,bm=(b0+b1)/2;
+      G.sheet(p[0],p[1],p[2],p[3],col);}}
+  G.box(x-0.12,z-0.12,x+0.12,z+0.02,1.35,1.6,'#3a3a3a','#3a3a3a',false); // aparelho
+}
+function adTexture(ad){
+  const c=document.createElement('canvas');c.width=512;c.height=192;const g=c.getContext('2d');
+  const grd=g.createLinearGradient(0,0,0,192);grd.addColorStop(0,'#0b4f8a');grd.addColorStop(1,'#06345e');g.fillStyle=grd;g.fillRect(0,0,512,192);
+  g.fillStyle='#f2c230';g.fillRect(0,150,512,42);
+  g.fillStyle='#ffffff';g.font='bold 64px "Anton",Impact,sans-serif';g.textBaseline='alphabetic';g.fillText(ad[0],22,74);
+  g.font='34px "Anton",Impact,sans-serif';g.fillStyle='#9fd3ff';g.fillText(ad[1],24,124);
+  g.fillStyle='#0b2a4a';g.font='26px "Anton",Impact,sans-serif';g.fillText(ad[2],22,180);
+  // desenho de prédio com sol (logo de construtora)
+  g.fillStyle='#ffd23f';g.beginPath();g.arc(430,70,34,0,Math.PI*2);g.fill();
+  g.fillStyle='#ffffff';g.fillRect(392,56,26,90);g.fillRect(424,36,30,110);g.fillRect(460,76,22,70);
+  g.fillStyle='#0b4f8a';for(let y=44;y<140;y+=12)for(const x of [398,404,430,438,446,464,472])if(x<418||x>424)g.fillRect(x,y,4,6);
+  const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=4;return t;
+}
+function buildRio(scene,SG,mats){
+  const M=new THREE.Matrix4(),Q=new THREE.Quaternion(),S3=new THREE.Vector3(),P=new THREE.Vector3(),E=new THREE.Euler();
+  const ads=new Map();
+  for(const d of decor){
+    const x=d.x*U,z=d.y*U,G=SG.at(x,z);
+    if(d.type==='camelo'){ // barraca de camelô: mesa com mercadoria e lona inclinada pra rua
+      const [fx,fz]=d.face,a=Math.atan2(fx,fz),c=Math.cos(a),s=Math.sin(a),L=(lx,ly,lz)=>[x+lx*c+lz*s,ly,z-lx*s+lz*c];
+      G.obox(x,z,-a,0.55,0.35,0.55,0.62,'#d9cdb0','#8a7a5a');
+      for(const [lx,lz] of [[-0.5,-0.3],[0.5,-0.3],[-0.5,0.32],[0.5,0.32]])G.obox(...L(lx,0,lz).filter((_,i)=>i!==1),-a,0.03,0.03,0,lz>0?1.45:1.75,'#444','#555');
+      G.sheet(L(-0.62,1.8,-0.42),L(0.62,1.8,-0.42),L(0.62,1.45,0.5),L(-0.62,1.45,0.5),C(d.c));
+      const goods=['#e74c3c','#f1c40f','#ecf0f1','#3498db','#2ecc71','#222'];
+      for(let k=0;k<4;k++){const [gx,,gz]=L(-0.38+k*0.25,0,0.05);G.box(gx-0.09,gz-0.12,gx+0.09,gz+0.12,0.62,0.62+0.08+((k*7+Math.round(d.x))%3)*0.05,goods[(k+Math.round(d.y))%goods.length],goods[(k+Math.round(d.x))%goods.length],false);}
+    } else if(d.type==='banca'){ // banca de jornal verde com revistas na frente
+      const [fx,fz]=d.face,side=Math.abs(fx)>0,hw=side?0.5:0.8,hd=side?0.8:0.5;
+      G.box(x-hw,z-hd,x+hw,z+hd,0,1.7,null,'#2e7d4f',true,0.7);
+      G.box(x-hw-0.15,z-hd-0.15,x+hw+0.15,z+hd+0.15,1.7,1.82,'#1f5e3a','#1f5e3a');
+      const cols=['#e53935','#fdd835','#1e88e5','#ffffff','#8e24aa','#fb8c00'];
+      for(let k=0;k<5;k++){const t=-0.6+k*0.3;
+        if(side){const fx0=x+fx*(hw+0.01);G.box(Math.min(fx0,fx0+fx*0.03),z+t-0.11,Math.max(fx0,fx0+fx*0.03),z+t+0.11,0.7,1.45,cols[k],cols[k],false);}
+        else{const fz0=z+fz*(hd+0.01);G.box(x+t-0.11,Math.min(fz0,fz0+fz*0.03),x+t+0.11,Math.max(fz0,fz0+fz*0.03),0.7,1.45,cols[k],cols[k],false);}}
+    } else if(d.type==='outdoor'){ // outdoor da construtora: dois pés e a placa (a placa tem textura própria)
+      for(const ox of [-1.6,1.6])G.box(x+ox-0.08,z-0.08,x+ox+0.08,z+0.08,0,2.2,'#666','#5a5a5a');
+      G.box(x-2.75,z-0.12,x+2.75,z-0.02,2.1,4.15,'#e8e8e8','#d0d0d0');
+      (ads.get(d.ad)||ads.set(d.ad,[]).get(d.ad)).push(d);
+    } else if(d.type==='barco'){ // canoa de madeira virada no quintal (casco com bico)
+      const c=Math.cos(d.a),s=Math.sin(d.a),Pt=(lx,lz)=>[x+lx*c-lz*s,z+lx*s+lz*c];
+      G.prism([Pt(-1.7,0),Pt(-1.1,-0.5),Pt(1.1,-0.5),Pt(1.7,0),Pt(1.1,0.5),Pt(-1.1,0.5)],0,0.45,d.c,d.c);
+      G.prism([Pt(-1.7,0),Pt(-1.1,-0.5),Pt(1.1,-0.5),Pt(1.7,0),Pt(1.1,0.5),Pt(-1.1,0.5)],0.12,0.2,null,'#f2f2ee'); // faixa branca no casco
+      G.prism([Pt(-1.35,0),Pt(-0.9,-0.36),Pt(0.9,-0.36),Pt(1.35,0),Pt(0.9,0.36),Pt(-0.9,0.36)],0.45,0.47,'#6b4a30','#6b4a30');
+      G.obox(...Pt(0,0),d.a,0.12,0.45,0.3,0.42,'#8a6a48','#8a6a48');
+    } else if(d.type==='rede'){ // rede de pesca estendida entre dois paus
+      const h=d.horiz!==false,X=(t,y)=>h?[x+t,y,z]:[x,y,z+t];
+      for(const t of [-1.8,1.8]){const [px,,pz]=X(t,0);G.box(px-0.05,pz-0.05,px+0.05,pz+0.05,0,1.7,'#6b4a30','#6b4a30');}
+      G.sheet(X(-1.75,0.35),X(1.75,0.35),X(1.75,1.6),X(-1.75,1.6),C('#4f6b5e'));
+      for(let k=0;k<6;k++){const [px,,pz]=X(-1.5+k*0.6,0);G.box(px-0.05,pz-0.05,px+0.05,pz+0.05,0.32,0.42,'#f2f2ee','#f2f2ee',false);} // boias
+    }
+  }
+  // placas dos outdoors (uma malha por anúncio)
+  for(const [ad,list] of ads){const pos=[],uv=[],idx=[];let v=0;
+    for(const d of list){const x=d.x*U,z=d.y*U+0.0;pos.push(x-2.65,2.18,z,x+2.65,2.18,z,x+2.65,4.07,z,x-2.65,4.07,z);uv.push(0,0,1,0,1,1,0,1);idx.push(v,v+1,v+2,v,v+2,v+3);v+=4;}
+    const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));geo.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));geo.setIndex(idx);geo.computeVertexNormals();geo.computeBoundingSphere();
+    const m=new THREE.Mesh(geo,new THREE.MeshLambertMaterial({map:adTexture(ad)}));m.receiveShadow=true;scene.add(m);}
+  // moitas da restinga (instanciadas)
+  const ms=decor.filter(d=>d.type==='moita');
+  if(ms.length){const im=new THREE.InstancedMesh(new THREE.IcosahedronGeometry(0.6,0),mats.leaf,ms.length);
+    ms.forEach((d,i)=>{M.compose(P.set(d.x*U,0.15*d.s,d.y*U),Q.setFromEuler(E.set(0,d.x,0)),S3.set(d.s*1.3,d.s*0.55,d.s));im.setMatrixAt(i,M);im.setColorAt(i,C(d.c));});
+    im.castShadow=true;im.receiveShadow=true;im.computeBoundingSphere();scene.add(im);}
 }
 
 // ---------- estádio ----------

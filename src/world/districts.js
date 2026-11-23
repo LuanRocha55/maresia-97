@@ -5,12 +5,12 @@ import { S } from '../core/state.js';
 
 export const DISTRICTS = {
   centro:  { name:'CENTRO',            road:'#2f2f36', side:'#b8b5ad', sideStyle:'lajes' },
-  orla:    { name:'ORLA',              road:'#3d3d45', side:'#e9e6dc', sideStyle:'ondas' },
-  velha:   { name:'VILA VELHA',        road:'#6e655c', side:'#a85a4a', sideStyle:'tijolo', cobble:true },
-  cajueiro:{ name:'ALTO DO CAJUEIRO',  road:'#48484e', side:'#9a968c', sideStyle:'rachado', worn:true },
-  jardim:  { name:'JARDIM MARESIA',    road:'#3b3b42', side:'#a9a7a0', sideStyle:'grama', bumps:true },
-  rico:    { name:'ALTO DA MARESIA',   road:'#34343c', side:'#d8d2c4', sideStyle:'lajes', smooth:true },
-  porto:   { name:'PORTO',             road:'#45454a', side:'#8f8c85', sideStyle:'rachado' },
+  orla:    { name:'PRAIA DO RECANTO',  road:'#3d3d45', side:'#e9e6dc', sideStyle:'ondas' },
+  velha:   { name:'VILA DOS PESCADORES', road:'#6e655c', side:'#a85a4a', sideStyle:'tijolo', cobble:true },
+  cajueiro:{ name:'MORRO DO CAJUEIRO', road:'#48484e', side:'#9a968c', sideStyle:'rachado', worn:true },
+  jardim:  { name:'JACARANDÁ',         road:'#3b3b42', side:'#a9a7a0', sideStyle:'caquinho', bumps:true },
+  rico:    { name:'BARRA SUL',         road:'#34343c', side:'#d8d2c4', sideStyle:'lajes', smooth:true },
+  porto:   { name:'CAIS DO PORTO',     road:'#45454a', side:'#8f8c85', sideStyle:'rachado' },
 };
 export const districtOfTile=(tx,ty)=>zoneAt(tx,ty);
 export const districtAt=(px,py)=>DISTRICTS[zoneAt(px/T|0,py/T|0)];

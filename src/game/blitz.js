@@ -15,13 +15,13 @@ import { S, player } from '../core/state.js';
 
 export const START_OPEN=['centro','jardim'];
 export const DISTRICT_ORDER=[
-  {z:'cajueiro',meta:2000, name:'Alto do Cajueiro'},
-  {z:'rico',    meta:5000, name:'Alto da Maresia'},
-  {z:'orla',    meta:10000,name:'Orla'},
-  {z:'velha',   meta:16000,name:'Vila Velha'},
-  {z:'porto',   meta:25000,name:'Porto'},
+  {z:'cajueiro',meta:2000, name:'Morro do Cajueiro'},
+  {z:'rico',    meta:5000, name:'Barra Sul'},
+  {z:'orla',    meta:10000,name:'Praia do Recanto'},
+  {z:'velha',   meta:16000,name:'Vila dos Pescadores'},
+  {z:'porto',   meta:25000,name:'Cais do Porto'},
 ];
-export const ZONE_NAME={centro:'Centro',jardim:'Jardim Maresia',...Object.fromEntries(DISTRICT_ORDER.map(d=>[d.z,d.name]))};
+export const ZONE_NAME={centro:'Centro',jardim:'Jacarandá',...Object.fromEntries(DISTRICT_ORDER.map(d=>[d.z,d.name]))};
 
 export const isOpenZone=z=>!S.unlocked||S.unlocked.includes(z);
 export function nextDistrict(){return DISTRICT_ORDER.find(d=>!isOpenZone(d.z))||null;}
