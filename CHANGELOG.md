@@ -5,6 +5,19 @@ O número segue o padrão `MAIOR.MENOR.CORREÇÃO`:
 - **MENOR** — novidade (sistema, missão, veículo, reorganização)
 - **CORREÇÃO** — conserto de bug ou ajuste pequeno
 
+## 1.14.0 — 23/11/2026
+**Gente de 97 e motos novas, feitas pro jogo** (sem modelo pronto, sem marca real)
+
+![antes e depois](docs/capturas/1.14.0/1-no-jogo-antes-depois.jpg)
+
+- **Pessoas novas**: boneco com braço, antebraço, coxa, canela e pé, que anda balançando os braços, corre inclinado, fica parado respirando e cai. O jogador também soca e mira
+- **Roupa carioca de 97** sorteada pra cada um: regata, camiseta, camisa de time inventada, bermuda, short ou jeans, chinelo ou tênis, boné e cabelo comprido. A polícia vai de farda, coturno e quepe
+- **Moto nova**: 125 de rua com tanque e tampa lateral na cor da moto, banco comprido, farol redondo, garfo e para-lamas cromados, rodas raiadas que giram, escapamento e bagageiro
+- **Quem pilota aparece** sentado na moto e de capacete (antes a moto andava sozinha)
+- Mais leve que antes: saíram os bonecos com esqueleto; todo mundo é desenhado de uma vez (300 pessoas custam menos de 0,6 ms por quadro)
+
+![de perto](docs/capturas/1.14.0/2-de-perto.jpg)
+
 ## 1.13.0 — 23/11/2026
 **Modelos de 97 feitos pro jogo: viatura, lotação e quiosque de palha** (formas e nomes próprios, sem marca real)
 
