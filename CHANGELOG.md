@@ -5,6 +5,16 @@ O número segue o padrão `MAIOR.MENOR.CORREÇÃO`:
 - **MENOR** — novidade (sistema, missão, veículo, reorganização)
 - **CORREÇÃO** — conserto de bug ou ajuste pequeno
 
+## 1.13.0 — 23/11/2026
+**Modelos de 97 feitos pro jogo: viatura, lotação e quiosque de palha** (formas e nomes próprios, sem marca real)
+
+![antes e depois](docs/capturas/1.13.0/1-no-jogo-antes-depois.jpg)
+
+- **Viatura nova**: sedã de três volumes dos anos 90, branco, com portas azul-marinho escrito POLÍCIA, friso dourado e giroflex em barra no teto. Vale em todas as qualidades do 3D (no lugar da viatura de modelo pronto)
+- **Lotação no trânsito**: van alta de nariz curto, branca com faixas verde e amarela, porta corrediça, bagageiro e placa "CENTRO" no para-brisa. Roda no Centro, Jacarandá, Morro do Cajueiro e Vila dos Pescadores, e dá pra roubar como qualquer carro
+- **Quiosque da Praia do Recanto caprichado**: telhado de palha de quatro águas com franja, balcão de tábua branca com tampo azul, prateleira de garrafas, cocos verdes, mesinha e cadeiras de plástico. A placa ficou com uma faixa clara, pronta pro nome
+- Os três são leves (cerca de 1.200 triângulos cada)
+
 ## 1.12.0 — 23/11/2026
 **Luz de verdade: a cidade reflete e ilumina** (a luz deixa de ser chapada em qualquer hora)
 - **Postes, faróis, sirene, neon e fogo viram luzes de verdade**: iluminam o chão, as paredes, os carros e as pessoas, em vez de só uma mancha pintada no chão

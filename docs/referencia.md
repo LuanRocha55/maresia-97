@@ -96,6 +96,7 @@ Arquivo: `src/entities/vehicles.js` (`CT`)
 | Guincho | 240 | 190 | 420 | 7 | 2,1 | 220 | 2,2 | $700 |
 | Sedã Executivo | 390 | 310 | 560 | 8,4 | 2,6 | 120 | 1,3 | $1.100 |
 | Utilitário | 320 | 260 | 500 | 7,8 | 2,4 | 160 | 1,6 | $800 |
+| Lotação | 250 | 170 | 400 | 7 | 2 | 200 | 2 | $600 |
 | Caminhão Baú | 210 | 120 | 320 | 7 | 1,8 | 300 | 3,5 | $900 |
 | Viatura | 390 | 330 | 560 | 8,6 | 2,9 | 150 | 1,3 | $1.200 |
 | Van da SWAT | 330 | 250 | 480 | 8 | 2,2 | 340 | 2,6 | $1.800 |
@@ -114,11 +115,11 @@ Arquivo: `src/entities/vehicles.js` (`CT`)
 
 | Bairro | Mistura |
 |---|---|
-| Centro | Jegue ×2, Táxi ×2, Sedã Executivo, Utilitário, Busão, Caminhonete, Motoca |
+| Centro | Jegue ×2, Táxi ×2, Sedã Executivo, Utilitário, Busão, Caminhonete, Motoca, Lotação |
 | Alto da Maresia | Brisa ×2, Sedã Executivo ×2, Utilitário ×2, Táxi, Bugue |
-| Vila Velha | Jegue ×2, Motoca ×2, Táxi |
-| Alto do Cajueiro | Motoca ×3, Jegue ×2, Caminhonete |
-| Jardim Maresia | Jegue ×2, Utilitário, Táxi, Motoca, Caminhonete |
+| Vila Velha | Jegue ×2, Motoca ×2, Táxi, Lotação |
+| Alto do Cajueiro | Motoca ×3, Jegue ×2, Caminhonete, Lotação |
+| Jardim Maresia | Jegue ×2, Utilitário, Táxi, Motoca, Caminhonete, Lotação |
 | Orla | Bugue ×2, Brisa, Jegue, Táxi, Utilitário, Sedã Executivo |
 | Porto | Caminhão Baú ×3, Caminhonete, Jegue |
 
