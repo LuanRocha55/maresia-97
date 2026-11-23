@@ -163,9 +163,65 @@ function lotacao(L, W) {
   return { root, wheels: wl, top: roof + 0.06, radius: wr };
 }
 
+// ---------- moto: a "cento e vinte e cinco" de rua dos anos 90 (tanque e tampa lateral na cor, banco comprido preto,
+// farol redondo, garfo e para-lamas cromados, rodas raiadas, escapamento do lado direito, bagageiro atrás) ----------
+const motoPaint = new Map();
+function motoPaintMat(hex) { let m = motoPaint.get(hex); if (!m) { m = new THREE.MeshLambertMaterial({ color: hex }); m.userData.pbr = { car: true }; motoPaint.set(hex, m); } return m; }
+function motoWheel(r, w) { // no referencial da roda: eixo em X (igual às rodas dos carros)
+  const D = [];
+  const tire = new THREE.TorusGeometry(r - w * 0.5, w * 0.5, 6, 18); tire.rotateY(Math.PI / 2); D.push([tire, TIRE]);
+  const rim = new THREE.TorusGeometry(r - w * 1.05, w * 0.16, 4, 18); rim.rotateY(Math.PI / 2); D.push([rim, CHROME]);
+  D.push([cyl(r * 0.16, w * 1.4, 0, 0, 0, 'x', 8), '#9a9da0']);
+  for (let k = 0; k < 12; k++) { const a = k / 12 * Math.PI * 2, rr = (r - w * 1.05) / 2, g = new THREE.BoxGeometry(0.004, r - w * 1.05, 0.004);
+    g.translate(0, rr, 0); g.rotateX(a); g.translate((k % 2 ? 1 : -1) * w * 0.18, 0, 0); D.push([g, '#bfc3c6']); }
+  return mergeColored(D);
+}
+function moto(L, W) {
+  const root = new THREE.Group(), r = 0.115, fx = L * 0.36, rx = -L * 0.36;
+  const D = [], P = [];
+  // quadro, motor e escapamento
+  const frame = (a, b, t = 0.014, c = '#1d1e21') => { const dx = b[0] - a[0], dy = b[1] - a[1], l = Math.hypot(dx, dy), g = new THREE.CylinderGeometry(t, t, l, 6);
+    g.rotateZ(-Math.atan2(dx, dy)); g.translate((a[0] + b[0]) / 2, (a[1] + b[1]) / 2, a[2] || 0); D.push([g, c]); };
+  frame([0.2, 0.36], [-0.02, 0.14], 0.018); frame([0.2, 0.36], [-0.2, 0.3], 0.015); frame([-0.02, 0.14], [-0.2, 0.3], 0.013);
+  for (const z of [0.045, -0.045]) frame([rx, r, z], [-0.04, 0.15, z], 0.011);                                               // balança
+  for (const z of [0.04, -0.04]) frame([rx + 0.02, r + 0.02, z], [-0.17, 0.29, z], 0.012, CHROME);                           // amortecedores
+  D.push([box(0.15, 0.09, 0.09, 0.03, 0.13, 0), '#3a3c40'], [box(0.07, 0.1, 0.075, 0.1, 0.2, 0), '#55585d']);               // motor e cilindro
+  for (let k = 0; k < 4; k++) D.push([box(0.08, 0.008, 0.09, 0.1, 0.165 + k * 0.022, 0), '#8c9094']);                           // aletas
+  D.push([cyl(0.04, 0.025, 0.02, 0.13, 0.05, 'z', 12), '#7d8185']);                                                             // tampa do motor
+  const ex = new THREE.CylinderGeometry(0.018, 0.022, 0.42, 8); ex.rotateZ(Math.PI / 2 - 0.12); ex.translate(-0.13, 0.12, 0.07); D.push([ex, CHROME]);
+  D.push([cyl(0.024, 0.06, -0.33, 0.145, 0.07, 'x', 8), '#2b2c2f']);                                                            // ponteira
+  // tanque e tampa lateral (cor da moto)
+  const tank = new THREE.SphereGeometry(0.1, 12, 8); tank.scale(1.15, 0.55, 0.62); tank.translate(0.1, 0.37, 0); P.push(tank);
+  D.push([cyl(0.016, 0.012, 0.12, 0.42, 0, 'y', 8), CHROME]);                                                                   // tampa do tanque
+  for (const z of [0.052, -0.052]) { const sc = new THREE.BoxGeometry(0.11, 0.075, 0.012); sc.translate(-0.08, 0.255, z); P.push(sc); }
+  for (const z of [0.059, -0.059]) D.push([box(0.06, 0.012, 0.002, 0.1, 0.38, z * 0.95), '#f4f4f0']);                        // faixinha no tanque
+  // banco comprido
+  D.push([extrude([[-0.29, 0.28], [0.03, 0.28], [0.04, 0.31], [-0.03, 0.33], [-0.28, 0.33]], 0.1, 0.02, 0.012), '#141416']);
+  // rabeta, lanterna, bagageiro e para-lama de trás
+  D.push([box(0.1, 0.03, 0.08, -0.32, 0.29, 0), '#1d1e21'], [box(0.016, 0.035, 0.06, -0.375, 0.29, 0), '#9a1a1a']);
+  for (const z of [0.04, -0.04]) D.push([box(0.12, 0.008, 0.008, -0.33, 0.345, z), CHROME]);
+  for (let k = 0; k < 3; k++) D.push([box(0.008, 0.008, 0.08, -0.29 - k * 0.04, 0.345, 0), CHROME]);
+  const rf = new THREE.CylinderGeometry(r + 0.02, r + 0.02, 0.06, 12, 1, true, Math.PI * 0.9, Math.PI * 0.6); rf.rotateX(Math.PI / 2); rf.translate(rx, r, 0); D.push([rf, CHROME]);
+  // garfo, para-lama da frente, farol, painel, guidão e retrovisores
+  for (const z of [0.038, -0.038]) frame([fx, r, z], [0.215, 0.43, z], 0.012, CHROME);
+  const ff = new THREE.CylinderGeometry(r + 0.018, r + 0.018, 0.05, 12, 1, true, Math.PI * 0.45, Math.PI * 0.6); ff.rotateX(Math.PI / 2); ff.translate(fx, r, 0); D.push([ff, CHROME]);
+  const hl = new THREE.SphereGeometry(0.045, 10, 6, 0, Math.PI); hl.rotateY(Math.PI / 2); hl.scale(0.7, 1, 1); hl.translate(0.245, 0.4, 0); D.push([hl, '#1d1e21']);
+  D.push([cyl(0.038, 0.006, 0.247, 0.4, 0, 'x', 12), '#fff7d0']);
+  for (const z of [0.03, -0.03]) D.push([cyl(0.015, 0.02, 0.2, 0.46, z, 'y', 8), '#2a2b2e']);                               // relógios
+  const bar = new THREE.CylinderGeometry(0.008, 0.008, 0.25, 6); bar.rotateX(Math.PI / 2); bar.translate(0.19, 0.47, 0); D.push([bar, CHROME]);
+  for (const z of [0.115, -0.115]) { D.push([cyl(0.013, 0.045, 0.19, 0.47, z, 'z', 6), '#151515']); frame([0.2, 0.47, z * 0.75], [0.17, 0.55, z * 0.95], 0.004, CHROME);
+    D.push([cyl(0.02, 0.008, 0.17, 0.555, z * 0.95, 'x', 10), '#2a2b2e']); }
+  for (const z of [0.035, -0.035]) D.push([box(0.03, 0.006, 0.05, 0.0, 0.08, z * 2.2), '#222']);                             // pedaleiras
+  root.add(mesh(mergeColored(D), partMat));
+  const body = mesh(mergeColored(P.map(g => [g, '#ffffff'])), motoPaintMat('#e53935')); body.userData.paint = true; root.add(body);
+  const wg = motoWheel(r, 0.035), wl = [];
+  for (const x of [fx, rx]) { const p = new THREE.Group(); p.position.set(x, r, 0); p.rotation.y = Math.PI / 2; const m = new THREE.Mesh(wg, tireMat); m.castShadow = true; p.add(m); root.add(p); wl.push(p); }
+  return { root, wheels: wl, top: 0.5, radius: r, paintMesh: true };
+}
+
 function mesh(geo, mat) { const m = new THREE.Mesh(geo, mat); m.castShadow = true; m.receiveShadow = true; return m; }
 
-const BUILD = { viatura, lotacao };
+const BUILD = { viatura, lotacao, moto };
 const cache = new Map();
 // mesmo formato do carModel() de models.js: { root, wheels, paint:[], top, radius, name }. Devolve null se o tipo não é daqui.
 export function rioModel(type, L, W) {
@@ -173,5 +229,8 @@ export function rioModel(type, L, W) {
   const key = type + '|' + L + '|' + W; let P = cache.get(key); if (!P) { P = f(L, W); cache.set(key, P); }
   const root = P.root.clone(true), wl = [];
   root.traverse(o => { if (o.isGroup && o !== root && P.wheels.some(w => w.position.equals(o.position))) wl.push(o); });
-  return { root, wheels: wl, paint: [], top: P.top, radius: P.radius, name: type };
+  const out = { root, wheels: wl, paint: [], top: P.top, radius: P.radius, name: type };
+  if (P.paintMesh) { const body = root.children.find(o => o.userData.paint) || null;
+    out.repaint = hex => { if (body) body.material = motoPaintMat(hex); }; }
+  return out;
 }

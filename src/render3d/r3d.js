@@ -20,7 +20,8 @@ import { checkpoints } from '../game/blitz.js';
 import { pf } from '../render/style97.js';
 import { loadCarModels, carModel, repaint } from './models.js';
 import { rioModel } from './rio97.js';
-import { loadMapProps, coneMesh, loadCharacters, charsReady, makeCharacter } from './props.js';
+import { loadMapProps, coneMesh } from './props.js';
+import { initPeople, beginPeople, putPerson, endPeople, lookOf, withHelmet, PLAYER_LOOK } from './gente97.js';
 import { swapScene, updateEnv, renderReal, renderPlain, initTextures } from './realista.js';
 import { initLights, setLightQuality, updateLights, lightsOn } from './luzes.js';
 
@@ -82,11 +83,10 @@ export function init3D(){
     overlayTex=new THREE.CanvasTexture(overlay);overlayTex.colorSpace=THREE.SRGBColorSpace;
     const og=new THREE.PlaneGeometry(64,64);og.rotateX(-Math.PI/2);
     overlayMesh=new THREE.Mesh(og,new THREE.MeshLambertMaterial({map:overlayTex,transparent:true,depthWrite:false}));overlayMesh.material.userData.pbr={r:0.95};overlayMesh.renderOrder=1;overlayMesh.receiveShadow=true;scene.add(overlayMesh);
-    initPeople();initParticles();
+    initPeople(scene);initParticles();
     loadCarModels().then(ok=>{if(ok)rebuildCars();});
     // árvores, postes, casas e cones (props.js): troca as peças feitas por código quando chegam
     loadMapProps(scene).then(r=>{mapProps=r;applyProps();movePools();for(const g of cpMeshes.values())scene.remove(g);cpMeshes.clear();}).catch(e=>console.warn('Modelos do mapa:',e));
-    loadCharacters().catch(e=>console.warn('Personagens:',e));
     R.ok=true;DBG.renderer=renderer;DBG.scene=scene;
     applyQuality(quality);
     view3d();warmUp();
@@ -307,7 +307,7 @@ function makeCar(c){
   // modelo 3D (Kenney) quando tem e já carregou; senão, o carro de caixas
   const M=rioModel(c.type,P.L,P.Wd)||(useModels()?carModel(c.type,c.color,P.L):null);
   let ly=0; // quanto subir/descer faróis e lanternas pra encaixar no modelo
-  if(M){g.add(M.root);g.userData.model=M;ly=M.top*0.42-(0.18+P.h*0.65);}
+  if(M){g.add(M.root);g.userData.model=M;if(M.repaint)M.repaint(c.color);ly=M.top*0.42-(0.18+P.h*0.65);}
   else{
   const body=part(g,c.color,P.body);body.castShadow=true;g.userData.body=body;
   // cabine da cor do carro (a viatura tem a cabine branca fixa)
@@ -359,7 +359,7 @@ function syncCars(night){
     const M=g.userData.model;
     if(M){ // carro com modelo: rodas giram, carcaça queimada vira cinza escuro
       if(c.wreck){if(!g.userData.burnt){g.userData.burnt=true;M.root.traverse(o=>{if(o.isMesh)o.material=wreckMat;});}}
-      else{if(g.userData.col!==c.color){repaint(M,c.color);g.userData.col=c.color;}
+      else{if(g.userData.col!==c.color){if(M.repaint)M.repaint(c.color);else repaint(M,c.color);g.userData.col=c.color;}
         const spin=(c.fwdSpeed?c.fwdSpeed():0)*U/60/M.radius;for(const w of M.wheels)w.rotation.x+=spin;}
     }else{
     const b=g.userData.body,cb=g.userData.cabin;
@@ -413,69 +413,44 @@ function syncCheckpoints(){
 }
 
 // ---------- pessoas ----------
-// Todo mundo desenhado de uma vez (instanciado): 5 chamadas pra GPU, não importa quantas pessoas.
-const MAXP=320;
+// Gente de 97 feita por código (gente97.js): boneco articulado com roupa carioca, todo mundo instanciado
+// (umas 14 chamadas pra GPU, não importa quantas pessoas) e animado aqui mesmo, sem esqueleto.
 // escala das pessoas: um andar dos prédios tem 0,95 de altura (uns 3 m) e um carro uns 1,1 de comprimento,
 // então gente de verdade fica com ~0,6 (uns 1,9 m). O jogador é um pouco maior pra continuar fácil de achar na tela.
-const PED_SCALE=0.56, PLAYER_SCALE=0.75;
-const legG=new THREE.BoxGeometry(0.1,0.36,0.1);legG.translate(0,-0.18,0);
-const bodyG=new THREE.CylinderGeometry(0.17,0.15,0.5,7);
-const headG=new THREE.SphereGeometry(0.13,8,6);
-let PI_={};
-const hexCache={};const hexCol=h=>hexCache[h]||(hexCache[h]=new THREE.Color(h));
-function initPeople(){
-  const mk=(geo,color,cast)=>{const m=new THREE.InstancedMesh(geo,new THREE.MeshLambertMaterial({color}),MAXP);m.count=0;m.frustumCulled=false;m.castShadow=cast;m.instanceMatrix.setUsage(THREE.DynamicDrawUsage);scene.add(m);return m;};
-  PI_={l1:mk(legG,'#2b2f45',false),l2:mk(legG,'#2b2f45',false),body:mk(bodyG,'#ffffff',true),head:mk(headG,'#ffffff',false),hair:mk(headG,'#ffffff',false)};
-  for(const k of ['body','head','hair'])PI_[k].setColorAt(0,hexCol('#fff'));
-}
-const _B=new THREE.Matrix4(),_L=new THREE.Matrix4(),_M=new THREE.Matrix4(),_q=new THREE.Quaternion(),_e=new THREE.Euler(),_p=new THREE.Vector3(),_s=new THREE.Vector3();
-const L_BODY=new THREE.Matrix4().makeTranslation(0,0.6,0), L_HEAD=new THREE.Matrix4().makeTranslation(0,0.98,0),
-  L_HAIR=new THREE.Matrix4().compose(new THREE.Vector3(-0.02,1.04,0),new THREE.Quaternion(),new THREE.Vector3(1.05,0.6,1.05));
-function putPerson(n,x,y,a,anim,moving,down,scale,shirt,skin,hair){
-  _e.set(down?0:0,-a,down?Math.PI/2:0,'YXZ');_q.setFromEuler(_e);
-  _B.compose(_p.set(x*U,down?0.15*scale:0,y*U),_q,_s.set(scale,scale,scale));
-  const sw=moving?Math.sin(anim*10)*0.6:0;
-  _L.makeRotationZ(sw).setPosition(0,0.36,-0.08);PI_.l1.setMatrixAt(n,_M.multiplyMatrices(_B,_L));
-  _L.makeRotationZ(-sw).setPosition(0,0.36,0.08);PI_.l2.setMatrixAt(n,_M.multiplyMatrices(_B,_L));
-  PI_.body.setMatrixAt(n,_M.multiplyMatrices(_B,L_BODY));PI_.head.setMatrixAt(n,_M.multiplyMatrices(_B,L_HEAD));PI_.hair.setMatrixAt(n,_M.multiplyMatrices(_B,L_HAIR));
-  PI_.body.setColorAt(n,hexCol(shirt||'#888'));PI_.head.setColorAt(n,hexCol(skin||'#c68642'));PI_.hair.setColorAt(n,hexCol(hair||'#222'));
-}
-// Bonecos animados (Mini Characters): o jogador e os PED_MODELS pedestres mais perto da câmera.
-// Os outros continuam com o boneco simples instanciado (bem mais leve).
-const PED_MODELS=20,HUMAN_H=1.11; // altura do boneco simples na escala 1
-let playerChar=null;const pedChars=new Map(),charPool=[];let charSeq=0;
-function getChar(){const c=charPool.pop()||makeCharacter(charSeq++,HUMAN_H*PED_SCALE);scene.add(c.root);return c;}
-function releaseChar(p){const c=pedChars.get(p);if(!c)return;scene.remove(c.root);charPool.push(c);pedChars.delete(p);}
-function placeChar(c,x,y,a,anim,dt){c.root.position.set(x*U,0,y*U);c.root.rotation.y=Math.PI/2-a;c.play(anim);c.mixer.update(dt);}
-let lastPeopleT=performance.now();
+const PED_SCALE=0.6, PLAYER_SCALE=0.75;
+const riders=new WeakMap(); // quem pilota cada moto (um pedestre inventado, com roupa fixa)
+function riderOf(c){let r=riders.get(c);if(!r){const id=Math.floor(Math.random()*1e6);r={id,shirt:['#e74c3c','#f4f4f0','#3498db','#f1c40f','#2c3e50','#e67e22'][id%6],skin:['#f1c27d','#e0ac69','#c68642','#8d5524'][id%4],hair:'#222'};riders.set(c,r);}return r;}
 function syncPeople(){
-  let n=0;const now=performance.now(),dt=Math.min(0.1,(now-lastPeopleT)/1000);lastPeopleT=now;
-  const animated=useModels()&&charsReady();
+  beginPeople();
   const vis=!player.car&&player.state==='play'&&!(player.inv>0&&Math.floor(S.gameTime*10)%2);
   const mv=keys['KeyW']||keys['KeyS']||keys['KeyA']||keys['KeyD']||keys['ArrowUp']||keys['ArrowDown']||keys['ArrowLeft']||keys['ArrowRight'];
-  if(animated){
-    if(!playerChar){playerChar=makeCharacter(0,HUMAN_H*PLAYER_SCALE);scene.add(playerChar.root);}
-    const dead=player.state==='wasted';playerChar.root.visible=(vis||dead)&&!player.car;
-    if(playerChar.root.visible){
-      const anim=dead?'die':player.punchCd>0.15&&player.weapon==='punho'?'attack-melee-right':mv?(keys['ShiftLeft']||keys['ShiftRight']?'sprint':'walk'):player.weapon!=='punho'?'holding-right':'idle';
-      placeChar(playerChar,player.x,player.y,player.a,anim,dt);}
-  }else if(vis)putPerson(n++,player.x,player.y,player.a,player.anim/10,mv,false,PLAYER_SCALE,'#ff7a1a','#c68642','#111');
+  if(vis||player.state==='wasted'&&!player.car){
+    const run=keys['ShiftLeft']||keys['ShiftRight'];let pose,ph=player.anim;
+    if(player.state==='wasted')pose='down';
+    else if(player.punchCd>0.15&&player.weapon==='punho'){pose='punch';ph=(0.4-player.punchCd)/0.25*Math.PI;}
+    else if(mv)pose=run?'run':'walk';
+    else pose=player.weapon&&player.weapon!=='punho'?'aim':'idle';
+    if(pose==='idle')ph=S.gameTime*3;
+    putPerson(player.x*U,player.y*U,0,player.a,PLAYER_SCALE,PLAYER_LOOK,pose,ph);
+  }
+  // quem está pilotando moto: sentado, de capacete
+  for(const c of S.cars){
+    if(c.type!=='moto'||!c.driver||c.wreck)continue;
+    const dx=c.x-cam.x,dy=c.y-cam.y;if(dx*dx+dy*dy>(46*T)*(46*T))continue;
+    const me=c.driver==='player',sc=me?PLAYER_SCALE*0.85:PED_SCALE,back=-0.13,ca=Math.cos(c.a),sa=Math.sin(c.a);
+    const L=me?withHelmet(PLAYER_LOOK,'#e53935'):withHelmet(lookOf(riderOf(c)),'#f4f4f0');
+    putPerson(c.x*U+ca*back,c.y*U+sa*back,0.3-0.56*sc,c.a,sc,L,'sit',0);
+  }
   // só quem está perto da câmera (o resto não aparece mesmo)
-  const r2=(46*T)*(46*T),near=[];
+  const r2=(46*T)*(46*T);
   for(const p of S.peds){
     if(p.state==='dead'||p.state==='gone'||p.state==='dead2')continue;
-    const dx=p.x-cam.x,dy=p.y-cam.y,d2=dx*dx+dy*dy;if(d2>r2)continue;near.push([d2,p]);}
-  const withModel=new Set();
-  if(animated){near.sort((a,b)=>a[0]-b[0]);for(let k=0;k<Math.min(PED_MODELS,near.length);k++)withModel.add(near[k][1]);}
-  for(const p of [...pedChars.keys()])if(!withModel.has(p))releaseChar(p);
-  for(const [,p] of near){
-    if(withModel.has(p)){let c=pedChars.get(p);if(!c){c=getChar();pedChars.set(p,c);}
-      const run=p.state==='flee'||p.state==='robber'||p.state==='cop'||p.fan&&matchOn();
-      placeChar(c,p.x,p.y,p.a,p.state==='down'?'die':p.state==='wait'?'idle':run?'sprint':'walk',dt);continue;}
-    if(n>=MAXP)continue;
-    putPerson(n++,p.x,p.y,p.a,p.anim,p.state!=='wait',p.state==='down',PED_SCALE,p.shirt,p.skin,p.hair);
+    const dx=p.x-cam.x,dy=p.y-cam.y;if(dx*dx+dy*dy>r2)continue;
+    const run=p.state==='flee'||p.state==='robber'||p.state==='cop'||p.fan&&matchOn();
+    const pose=p.state==='down'?'down':p.state==='wait'?'idle':run?'run':'walk';
+    putPerson(p.x*U,p.y*U,0,p.a,PED_SCALE,lookOf(p),pose,pose==='idle'?S.gameTime*3+p.id:p.anim*(run?13:9));
   }
-  for(const m of Object.values(PI_)){m.count=n;m.instanceMatrix.needsUpdate=true;if(m.instanceColor)m.instanceColor.needsUpdate=true;}
+  endPeople();
 }
 
 // ---------- partículas e tiros ----------
@@ -621,7 +596,7 @@ export function getQuality(){return quality;}
 export function applyQuality(q,manual){
   const flip=(q>0)!==(quality>0);
   quality=q;
-  if(flip){rebuildCars();applyProps();for(const p of pedChars.keys())releaseChar(p);if(playerChar){scene.remove(playerChar.root);playerChar=null;}}if(manual)autoOK=false;if(!renderer)return;
+  if(flip){rebuildCars();applyProps();}if(manual)autoOK=false;if(!renderer)return;
   const dpr=window.devicePixelRatio||1;
   // realista: até 1,5x em tela de alta densidade (com antisserrilhado 4x e bloom, 2x pesa muito e quase não aparece)
   renderer.setPixelRatio(q===3?Math.min(1.5,dpr):q===2?Math.min(2,dpr):q===1?Math.min(1,dpr):Math.min(0.75,dpr));
