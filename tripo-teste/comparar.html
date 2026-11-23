@@ -1,0 +1,37 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><style>html,body{margin:0;background:#20242c;color:#eee;font:15px sans-serif}
+#row{display:flex}canvas{display:block}.c{position:relative}.l{position:absolute;left:10px;top:8px;background:#0008;padding:4px 8px;border-radius:4px}</style>
+<script type="importmap">{"imports":{"three":"../vendor/three/three.module.min.js"}}</script></head><body><div id="row"></div>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from '../vendor/three/addons/loaders/GLTFLoader.js';
+const q = new URLSearchParams(location.search);
+const items = JSON.parse(q.get('items')); // [{file,label,len,rot}]
+const view = q.get('view') || 'jogo';
+const W = +q.get('w') || 640, H = +q.get('h') || 480;
+const loader = new GLTFLoader(); const info = [];
+for (const it of items) {
+  const div = document.createElement('div'); div.className = 'c'; document.getElementById('row').appendChild(div);
+  const r = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true }); r.setSize(W, H); r.outputColorSpace = THREE.SRGBColorSpace;
+  r.shadowMap.enabled = true; div.appendChild(r.domElement);
+  const s = new THREE.Scene(); s.background = new THREE.Color('#9cc3dd');
+  s.add(new THREE.HemisphereLight('#dfefff', '#5a6b4a', 0.9));
+  const sun = new THREE.DirectionalLight('#fff4e0', 2.2); sun.position.set(6, 10, 4); sun.castShadow = true;
+  Object.assign(sun.shadow.camera, { left: -8, right: 8, top: 8, bottom: -8 }); sun.shadow.mapSize.set(2048, 2048); s.add(sun);
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(60, 60), new THREE.MeshLambertMaterial({ color: '#6d6d6a' })); ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; s.add(ground);
+  const g = await loader.loadAsync(it.file); const m = g.scene;
+  let tris = 0; m.traverse(o => { if (o.isMesh) { o.castShadow = true; const gg = o.geometry; tris += (gg.index ? gg.index.count : gg.attributes.position.count) / 3; } });
+  m.rotation.y = (it.rot || 0) * Math.PI / 180;
+  let b = new THREE.Box3().setFromObject(m); const sz = b.getSize(new THREE.Vector3());
+  const k = it.len / Math.max(sz.x, sz.z); m.scale.setScalar(k);
+  b = new THREE.Box3().setFromObject(m); const c = b.getCenter(new THREE.Vector3()); m.position.sub(new THREE.Vector3(c.x, b.min.y, c.z));
+  s.add(m);
+  const cam = new THREE.PerspectiveCamera(42, W / H, 0.1, 200);
+  const d = it.len * (view === 'jogo' ? 2.6 : 1.7);
+  if (view === 'jogo') cam.position.set(0, d * 0.92, d * 0.62); else cam.position.set(d * 0.8, d * 0.45, d * 0.75);
+  cam.lookAt(0, sz.y * k * 0.35, 0);
+  r.render(s, cam);
+  const lab = document.createElement('div'); lab.className = 'l'; lab.textContent = it.label + ' · ' + Math.round(tris).toLocaleString('pt-BR') + ' triângulos'; div.appendChild(lab);
+  info.push({ label: it.label, tris: Math.round(tris), size: sz.toArray().map(v => +v.toFixed(2)) });
+}
+window.done = info;
+</script></body></html>
