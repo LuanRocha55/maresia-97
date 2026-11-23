@@ -144,7 +144,7 @@ export function roofSign(g,b,x,y,rw,rh){
   const k=b.kind;
   if(k==='hospital'){g.fillStyle='#e53935';const q=s*0.16;g.fillRect(cx-q,cy-q*3,q*2,q*6);g.fillRect(cx-q*3,cy-q,q*6,q*2);plate('HOSPITAL',y+rh-12,'rgba(255,255,255,0.85)','#b71c1c');}
   else if(k==='policia'){star(g,cx,cy-s*0.08,s*0.26,'#f5f5f5');star(g,cx,cy-s*0.08,s*0.15,'#2e4d86');
-    g.fillStyle='#f5f5f5';for(let i=0;i<rw;i+=16)g.fillRect(x+i,y+2,8,5);plate('POLÍCIA',y+rh-12,'#1b2f55','#ffffff');}
+    g.fillStyle='#f5f5f5';for(let i=0;i<rw;i+=16)g.fillRect(x+i,y+2,8,5);plate('CARCERAGEM',y+rh-12,'#1b2f55','#ffffff');}
   else if(k==='ze'){wrench(g,cx,cy-4,s*0.5);plate('OFICINA DO ZÉ',y+rh-10,'#3a2410','#ffd08a');}
   else if(k==='pintura'||k==='pintura2'){const cols=['#e53935','#fdd835','#1e88e5','#d81b60','#43a047'];
     for(let i=0;i<5;i++){g.fillStyle=cols[i];g.beginPath();const bx=x+12+i*rw*0.13;g.moveTo(bx,y+8);g.lineTo(bx+rw*0.08,y+8);g.lineTo(bx+rw*0.08-14,y+rh-24);g.lineTo(bx-14,y+rh-24);g.closePath();g.fill();}
@@ -168,7 +168,7 @@ export function roofSign(g,b,x,y,rw,rh){
     plate('ESCOLA',y+rh-12,'#1f3f70','#ffffff');}
   else if(k==='lanchonete'){const q=s*0.14;g.fillStyle='#e6a33a';g.beginPath();g.ellipse(cx,cy-q-4,q*1.4,q*0.7,0,Math.PI,0);g.fill();g.fillStyle='#6b3a1a';g.fillRect(cx-q*1.4,cy-q-2,q*2.8,q*0.5);
     g.fillStyle='#4caf50';g.fillRect(cx-q*1.5,cy-q*0.5-2,q*3,q*0.25);g.fillStyle='#e6a33a';g.fillRect(cx-q*1.4,cy-q*0.2,q*2.8,q*0.5);plate('LANCHONETE',y+rh-12,'#7a1d14','#ffe14a');}
-  else if(k==='lojaposto'){plate('POSTO MARESIA',cy+4,'#7a1d14','#ffffff');}
+  else if(k==='lojaposto'){plate('POSTO GUANABARA',cy+4,'#7a1d14','#ffffff');}
 }
 function star(g,x,y,r,col){g.fillStyle=col;g.beginPath();for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5,rr=i%2?r*0.45:r;g.lineTo(x+Math.cos(a)*rr,y+Math.sin(a)*rr);}g.closePath();g.fill();}
 function wrench(g,x,y,size){g.save();g.translate(x,y);g.rotate(-Math.PI/4);g.fillStyle='#e0e0e0';g.fillRect(-size*0.08,-size*0.05,size*0.55,size*0.1);
@@ -209,7 +209,7 @@ function drawStadium(g,b,camH){
         const jump=live?Math.sin(S.gameTime*8+q+r)*1.2:0;
         g.fillStyle=col;g.fillRect(lerp(ax,cx2,q/n)-2,lerp(ay,cy2,q/n)-2+jump,4,4);}}}
   // placa e refletores
-  label(g,'ARENA MARESIA',(O[2][0]+O[3][0])/2,O[2][1]-8,'#ffffff',16);
+  label(g,'ESTÁDIO DO JACARANDÁ',(O[2][0]+O[3][0])/2,O[2][1]-8,'#ffffff',16);
   if(live&&m)label(g,HOME.name+' '+m.hs+' x '+m.as+' '+opp.name,(O[0][0]+O[1][0])/2,O[0][1]+22,'#ffe14a',13);
   const lit=NIGHT>0.2||live;
   for(const [gx,gy] of [[b.x0-16,b.y0-16],[b.x1+16,b.y0-16],[b.x0-16,b.y1+16],[b.x1+16,b.y1+16]]){

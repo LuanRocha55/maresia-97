@@ -95,7 +95,12 @@ function drawSidewalk(g,px,py,X,Y,D,r){
   else if(D.sideStyle==='rachado'){g.fillStyle='rgba(0,0,0,0.10)';g.fillRect(px,py+15,T,1);g.fillRect(px+15,py,1,T);
     if(r()<0.35){g.strokeStyle='rgba(40,40,40,0.4)';g.lineWidth=1;g.beginPath();let x=px+r()*T,y=py+r()*T;g.moveTo(x,y);for(let i=0;i<3;i++){x+=r()*12-6;y+=r()*12-6;g.lineTo(x,y);}g.stroke();}}
   else if(D.sideStyle==='grama'){g.fillStyle='rgba(0,0,0,0.10)';g.fillRect(px,py+15,T,1);g.fillRect(px+15,py,1,T);}
-  const grass=D.sideStyle==='grama';
+  else if(D.sideStyle==='caquinho'){ // piso de caquinho (cerâmica quebrada vermelha, com pedaços amarelos e pretos)
+    g.fillStyle='#b49a86';g.fillRect(px,py,T,T);
+    for(let k=0;k<12;k++){const q=r(),cx=px+r()*T,cy=py+r()*T,s=3.5+r()*4;
+      g.fillStyle=q<0.7?'#9c4a36':q<0.86?'#a95640':q<0.95?'#c39a4e':'#3b3330';
+      g.beginPath();g.moveTo(cx-s,cy-s*0.6);g.lineTo(cx+s*0.8,cy-s);g.lineTo(cx+s,cy+s*0.5);g.lineTo(cx-s*0.4,cy+s);g.closePath();g.fill();}}
+  const grass=D.sideStyle==='grama'||D.sideStyle==='caquinho';
   const curb=(x,y,w,h)=>{g.fillStyle='#7d7b75';g.fillRect(x,y,w,h);};
   if(tileOf(X-1,Y)===ROAD){curb(px,py,3,T);if(grass){g.fillStyle='#5f9e4a';g.fillRect(px+3,py,5,T);}}
   if(tileOf(X+1,Y)===ROAD){curb(px+T-3,py,3,T);if(grass){g.fillStyle='#5f9e4a';g.fillRect(px+T-8,py,5,T);}}
@@ -174,7 +179,7 @@ export function surfaceMap(){
     let s=255;
     if(t===ROAD)s=RT[i]===1||D.cobble?2:0;
     else if(t===PARK)s=0;
-    else if(t===SIDE||t===BUILD)s=D.sideStyle==='ondas'||D.sideStyle==='tijolo'?9:1;
+    else if(t===SIDE||t===BUILD)s=D.sideStyle==='ondas'||D.sideStyle==='tijolo'||D.sideStyle==='caquinho'?9:1;
     else if(t===SAND)s=3;
     else if(t===GRASS)s=4;
     else if(t===TREE)s=tileOf(x-1,y)===SAND||tileOf(x+1,y)===SAND||tileOf(x,y-1)===SAND||tileOf(x,y+1)===SAND?3:4;

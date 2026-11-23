@@ -1,6 +1,6 @@
 # Guia do jogador
 
-Tudo o que dá pra fazer em Vila Maresia, do primeiro passo até liberar a cidade inteira. Os números exatos (preços, velocidades, pagamentos) estão na [referência](referencia.md).
+Tudo o que dá pra fazer em Guanabara, do primeiro passo até liberar a cidade inteira. Os números exatos (preços, velocidades, pagamentos) estão na [referência](referencia.md).
 
 - [Começando](#começando)
 - [Controles](#controles)
@@ -10,7 +10,7 @@ Tudo o que dá pra fazer em Vila Maresia, do primeiro passo até liberar a cidad
 - [Dinheiro: como ganhar e onde gastar](#dinheiro-como-ganhar-e-onde-gastar)
 - [Missões dos orelhões](#missões-dos-orelhões)
 - [Empregos](#empregos)
-- [Arena Maresia](#arena-maresia)
+- [Estádio do Jacarandá](#estádio-do-jacarandá)
 - [Comércios e interiores](#comércios-e-interiores)
 - [Armas e combate](#armas-e-combate)
 - [Polícia e procurado](#polícia-e-procurado)
@@ -89,57 +89,57 @@ O **mapa em tela cheia** (M) mostra os bairros, a legenda dos ícones, a políci
 
 ## A cidade e os bairros
 
-Vila Maresia é uma cidade litorânea inventada, inspirada em Fortaleza, em 1997. O mar fica a leste.
+Guanabara é uma cidade litorânea inventada, inspirada no Rio de Janeiro de 1997 (os nomes são todos inventados). Por enquanto o mapa ainda é o antigo, com o mar a leste; o mapa novo do [design](design.md) entra depois.
 
 ```
   oeste ................................................ leste (mar)
-  Alto do Cajueiro | Jardim Maresia | Alto da Maresia | Orla | praia | mar
-  Alto do Cajueiro | Centro         | Centro          | Orla | praia | mar
-  Vila Velha       | Vila Velha     | Centro          | Orla | praia | mar
-  Vila Velha       | Porto          | Porto           | Porto        | mar
+  Morro do Cajueiro   | Jacarandá           | Barra Sul     | Praia do Recanto | praia | mar
+  Morro do Cajueiro   | Centro              | Centro        | Praia do Recanto | praia | mar
+  Vila dos Pescadores | Vila dos Pescadores | Centro        | Praia do Recanto | praia | mar
+  Vila dos Pescadores | Cais do Porto       | Cais do Porto | Cais do Porto           | mar
 ```
 
 | Bairro | Como é | O que tem |
 |---|---|---|
-| **Centro** | torres altas, praças, calçada de lajes | hospital, delegacia, Arena Maresia, Oficina do Zé, um Posto Maresia, escolas, lanchonetes, mercadinhos, farmácias, padarias |
-| **Jardim Maresia** | casas, canteiro de grama, lombadas | sua casa, uma Pintura Express, um Posto Maresia, farmácia |
-| **Alto do Cajueiro** | periferia: casinhas de tijolo, terra batida, asfalto remendado, campinho de várzea, muitas motos | uma Pintura Express, Armas do Tonhão, lanchonetes, mercadinho, farmácia, padaria |
-| **Alto da Maresia** | bairro rico: mansões com piscina, condomínios, esportivos e sedãs de luxo no trânsito | estacionamento do Brisa |
-| **Orla** | praia larga com coqueiros, barracas, guarda-sóis, vôlei, salva-vidas, hotéis, calçadão de ondas e ciclofaixa | hotéis e praia |
-| **Vila Velha** | centro histórico: becos de paralelepípedo e casarões coloridos geminados | farmácias, lanchonetes, padarias, mercadinhos |
-| **Porto** | galpões, contêineres, guindastes, caminhões | — |
+| **Centro** | torres altas, praças, calçada de lajes, camelôs de lona na calçada, bancas de jornal, letreiros de foto 1 hora e loteria | hospital, Carceragem Central, Estádio do Jacarandá, Oficina do Zé, um Posto Guanabara, escolas, lanchonetes, mercadinhos, farmácias, padarias |
+| **Jacarandá** | subúrbio de casas, calçada de caquinho, canteiro de grama, lombadas, bancas de jornal | sua casa, uma Pintura Express, um Posto Guanabara, farmácia |
+| **Morro do Cajueiro** | casinhas de tijolo com laje, caixa d'água azul e ferro esperando o próximo andar, terra batida, asfalto remendado, campinho de várzea, muitas motos | uma Pintura Express, Armas do Tonhão, lanchonetes, mercadinho, farmácia, padaria |
+| **Barra Sul** | bairro rico: mansões com piscina, condomínios, outdoors da BarraSul Incorporações, letreiro do Bingo Estrela, esportivos e sedãs de luxo no trânsito | estacionamento do Brisa |
+| **Praia do Recanto** | praia larga com coqueiros, quiosques de madeira com telhado de palha, moitas de restinga, guarda-sóis, vôlei, salva-vidas, hotéis, calçadão de ondas e ciclofaixa | hotéis e praia |
+| **Vila dos Pescadores** | becos de paralelepípedo, casarões coloridos geminados, barcos de madeira e redes de pesca estendidas | farmácias, lanchonetes, padarias, mercadinhos |
+| **Cais do Porto** | galpões, contêineres, guindastes de pórtico, caminhões | — |
 
-**Ruas.** Há três tipos: **avenidas** de 4 faixas mão dupla (Av. dos Coqueiros, Av. Maresia, Av. Beira-Mar, Av. Sol Nascente, Av. Atlântica), **ruas** de 2 faixas e **becos** estreitos de mão única (só na Vila Velha). Cruzamentos com avenida têm semáforo, e o trânsito para no vermelho. Onde rua encontra avenida tem PARE pintado.
+**Ruas.** Há três tipos: **avenidas** de 4 faixas mão dupla (Estrada dos Tropeiros, Av. Aurora, Av. Beira-Mar, Via Expressa, Av. das Nações), **ruas** de 2 faixas e **becos** estreitos de mão única (só na Vila dos Pescadores). Cruzamentos com avenida têm semáforo, e o trânsito para no vermelho. Onde rua encontra avenida tem PARE pintado.
 
 **Lugares no mapa** (ícones):
 
 | Ícone | Lugar | Pra quê |
 |---|---|---|
 | cruz vermelha | Hospital | tratamento; onde você renasce |
-| estrela | Delegacia | fiança; onde você sai depois de preso |
+| estrela | Carceragem Central | fiança; onde você sai depois de preso |
 | casinha | Sua casa | salvar e dormir |
 | gota | Pintura Express | apaga as estrelas |
 | mira | Armas do Tonhão | armas, munição e colete |
-| bomba de gasolina | Posto Maresia | conserta o carro |
+| bomba de gasolina | Posto Guanabara | conserta o carro |
 | chave | Oficina do Zé | compra carro roubado |
 | cruz verde | Farmácia | vida e colete |
 | carrinho / pão / hambúrguer | Mercadinho / Padaria / Lanchonete | comida (vida) |
 | livro | Escola | cursos permanentes |
 | orelhão | Orelhão | missões |
 | táxi / ônibus | Ponto de táxi / Terminal | empregos |
-| estádio | Arena Maresia | jogo, aposta |
+| estádio | Estádio do Jacarandá | jogo, aposta |
 
 ## Operação Maré Alta: bairros fechados
 
-A cidade está sob operação policial. No começo só o **Centro** e o **Jardim Maresia** estão abertos. Os outros bairros abrem quando você **junta dinheiro**, sempre nesta ordem:
+A cidade está sob operação policial. No começo só o **Centro** e o **Jacarandá** estão abertos. Os outros bairros abrem quando você **junta dinheiro**, sempre nesta ordem:
 
 | Ordem | Bairro | Meta (dinheiro em mãos) |
 |---|---|---|
-| 1 | Alto do Cajueiro | $2.000 |
-| 2 | Alto da Maresia | $5.000 |
-| 3 | Orla | $10.000 |
-| 4 | Vila Velha | $16.000 |
-| 5 | Porto | $25.000 |
+| 1 | Morro do Cajueiro | $2.000 |
+| 2 | Barra Sul | $5.000 |
+| 3 | Praia do Recanto | $10.000 |
+| 4 | Vila dos Pescadores | $16.000 |
+| 5 | Cais do Porto | $25.000 |
 
 - A meta é o **saldo** que você tem na hora, não o total ganho. Ao bater a meta, aparece "BAIRRO LIBERADO", um contato "desenrola" e a blitz daquele bairro some. Gastar depois não fecha de novo.
 - Só o **próximo** bairro da fila pode abrir. Se você já tem $10.000 e o Cajueiro ainda está fechado, ele abre primeiro e logo em seguida o próximo.
@@ -153,7 +153,7 @@ A cidade está sob operação policial. No começo só o **Centro** e o **Jardim
 
 Missões, empregos, orelhões e o tutorial só mandam você pra bairros abertos.
 
-> **O que tem disponível no começo.** Centro e Jardim já são grandes: têm os dois postos de conserto, a Oficina do Zé, a Pintura Express do Jardim, lanchonetes com motoca, mercadinhos, farmácias, padarias e boa parte dos pontos de ônibus. Dá pra fazer missões dos orelhões e trabalhar de **taxista**, **motoboy**, **motorista de busão**, **guincho** e **vigilante noturno** desde o início. Ficam fechados até liberar o bairro: a Pintura do Cajueiro, o Armas do Tonhão e o estacionamento do Brisa (Alto da Maresia).
+> **O que tem disponível no começo.** Centro e Jacarandá já são grandes: têm os dois postos de conserto, a Oficina do Zé, a Pintura Express do Jacarandá, lanchonetes com motoca, mercadinhos, farmácias, padarias e boa parte dos pontos de ônibus. Dá pra fazer missões dos orelhões e trabalhar de **taxista**, **motoboy**, **motorista de busão**, **guincho** e **vigilante noturno** desde o início. Ficam fechados até liberar o bairro: a Pintura do Cajueiro, o Armas do Tonhão e o estacionamento do Brisa (Barra Sul).
 
 ## Dinheiro: como ganhar e onde gastar
 
@@ -162,7 +162,7 @@ Missões, empregos, orelhões e o tutorial só mandam você pra bairros abertos.
 - Missões dos orelhões ($1.000 a $4.000, aumenta a cada rodada)
 - Empregos (pagam por serviço, sobem de nível)
 - Vender carro na Oficina do Zé (desmanche)
-- Aposta no Maresia FC (paga 2,5x) e raspadinha do mercadinho
+- Aposta no Jacarandá FC (paga 2,5x) e raspadinha do mercadinho
 
 **Gastar**
 
@@ -171,7 +171,7 @@ Missões, empregos, orelhões e o tutorial só mandam você pra bairros abertos.
 - Armas e munição
 - Cursos da escola
 - Pintura Express ($500 por estrela) e conserto no posto ($150)
-- Fiança na delegacia ($300 por estrela)
+- Fiança na Carceragem Central ($300 por estrela)
 - Morrer custa $300 e ser preso custa $500
 
 O recorde (maior dinheiro que você já teve) aparece na tela de título.
@@ -186,9 +186,9 @@ Os orelhões amarelos tocando têm missão. Chegue perto a pé ou de carro e ela
 | 2 | **Corrida do Chico** | pegar o passageiro de amarelo (encosta devagar) e levar ao destino. Se ele for atingido, falha | 110 s (+25 s ao embarcar) | $1.500 |
 | 3 | **O Brisa do Doutor** | roubar o Brisa GT vermelho do estacionamento (o alarme dá estrelas) e levar pra Oficina do Zé | 200 s | $2.500 |
 | 4 | **Acerto de Contas** | destruir as 3 caminhonetes verdes da gangue do Galego, batendo nelas. Elas atiram de volta | 200 s | $3.000 |
-| 5 | **Fuga pela Orla** | começa com 3 estrelas: despistar a polícia até zerar | 150 s | $4.000 |
+| 5 | **Fuga pela Beira-Mar** | começa com 3 estrelas: despistar a polícia até zerar | 150 s | $4.000 |
 
-- "O Brisa do Doutor" precisa do Alto da Maresia e da Orla abertos. Até lá ela é pulada e volta na rodada seguinte.
+- "O Brisa do Doutor" precisa da Barra Sul e da Praia do Recanto abertas. Até lá ela é pulada e volta na rodada seguinte.
 - A missão falha se o tempo acabar, se você morrer ou for preso.
 - Depois de cumprir, o jogo salva sozinho.
 
@@ -210,9 +210,9 @@ Aperte **J a pé** pra abrir o menu de empregos: ele explica cada um e marca no 
 
 Os veículos de trabalho ficam estacionados nos pontos e reaparecem se sumirem (mas nunca na sua frente).
 
-## Arena Maresia
+## Estádio do Jacarandá
 
-O estádio fica no Centro. Todo dia de jogo, das **15h30 às 18h**, o **Maresia FC** enfrenta um adversário diferente (Tubarões do Porto, Cajueiro EC, Unidos da Orla, Jangadeiros).
+O estádio fica no Centro. Todo dia de jogo, das **15h30 às 18h**, o **Jacarandá FC** enfrenta um adversário diferente (Tubarões do Porto, Cajueiro EC, Unidos do Recanto, Colônia AC).
 
 - A arquibancada lota, a torcida chega na praça em volta e dá pra ouvir de perto.
 - Os gols aparecem na tela se você estiver perto, e o placar ao vivo fica em cima do estádio.
@@ -222,14 +222,14 @@ O estádio fica no Centro. Todo dia de jogo, das **15h30 às 18h**, o **Maresia 
 | Opção | Preço | O que faz |
 |---|---|---|
 | Assistir ao jogo | $20 | pula até o fim da partida (18h) e recupera 15 de vida. Uma vez por dia |
-| Apostar no Maresia FC | $100 | se o Maresia ganhar, paga $250 no fim do jogo. Apostas fecham às 17h. Empate perde |
+| Apostar no Jacarandá FC | $100 | se o Jacarandá ganhar, paga $250 no fim do jogo. Apostas fecham às 17h. Empate perde |
 | Ver placar | grátis | placar agora ou o próximo jogo |
 
 ## Comércios e interiores
 
 Portas com ícone no chão e toldo colorido podem ser abertas com **F** (ou clique direito). Lá dentro você anda numa sala em 3D e fala com o atendente no balcão. O tempo continua passando lá fora.
 
-- **Procurado não entra**, a não ser na delegacia.
+- **Procurado não entra**, a não ser na Carceragem Central.
 - Quando o menu está aberto, o mundo pausa.
 
 | Lugar | O que vende |
@@ -240,7 +240,7 @@ Portas com ícone no chão e toldo colorido podem ser abertas com **F** (ou cliq
 | **Lanchonete** | pastel +20 ($10), X-tudo +50 ($22), combo com suco +70 ($30) |
 | **Lojinha do posto** | água +8 ($3), salgado +25 ($12) |
 | **Hospital** | tratamento completo ($100). A vida também volta devagar enquanto você está lá dentro |
-| **Delegacia** | pagar fiança ($300 por estrela, só até 2 estrelas) ou se entregar |
+| **Carceragem Central** | pagar fiança ($300 por estrela, só até 2 estrelas) ou se entregar |
 | **Armas do Tonhão** | pistola, escopeta, SMG (munição) e colete |
 | **Escola** | cursos que valem pra sempre (veja abaixo) |
 | **Sua casa** | salvar (computador), dormir até 8h ou até 20h (cama; enche a vida; não dá com estrelas) |
@@ -300,7 +300,7 @@ Quanto mais estrelas, mais viaturas ao mesmo tempo (2 com 1 estrela, até 11 com
 2. **Se esconder:** parado (ou bem devagar) num **beco** ou num **estacionamento**, fora de vista, cai **3 vezes mais rápido**.
 3. **Trocar de carro sem ninguém ver:** a polícia perde a placa e cai 1 estrela.
 4. **Pintura Express:** apaga tudo na hora. Custa $500 por estrela.
-5. **Delegacia:** com até 2 estrelas, paga a fiança ($300 por estrela).
+5. **Carceragem Central:** com até 2 estrelas, paga a fiança ($300 por estrela).
 
 **Preso:** se uma viatura encostar em você parado (ou um policial te alcançar a pé) por um instante, você é preso.
 
@@ -311,9 +311,9 @@ Chegue perto e aperte **F** pra entrar. Se tiver motorista, você rouba (e ganha
 - Cada modelo tem velocidade, aceleração, aderência e resistência próprias (tabela na [referência](referencia.md#veículos)). O Brisa GT é rápido, o Busão é lento e pesado, a Motoca é a mais ágil.
 - **Areia** e **grama** deixam o carro lento e escorregando, menos o **Bugue** e o **Jipe do Exército**, que são feitos pra areia.
 - Com menos de 25% de vida o carro perde velocidade. Com menos de 35% solta fumaça.
-- **Posto Maresia:** passe por baixo da cobertura pra consertar ($150). Apaga o fogo e conserta pneu furado.
+- **Posto Guanabara:** passe por baixo da cobertura pra consertar ($150). Apaga o fogo e conserta pneu furado.
 - **Oficina do Zé (desmanche):** entre de carro na garagem e o Zé paga pelo carro, proporcional ao estado. Carro com menos de 40% de vida ele não quer.
-- O trânsito muda por bairro: esportivos no Alto da Maresia, motos no Cajueiro, caminhões no Porto.
+- O trânsito muda por bairro: esportivos na Barra Sul, motos no Cajueiro, caminhões no Cais do Porto.
 
 ## Dia e noite
 
@@ -329,7 +329,7 @@ Chegue perto e aperte **F** pra entrar. Se tiver motorista, você rouba (e ganha
 |---|---|---|
 | Custo | $300 de hospital | $500 de fiança |
 | Perde | todas as armas e munição | todas as armas e munição |
-| Volta em | Hospital | Delegacia |
+| Volta em | Hospital | Carceragem Central |
 | Missão | falha | falha |
 
 Você volta com vida cheia, sem estrelas e com 2 segundos de invencibilidade.

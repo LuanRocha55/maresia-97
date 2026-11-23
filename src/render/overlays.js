@@ -53,8 +53,8 @@ export function drawBigMap(){
   S.mapRect={ox,oy,size,sc};
   const toS=(wx,wy)=>[ox+wx/T*sc, oy+wy/T*sc];
   // título
-  g.font=lf(Math.round(clamp(CW/34,22,38)));g.textAlign='left';g.fillStyle=C97.tinta;g.fillText('GUIA DE RUAS · VILA MARESIA',px0+28,py0+top*0.62);
-  const tw=g.measureText('GUIA DE RUAS · VILA MARESIA').width;
+  g.font=lf(Math.round(clamp(CW/34,22,38)));g.textAlign='left';g.fillStyle=C97.tinta;g.fillText('GUIA DE RUAS · GUANABARA',px0+28,py0+top*0.62);
+  const tw=g.measureText('GUIA DE RUAS · GUANABARA').width;
   ptxt(g,'EDIÇÃO 1997 · ESCALA 1:8.000',px0+40+tw,py0+top*0.62,13,C97.tinta,'left',false);
   // mapa
   g.imageSmoothingEnabled=true;g.drawImage(paperMap(),ox,oy,size,size);g.drawImage(paperLockMask(),ox,oy,size,size);

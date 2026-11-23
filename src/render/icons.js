@@ -2,10 +2,10 @@
 // Cada lugar tem cor de fundo própria + desenho branco, pra não depender de letra.
 
 export const ICONS = {
-  estadio:    { bg:'#2e7d32', name:'Arena Maresia (jogo às 15h30)' },
+  estadio:    { bg:'#2e7d32', name:'Estádio do Jacarandá (jogo às 15h30)' },
   hospital:   { bg:'#e53935', name:'Hospital' },
   farmacia:   { bg:'#2e9e4a', name:'Farmácia' },
-  policia:    { bg:'#2e4d86', name:'Polícia' },
+  policia:    { bg:'#2e4d86', name:'Carceragem Central (fiança)' },
   ze:         { bg:'#e67e22', name:'Oficina do Zé (desmanche)' },
   pintura:    { bg:'#16a085', name:'Pintura Express (apaga estrelas)' },
   armas:      { bg:'#8e1b14', name:'Armas do Tonhão' },

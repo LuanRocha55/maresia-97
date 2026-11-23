@@ -137,7 +137,7 @@ export function update(dt){
       } else if(z.type==='posto'){
         const c=player.car;
         if(c.health<c.t.hp-0.5||c.burnT>0||c.flat){
-          if(player.money>=150){player.money-=150;c.health=c.t.hp;c.burnT=0;c.flat=false;c._warn=false;big('CARRO CONSERTADO','-$150 no Posto Maresia','#ffd83c',2);sfxTone(600,0.1,0.1);sfxTone(900,0.15,0.1,'square',0.1);}
+          if(player.money>=150){player.money-=150;c.health=c.t.hp;c.burnT=0;c.flat=false;c._warn=false;big('CARRO CONSERTADO','-$150 no Posto Guanabara','#ffd83c',2);sfxTone(600,0.1,0.1);sfxTone(900,0.15,0.1,'square',0.1);}
           else msg('Conserto custa $150. Tu tá liso!');
           S.zoneCd=3;}
       } else if(z.type==='ze'&&(!S.mission||player.car.mission!==S.mission)){

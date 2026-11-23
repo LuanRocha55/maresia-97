@@ -1,5 +1,5 @@
 // Geração da cidade: malha de ruas (avenidas, ruas, becos), bairros, prédios, praia e lugares especiais
-import { rng, rand, pick } from '../core/utils.js';
+import { rng, rand, pick, mulberry } from '../core/utils.js';
 import { zoneAt, VV, BEACH_X0, BEACH_X1, LAND_Y1, CITY_X1 } from './zoning.js';
 
 export const T=32;
@@ -33,22 +33,22 @@ export const ROOFS=['#6b6460','#5d6670','#7a6a5a','#4f5a52','#6e5c6a','#857b6c']
 //  MALHA DE RUAS
 //  Linhas verticais (VL) e horizontais (HL). Cada uma tem largura em tiles
 //  e um tipo: 'ave' (4 faixas, mão dupla), 'rua' (2 faixas, mão dupla) ou
-//  'beco' (1 faixa, mão única, só na Vila Velha).
+//  'beco' (1 faixa, mão única, só na Vila dos Pescadores).
 // =====================================================================
 const LANES={ave:2,rua:1,beco:1};
 const WIDTH={ave:8,rua:4,beco:2};
 function mkLines(list){return list.sort((a,b)=>a[0]-b[0]).map(([c,type,name],idx)=>({idx,c,px:c*T,type,w:WIDTH[type],lanes:LANES[type],name,oneway:0}));}
 export const VL=mkLines([
-  [16,'rua','Rua da Brisa'],[42,'rua','Rua do Sal'],[68,'rua','Rua da Jangadinha'],[94,'ave','Av. dos Coqueiros'],[120,'rua','Rua Tapioca'],
-  [146,'rua','Rua da Rede'],[172,'rua','Rua do Caju'],[198,'rua','Rua da Renda'],[224,'ave','Av. Maresia'],[250,'rua','Rua Carnaúba'],
-  [276,'rua','Rua das Dunas'],[302,'rua','Rua do Farol'],[328,'ave','Av. Beira-Mar'],
-  [29,'beco','Beco do Vaqueiro'],[55,'beco','Beco da Rendeira'],[81,'beco','Beco do Xote'],[107,'beco','Beco do Baião'],[133,'beco','Beco do Forró'],[159,'beco','Beco do Repente'],
+  [16,'rua','Rua da Brisa'],[42,'rua','Rua do Sal'],[68,'rua','Rua do Bonde'],[94,'ave','Estrada dos Tropeiros'],[120,'rua','Rua do Pandeiro'],
+  [146,'rua','Rua da Feira'],[172,'rua','Rua do Caju'],[198,'rua','Rua das Amendoeiras'],[224,'ave','Av. Aurora'],[250,'rua','Rua do Bicho'],
+  [276,'rua','Rua da Restinga'],[302,'rua','Rua do Farol'],[328,'ave','Av. Beira-Mar'],
+  [29,'beco','Beco do Cavaquinho'],[55,'beco','Beco da Lavadeira'],[81,'beco','Beco do Chorinho'],[107,'beco','Beco do Partido-Alto'],[133,'beco','Beco do Jongo'],[159,'beco','Beco do Calango'],
 ]);
 export const HL=mkLines([
-  [16,'rua','Rua das Jangadas'],[42,'rua','Rua do Cajueiro'],[68,'rua','Rua do Coqueiral'],[94,'ave','Av. Sol Nascente'],[120,'rua','Rua dos Pescadores'],
-  [146,'rua','Rua das Gaivotas'],[172,'rua','Rua da Lagosta'],[198,'ave','Av. Atlântica'],[224,'rua','Rua da Maré'],[250,'rua','Rua do Mangue'],
-  [276,'rua','Rua da Peixada'],[302,'rua','Rua Areia Branca'],[328,'rua','Rua do Cais'],[354,'rua','Av. do Porto'],
-  [237,'beco','Beco das Flores'],[263,'beco','Beco do Sino'],[289,'beco','Beco da Lua'],[315,'beco','Beco dos Ventos'],[341,'beco','Beco do Bumba'],
+  [16,'rua','Rua das Jaqueiras'],[42,'rua','Rua do Cajueiro'],[68,'rua','Rua do Coqueiral'],[94,'ave','Via Expressa'],[120,'rua','Rua dos Pescadores'],
+  [146,'rua','Rua das Gaivotas'],[172,'rua','Rua da Lagosta'],[198,'ave','Av. das Nações'],[224,'rua','Rua da Maré'],[250,'rua','Rua do Mangue'],
+  [276,'rua','Rua da Peixada'],[302,'rua','Rua da Colônia'],[328,'rua','Rua do Cais'],[354,'rua','Av. do Cais'],
+  [237,'beco','Beco das Flores'],[263,'beco','Beco do Sino'],[289,'beco','Beco da Lua'],[315,'beco','Beco dos Ventos'],[341,'beco','Beco do Bloco'],
 ]);
 // becos alternam o sentido (mão única): +1 = leste/sul, -1 = oeste/norte
 {let k=0;for(const l of VL)if(l.type==='beco')l.oneway=(k++%2)?1:-1;}
@@ -174,9 +174,10 @@ export function genMap(){
   for(const b of buildings)if(ENTER_KINDS.includes(b.kind)&&!b.door)setDoor(b);
   placePhones(cells);
   placeLamps();
+  rioDecor(cells);
 }
 
-// ---------- estádio (Arena Maresia) ----------
+// ---------- estádio (Estádio do Jacarandá) ----------
 export const STADIUM={x0:230,y0:228,x1:270,y1:270};
 function buildStadium(cells){
   const {x0,y0,x1,y1}=STADIUM;
@@ -442,6 +443,62 @@ function placeLamps(){
   for(let i=0;i<NV;i++)for(let j=0;j<NH-1;j++)if(segV[i][j]){const L=VL[i];const step=L.type==='beco'?12:8;
     for(let y=Math.ceil(HL[j].c+4);y<HL[j+1].c-4;y+=step){add(Math.floor(L.c-L.w/2)-1,y);if(L.type!=='beco')add(Math.ceil(L.c+L.w/2),y);}}
   for(let y=20;y<LAND_Y1-12;y+=9)add(CITY_X1+5,y); // calçadão
+}
+
+// ---------- cara de Guanabara 97: enfeites de cada bairro (só visual, sem colisão) ----------
+// Usa um sorteio próprio no fim da geração: o traçado da cidade e os lugares continuam iguais.
+function rioDecor(cells){
+  const r=mulberry(1997), rp=a=>a[Math.floor(r()*a.length)];
+  const near=(list,x,y,d)=>list.some(p=>Math.abs(p.x-x)<d&&Math.abs(p.y-y)<d);
+  const doors=buildings.filter(b=>b.door).map(b=>b.door);
+  const busy=(x,y,d=40)=>near(phones,x,y,d)||near(lamps,x,y,d*0.7)||near(doors,x,y,d)||near(pumps,x,y,d);
+  const zt=(x,y)=>zoneAt(x,y);
+  const free=(x0,y0,w,h,t)=>{for(let y=y0;y<y0+h;y++)for(let x=x0;x<x0+w;x++)if(tileOf(x,y)!==t)return false;return true;};
+  const used=new Set(),mark=(x0,y0,w,h)=>{for(let y=y0;y<y0+h;y++)for(let x=x0;x<x0+w;x++)used.add(y*W+x);},isUsed=(x0,y0,w,h)=>{for(let y=y0;y<y0+h;y++)for(let x=x0;x<x0+w;x++)if(used.has(y*W+x))return true;return false;};
+  // de que lado fica a rua (pra virar a frente do enfeite pra ela)
+  const roadDir=(x,y)=>{for(let d=1;d<=3;d++)for(const [dx,dy] of [[0,1],[0,-1],[1,0],[-1,0]])if(tileOf(x+dx*d,y+dy*d)===ROAD)return [dx,dy];return null;};
+
+  // Centro: camelódromo (barracas de lona nas calçadas largas perto da praça do Centro)
+  {let n=0;const CX=205,CY=200;
+    for(let y=150;y<320&&n<70;y++)for(let x=150;x<300&&n<70;x++){
+      if(zt(x,y)!=='centro'||tileOf(x,y)!==SIDE||Math.hypot(x-CX,y-CY)>48)continue;
+      const d=roadDir(x,y);if(!d||tileOf(x+d[0],y+d[1])===ROAD)continue; // fica na faixa de dentro da calçada
+      if(tileOf(x+d[0],y+d[1])!==SIDE)continue;
+      if((d[1]?x:y)%3)continue;
+      const px=(x+.5)*T,py=(y+.5)*T;if(busy(px,py,44)||isUsed(x-1,y-1,3,3))continue;
+      mark(x,y,1,1);decor.push({type:'camelo',x:px,y:py,face:d,c:rp(['#1e5fa8','#2c7fd0','#e2711d','#d9a21b','#3f8f4a','#c0392b'])});n++;}}
+  // bancas de jornal: perto de alguns orelhões do Centro, do Jacarandá e da Barra
+  {let k=0;for(const ph of phones){const x=ph.x/T|0,y=ph.y/T|0;if(!['centro','jardim','rico'].includes(zt(x,y)))continue;if(k++%2)continue;
+    for(const [dx,dy] of [[3,0],[-3,0],[0,3],[0,-3]]){const bx=x+dx,by=y+dy;
+      if(tileOf(bx,by)!==SIDE||isUsed(bx-1,by-1,3,3))continue;const px=(bx+.5)*T,py=(by+.5)*T;
+      if(near(lamps,px,py,24)||near(doors,px,py,40))continue;const d=roadDir(bx,by);
+      mark(bx-1,by-1,3,3);decor.push({type:'banca',x:px,y:py,face:d||[0,1]});break;}}}
+  // Barra Sul: outdoors da BarraSul Incorporações nos terrenos vazios
+  {const ads=[['BARRASUL','INCORPORAÇÕES','LANÇAMENTO · VISTA PRO MAR'],['RESIDENCIAL','ATLÂNTIDA','2 E 3 QUARTOS · LAZER COMPLETO'],['BARRASUL','INCORPORAÇÕES','O FUTURO CHEGOU À ORLA'],['SHOPPING','BARRA SUL','INAUGURAÇÃO EM 98']];
+    let n=0;for(const c of cells){if(c.zone!=='rico'||n>=10)continue;
+      for(let x=c.x0+2;x<c.x1-6&&n<10;x+=3){const y=c.y1-2;
+        if(!free(x,y-1,5,2,GRASS)||isUsed(x-2,y-3,9,6))continue;
+        mark(x-2,y-3,9,6);decor.push({type:'outdoor',x:(x+2.5)*T,y:(y+.5)*T,face:[0,1],ad:ads[n%ads.length]});n++;break;}}}
+  // letreiros luminosos no alto de alguns prédios (bingo na Barra, foto 1 hora no Centro)
+  {const torres=z=>buildings.filter(b=>b.kind==='b'&&b.style==='torre'&&zt((b.x0+b.x1)/2/T|0,(b.y0+b.y1)/2/T|0)===z&&b.x1-b.x0>=7*T);
+    const rico=torres('rico');if(rico[0])rico[0].sign={text:'BINGO ESTRELA',col:'#ff3bd2',col2:'#ffe14a'};if(rico[2])rico[2].sign={text:'BARRASUL',col:'#38e8ff'};
+    torres('centro').filter((b,i)=>i%13===5).slice(0,3).forEach((b,i)=>b.sign=[{text:'FOTO 1 HORA',col:'#ffae2b'},{text:'HOTEL GUANABARA',col:'#38e8ff'},{text:'LOTERIA',col:'#3dff6e'}][i]);}
+  // Praia do Recanto: moitas de restinga na areia, perto do calçadão
+  for(let y=14;y<LAND_Y1-6;y++)for(let x=BEACH_X0;x<BEACH_X0+5;x++){
+    if(tileOf(x,y)!==SAND||r()>0.16)continue;const px=(x+r())*T,py=(y+r())*T;
+    if(buildings.some(b=>px>b.x0-24&&px<b.x1+24&&py>b.y0-24&&py<b.y1+24))continue;
+    decor.push({type:'moita',x:px,y:py,s:0.5+r()*0.7,c:rp(['#5d8a3a','#6f9a45','#4f7a34','#8a9a4a'])});}
+  // Vila dos Pescadores: barcos de madeira e redes estendidas nas pracinhas e na beira das calçadas
+  {let nb=0,nr=0;const spot=(x,y,horiz,len,t)=>horiz?free(x,y,len,1,t)&&!isUsed(x-1,y-1,len+2,3):free(x,y,1,len,t)&&!isUsed(x-1,y-1,3,len+2);
+    for(let y=224;y<354;y++)for(let x=16;x<172;x++){
+      if(zt(x,y)!=='velha')continue;const t=tileOf(x,y);if(t!==GRASS&&t!==SIDE)continue;
+      const lim=t===GRASS?1:0.06; // na calçada, bem de vez em quando
+      for(const horiz of [true,false]){
+        if(nb<34&&spot(x,y,horiz,4,t)&&r()<0.4*lim+0.0){const px=(x+(horiz?2:.5))*T,py=(y+(horiz?.5:2))*T;if(busy(px,py,52))continue;
+          horiz?mark(x,y,4,1):mark(x,y,1,4);decor.push({type:'barco',x:px,y:py,a:(horiz?0:Math.PI/2)+(r()<0.5?0:Math.PI)+(t===GRASS?(r()-0.5)*0.4:0),c:rp(['#2f6fb3','#c0392b','#2e8b57','#e0a21b','#f2f2ee'])});nb++;break;}
+        if(nr<24&&spot(x,y,horiz,4,t)&&r()<0.25*lim){const px=(x+(horiz?2:.5))*T,py=(y+(horiz?.5:2))*T;if(busy(px,py,52))continue;
+          horiz?mark(x,y,4,1):mark(x,y,1,4);decor.push({type:'rede',x:px,y:py,horiz});nr++;break;}
+      }}}
 }
 
 genMap();

@@ -5,6 +5,21 @@ O número segue o padrão `MAIOR.MENOR.CORREÇÃO`:
 - **MENOR** — novidade (sistema, missão, veículo, reorganização)
 - **CORREÇÃO** — conserto de bug ou ajuste pequeno
 
+## 1.11.0 — 23/11/2026
+**Guanabara, 1997: a cidade ganha cara de Rio** (primeira etapa do [design](docs/design.md), ainda no mapa antigo)
+- **Nomes novos**, seguindo a regra dos nomes do design: Jacarandá (era Jardim Maresia), Morro do Cajueiro, Barra Sul, Praia do Recanto, Vila dos Pescadores e Cais do Porto. Avenidas: Via Expressa, Av. das Nações, Av. Aurora, Estrada dos Tropeiros, Av. do Cais. Ruas e becos com nome de samba, feira e choro no lugar dos nomes cearenses
+- Estádio do Jacarandá (Jacarandá FC, Unidos do Recanto, Colônia AC), Carceragem Central no lugar da delegacia, Posto Guanabara, guia de ruas "Guanabara" e "GUANABARA · 1997" na tela de título
+- **Cada bairro com a sua decoração** (só visual, o traçado e os lugares não mudam):
+  - Centro: camelódromo com barracas de lona na calçada, bancas de jornal, letreiros de FOTO 1 HORA, HOTEL GUANABARA e LOTERIA que acendem à noite
+  - Jacarandá: calçada de caquinho vermelho e bancas de jornal
+  - Morro do Cajueiro: casinhas com laje, caixa d'água azul e ferro esperando o próximo andar; as outras com telha de amianto
+  - Barra Sul: outdoors da BarraSul Incorporações e de lançamentos, letreiro do BINGO ESTRELA piscando à noite
+  - Praia do Recanto: quiosques de madeira com telhado de palha e moitas de restinga na areia
+  - Vila dos Pescadores: barcos de madeira e redes de pesca estendidas
+  - Cais do Porto: guindastes de pórtico com lança sobre o mar
+  - Orelhão com a concha laranja de verdade
+- Saves antigos continuam valendo (o mapa é o mesmo)
+
 ## 1.10.2 — 21/11/2026
 **Logo numa linha só**
 - Na tela de título, o "97" fica do lado de MARESIA (antes ficava embaixo); o subtítulo e o menu subiram

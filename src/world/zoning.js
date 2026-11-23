@@ -2,10 +2,12 @@
 // Sem imports de propósito: o gerador do mapa usa isto enquanto ainda está carregando.
 //
 //   oeste ............................................ leste (mar)
-//   Alto do Cajueiro | Jardim Maresia | Alto da Maresia | Orla | praia | mar
-//   Alto do Cajueiro | Centro         | Centro          | Orla | praia | mar
-//   Vila Velha       | Vila Velha     | Centro          | Orla | praia | mar
-//   Vila Velha       | Porto          | Porto           | Porto        | mar
+//   cajueiro | jardim | rico   | orla  | praia | mar
+//   cajueiro | centro | centro | orla  | praia | mar
+//   velha    | velha  | centro | orla  | praia | mar
+//   velha    | porto  | porto  | porto         | mar
+//   (nomes na tela: Morro do Cajueiro, Jacarandá, Barra Sul, Praia do Recanto,
+//    Vila dos Pescadores, Cais do Porto; veja world/districts.js)
 //
 // A cidade cresceu na 1.8.0 (de 262 pra 376 tiles): os quarteirões têm o mesmo tamanho,
 // mas cada bairro ganhou mais ruas. As divisas ficam sempre em cima de uma rua.
