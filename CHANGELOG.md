@@ -11,7 +11,7 @@ O número segue o padrão `MAIOR.MENOR.CORREÇÃO`:
 ![dirigindo com a câmera nova](docs/capturas/1.15.0/1-dirigindo.jpg)
 
 - **Câmera nova por padrão**: fica atrás do carro, inclinada, e gira junto com ele. Nas curvas ela vem com um pouco de atraso, e quanto mais rápido, mais ela se afasta. De ré ela não dá meia-volta
-- **A pé** a câmera fica na última direção do carro e sobe um pouco, pra mirar com o mouse. W anda pra frente da tela, A e D pros lados
+- **A pé** a câmera segue macia, um pouco à frente de onde você anda, e gira devagar pra trás do jogador quando ele muda de rumo (andar pra trás não faz ela dar meia-volta). Mirar com o mouse não gira a câmera. W anda pra frente da tela, A e D pros lados, e o rumo não muda no meio do passo enquanto a câmera gira
 - **Prédio no caminho**: quando um prédio ficaria entre a câmera e o carro (encostado numa parede, por exemplo), a câmera sobe e chega mais perto até enxergar de novo
 - **Minimapa gira junto** com a câmera (a frente fica pra cima) e o **N** anda pela borda apontando pro norte
 - **Seta do alvo** aponta certo mesmo com o alvo atrás da câmera
