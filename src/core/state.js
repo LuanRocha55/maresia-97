@@ -23,5 +23,7 @@ export const mouse={x:0,y:0,down:false,active:false};
 export const view={
   project:(x,y)=>({x:(x-cam.x)*cam.zoom+window.innerWidth/2,y:(y-cam.y)*cam.zoom+window.innerHeight/2}),
   unproject:(sx,sy)=>({x:cam.x+(sx-window.innerWidth/2)/cam.zoom,y:cam.y+(sy-window.innerHeight/2)/cam.zoom}),
+  r34:false,   // câmera 3/4 atrás do carro ligada neste quadro (só no 3D, fora dos interiores)
+  yaw:-Math.PI/2, // pra onde a câmera 3/4 olha (ângulo do mundo; -π/2 = norte)
 };
 export function mouseWorld(){return view.unproject(mouse.x,mouse.y);}

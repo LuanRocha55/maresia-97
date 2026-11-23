@@ -207,7 +207,7 @@ export function spawnOnRoad(rmin,rmax,ignoreView,type,ai,pred){
     const along=rand(p0+margin,p1-margin);
     const x=s.horiz?along:lanes[li], y=s.horiz?lanes[li]:along;
     const d=hyp(x-player.x,y-player.y); if(d<rmin||d>rmax)continue;
-    if(!ignoreView&&d<viewR())continue;
+    if(!ignoreView&&(d<viewR()||onScreen(x,y,160)))continue;
     if(pred&&!pred(x,y))continue;
     let ty=type||pick(MIX[zoneAt(x/T|0,y/T|0)]||MIX.centro);
     if(s.L.type==='beco'&&CT[ty].len>40){if(type)continue;ty=pick(['jegue','moto']);} // reforço pedido não vira carro comum

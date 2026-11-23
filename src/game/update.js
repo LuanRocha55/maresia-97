@@ -1,4 +1,3 @@
-import { R } from '../render3d/r3d.js';
 // Loop de atualização do mundo, colisões e pedestres
 import { CH } from '../core/canvas.js';
 import { rand, randi, pick, clamp, lerp, hyp, fmtMoney } from '../core/utils.js';
@@ -13,7 +12,7 @@ import { fire, WEAPONS } from './weapons.js';
 import { explode, killPed, hurtPlayer, crashSparks } from './effects.js';
 import { wasted, busted, respawn } from './player.js';
 import { startMission, finishMission, failMission, inZone } from './missions.js';
-import { S, player, cam, keys, mouse, mouseWorld } from '../core/state.js';
+import { S, player, cam, keys, mouse, mouseWorld, view } from '../core/state.js';
 import { advanceTime } from '../world/time.js';
 import { updateWeapons } from './weapons.js';
 import { updateJobs } from './jobs.js';
@@ -48,7 +47,8 @@ export function update(dt){
   } else if(player.state==='play'){
     let mx=(rt?1:0)-(lf?1:0),my=(dn?1:0)-(up?1:0);
     if(mx||my){const l=hyp(mx,my);mx/=l;my/=l;
-      if(R.cam34&&R.yaw!==undefined){const fx=Math.cos(R.yaw),fy=Math.sin(R.yaw),ax=mx,ay=my;mx=fx*(-ay)+(-fy)*ax;my=fy*(-ay)+fx*ax;}const sp=(keys['ShiftLeft']||keys['ShiftRight'])?160:95;
+      // câmera 3/4: W anda pra onde a câmera olha, A/D pros lados da tela
+      if(view.r34&&!S.interior){const fx=Math.cos(view.yaw),fy=Math.sin(view.yaw),ax=mx,ay=my;mx=fx*(-ay)-fy*ax;my=fy*(-ay)+fx*ax;}const sp=(keys['ShiftLeft']||keys['ShiftRight'])?160:95;
       player.a=Math.atan2(my,mx);const nx=player.x+mx*sp*dt,ny=player.y+my*sp*dt;
       if(!solidAt(nx,player.y))player.x=nx;if(!solidAt(player.x,ny))player.y=ny;player.anim+=dt*sp*0.12;}
     // com mouse: o personagem olha pra mira (anda com WASD e mira com o mouse)

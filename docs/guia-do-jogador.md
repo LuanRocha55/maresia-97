@@ -43,7 +43,7 @@ Depois do tutorial aparecem dicas só na primeira vez que algo acontece (primeir
 
 | Tecla | A pé | No carro |
 |---|---|---|
-| WASD / setas | andar | acelerar, frear/ré, virar |
+| WASD / setas | andar (na câmera 3/4, W anda pra frente da tela) | acelerar, frear/ré, virar |
 | Shift | correr | — |
 | Espaço | soco (com o punho) ou atirar | freio de mão |
 | X ou Ctrl | — | atirar pra frente |
@@ -60,6 +60,7 @@ Depois do tutorial aparecem dicas só na primeira vez que algo acontece (primeir
 |---|---|
 | M ou Tab | mapa em tela cheia (clique marca destino, clique direito apaga) |
 | P ou Esc | pausa com menu (Esc ou P volta) |
+| C | câmera: 3/4 atrás do carro (padrão) ou de cima, como antes (só no 3D, fica salvo) |
 | G | gráficos: 3D realista → 3D alta → 3D média → 3D leve → clássico (2D) |
 | V | liga/desliga o Filtro 97 (só no 3D) |
 | F3 | contador de FPS → painel de desempenho completo → desligado |

@@ -28,8 +28,12 @@ let pref='3d';try{pref=localStorage.getItem('aq_gfx')||'3d';}catch(e){}
 init3D();
 const prefQ=pref==='3d'?2:pref.startsWith('3d')?(+pref[2]||0):2;
 applyQuality(prefQ);set3D(pref.startsWith('3d'));
+// câmera: 3/4 atrás do carro por padrão; C volta pra de cima (fica salvo)
+try{R.cam34=localStorage.getItem('aq_cam')!=='cima';}catch(e){}
 window.addEventListener('keydown',e=>{if(!S.started||S.menu||S.paused)return;
-  if(e.code==='KeyC'){R.cam34=!R.cam34;msg('Câmera '+(R.cam34?'3/4 (atrás do carro)':'de cima')+'  (C troca)',2.5);}
+  if(e.code==='KeyC'){if(!R.on){msg('A câmera 3/4 só funciona no 3D (G troca).',2.5);return;}
+    R.cam34=!R.cam34;R.yaw=undefined;try{localStorage.setItem('aq_cam',R.cam34?'34':'cima');}catch(err){}
+    msg('Câmera '+(R.cam34?'3/4 (atrás do carro)':'de cima')+'  (C troca)',2.5);}
   else if(e.code==='KeyG')msg(cycleGfx()+'  (G troca)',2.5);
   else if(e.code==='KeyV'){if(!R.on){msg('O Filtro 97 só funciona no 3D (G troca).',2.5);return;}toggleRetro();msg('Filtro 97 '+(R.retro?'ligado':'desligado')+'  (V troca)',2.5);}});
 let last=performance.now();
