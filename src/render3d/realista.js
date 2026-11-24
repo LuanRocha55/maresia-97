@@ -197,8 +197,23 @@ function makeComposer(renderer, scene, camera) {
   composer = new EffectComposer(renderer, rt);
   composer.addPass(new RenderPass(scene, camera));
   bloom = new UnrealBloomPass(new THREE.Vector2(sz.x, sz.y), 0.2, 0.5, 2);
+  // Um único pixel inválido (NaN ou infinito, que a placa de vídeo às vezes solta num reflexo/farol
+  // forte) entra no brilho e o desfoque espalha ele em retângulos pretos enormes na tela.
+  // O filtro do brilho agora joga fora esses pixels e limita o resto, antes de desfocar.
+  sanitizeBloom(bloom);
   composer.addPass(bloom);
   composer.addPass(new OutputPass());
+}
+function sanitizeBloom(pass) {
+  const m = pass.materialHighPassFilter, from = 'vec4 texel = texture2D( tDiffuse, vUv );';
+  if (!m.fragmentShader.includes(from)) { console.warn('bloom: filtro não reconhecido, sem proteção contra NaN'); return; }
+  // comparações com NaN dão sempre falso, então "!(fora < limite)" pega NaN e infinito
+  // (isnan/isinf podem ser removidos pelo compilador do Direct3D)
+  m.fragmentShader = m.fragmentShader.replace(from, from + `
+      vec3 cc = texel.rgb;
+      if ( !( abs( cc.r ) < 1e4 && abs( cc.g ) < 1e4 && abs( cc.b ) < 1e4 ) ) cc = vec3( 0.0 );
+      texel = vec4( clamp( cc, 0.0, 64.0 ), 1.0 );`);
+  m.needsUpdate = true;
 }
 let sizeKey = '';
 // desenha a cidade no modo realista. dk = escuridão (0 dia, 1 noite)
