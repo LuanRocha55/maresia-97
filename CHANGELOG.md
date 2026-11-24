@@ -22,6 +22,29 @@ O número segue o padrão `MAIOR.MENOR.CORREÇÃO`:
 - Poses novas: pistola com as duas mãos esticadas; escopeta e submetralhadora com a coronha no ombro e a outra mão no cano; andando com arma comprida ela fica atravessada no peito; coice a cada tiro. Dá pra mirar andando (pernas andam, braços miram)
 - C continua trocando pra câmera de cima (aí o mouse volta a ser a mira na tela, como antes)
 
+## 1.19.2 — 24/11/2026
+**Rodas girando no eixo certo e barcos no cais**
+
+![rodas: antes e depois](docs/capturas/1.19.2/1-rodas-antes-depois.jpg)
+![pracinha da Vila: antes e depois](docs/capturas/1.19.2/2-praca-antes-depois.jpg)
+![cais da Vila dos Pescadores: antes e depois](docs/capturas/1.19.2/3-cais-antes-depois.jpg)
+![trapiche](docs/capturas/1.19.2/4-trapiche.jpg)
+
+- Viatura, lotação e moto: as rodas giravam em volta do comprimento do veículo (a roda "capotava" de lado). Agora rolam no eixo da própria roda
+- SUV e Exército: o estepe pendurado atrás girava junto com as rodas. Agora fica parado
+- Barcos saíram das pracinhas e calçadas da Vila dos Pescadores e foram pro mar, no cais da Vila: 8 trapiches de madeira (tábuas, estacas e cabeços de amarração) com os barcos amarrados dos lados e mais alguns fundeados entre eles
+- Os barcos ficam com o casco afundado até a linha d'água (no modelo do Meshy e no de código). As redes de pesca continuam nas pracinhas
+- Os veículos do Meshy (Jegue, Busão, Sedã Executivo) têm a roda presa na lataria e não giram; não estavam no eixo errado
+
+## 1.19.1 — 24/11/2026
+**Fim da caixa preta na tela (gráfico realista)**
+
+![antes e depois](docs/capturas/1.19.1/caixa-preta-antes-depois.jpg)
+
+- Dirigindo no gráfico realista, às vezes um retângulo preto enorme cobria parte da tela. A causa: a chapa escura atrás dos letreiros de neon (em cima dos prédios) não tinha "normal" (a direção da superfície), e a conta da luz dava um valor inválido (NaN) quando ela aparecia na tela
+- O brilho (bloom) desfoca a imagem em vários tamanhos: um único pixel inválido se espalhava em blocos pretos retangulares
+- Consertado nos dois lados: a chapa dos letreiros agora tem normal, e o filtro do brilho descarta qualquer pixel inválido antes de desfocar (se algum outro modelo soltar um, vira no máximo um pontinho)
+
 ## 1.19.0 — 24/11/2026
 **Protagonista novo e carro do agiota, feitos no Meshy**
 

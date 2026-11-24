@@ -13,7 +13,7 @@ import { drawGround2D, label } from '../render/draw.js';
 import { drawHUD, drawKeycap } from '../render/hud.js';
 import { ICONS, KIND_ICON, drawIcon } from '../render/icons.js';
 import { enterables } from '../game/interiors.js';
-import { buildCity, U, bh, facadeOf } from './build.js';
+import { buildCity, U, bh, facadeOf, BOAT_Y } from './build.js';
 import { buildings as buildingsList_, lamps as lampsList, phones as phonesList, decor as decorList, tileAt, ROAD } from '../world/map.js';
 import { loadMeshy, meshyCar, meshyProps } from './meshy.js';
 import { VEH_SCALE } from '../entities/vehicles.js';
@@ -166,7 +166,8 @@ function buildNeon(){
       gidx.push(gv,gv+1,gv+2,gv,gv+2,gv+3);gv+=4;}
     const gg=new THREE.BufferGeometry();gg.setAttribute('position',new THREE.Float32BufferAttribute(gpos,3));gg.setAttribute('uv',new THREE.Float32BufferAttribute(Array(bs.length).fill([0,0,1,0,1,1,0,1]).flat(),2));gg.setIndex(gidx);gg.computeBoundingSphere();
     const m1=new THREE.Mesh(geo,mat),m2=new THREE.Mesh(gg,glow);m2.renderOrder=4;group.add(m1);group.add(m2);
-    {const bg=geo.clone();bg.setIndex(idx.slice().reverse());group.add(new THREE.Mesh(bg,neonBack||(neonBack=new THREE.MeshLambertMaterial({color:'#1b1b1f'}))));}
+    {const bg=geo.clone();bg.setIndex(idx.slice().reverse());bg.computeVertexNormals(); // sem normal a luz dava NaN (retângulo preto no realista)
+      group.add(new THREE.Mesh(bg,neonBack||(neonBack=new THREE.MeshLambertMaterial({color:'#1b1b1f'}))));}
     const ent={k,mat,glow,on:0};list.push(ent);
     // posição de cada letreiro pra luz colorida que ele joga na fachada e na calçada (luzes.js)
     const lc=new THREE.Color(col);
@@ -350,7 +351,7 @@ const wreckMat=new THREE.MeshLambertMaterial({color:'#2b2724',userData:{pbr:{r:1
 // modelos 3D só nas qualidades média e alta (na leve, as peças feitas por código pesam menos)
 const useModels=()=>quality>0;
 let mapProps=null, meshyMeshes=null;
-// onde vão os objetos do Meshy: orelhão com a concha aberta pra rua, banca de frente pra calçada, barco no comprido
+// onde vão os objetos do Meshy: orelhão com a concha aberta pra rua, banca de frente pra calçada, barco na água do cais
 function meshyList(){
   const out=[];
   for(const ph of phonesList){let dir=[0,1];
@@ -358,7 +359,7 @@ function meshyList(){
     out.push({name:'orelhao',x:ph.x*U,z:ph.y*U,rot:Math.atan2(dir[0],dir[1])});}
   for(const d of decorList){
     if(d.type==='banca')out.push({name:'banca',x:d.x*U,z:d.y*U,rot:Math.atan2(d.face[0],d.face[1])});
-    else if(d.type==='barco')out.push({name:'barco',x:d.x*U,z:d.y*U,rot:-d.a});}
+    else if(d.type==='barco')out.push({name:'barco',x:d.x*U,z:d.y*U,y:d.agua?BOAT_Y:0,rot:-d.a});}
   return out;
 }
 function applyProps(){

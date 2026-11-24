@@ -67,11 +67,12 @@ const labels = () => LBL || (LBL = { pol: labelMat('POLÍCIA', '#f4f4f0', null, 
 // ---------- cores ----------
 const BUMPER = '#4a4c52', GLASS = '#22303b', GLASS2 = '#355063', TIRE = '#151515', HUB = '#c4c7ca', PLASTIC = '#26272b', GRILLE = '#17181b', CHROME = '#d5d8da';
 
-// rodas: cada uma num grupo próprio, virado pra que girar em X role a roda pra frente (ver syncCars)
+// rodas: cada uma num grupo próprio, virado de lado (eixo da roda = largura do carro). A ordem 'YXZ' faz o giro em X
+// (syncCars) acontecer no eixo da própria roda; na ordem padrão 'XYZ' a roda girava no eixo do comprimento do carro e "bambeava".
 function wheels(root, list, r, w) {
   const tire = mergeColored([[cyl(r, w, 0, 0, 0, 'x', 14), TIRE], [cyl(r * 0.56, w + 0.014, 0, 0, 0, 'x', 10), HUB], [cyl(r * 0.2, w + 0.02, 0, 0, 0, 'x', 8), '#8a8d90']]);
   const out = [];
-  for (const [x, z] of list) { const p = new THREE.Group(); p.position.set(x, r, z); p.rotation.y = Math.PI / 2; const m = new THREE.Mesh(tire, tireMat); m.castShadow = true; p.add(m); root.add(p); out.push(p); }
+  for (const [x, z] of list) { const p = new THREE.Group(); p.position.set(x, r, z); p.rotation.order = 'YXZ'; p.rotation.y = Math.PI / 2; const m = new THREE.Mesh(tire, tireMat); m.castShadow = true; p.add(m); root.add(p); out.push(p); }
   return out;
 }
 // vidros laterais de uma cabine com colunas inclinadas (r0..r1 atrás, f0..f1 na frente, de y1 até roof)
@@ -215,7 +216,7 @@ function moto(L, W) {
   root.add(mesh(mergeColored(D), partMat));
   const body = mesh(mergeColored(P.map(g => [g, '#ffffff'])), motoPaintMat('#e53935')); body.userData.paint = true; root.add(body);
   const wg = motoWheel(r, 0.035), wl = [];
-  for (const x of [fx, rx]) { const p = new THREE.Group(); p.position.set(x, r, 0); p.rotation.y = Math.PI / 2; const m = new THREE.Mesh(wg, tireMat); m.castShadow = true; p.add(m); root.add(p); wl.push(p); }
+  for (const x of [fx, rx]) { const p = new THREE.Group(); p.position.set(x, r, 0); p.rotation.order = 'YXZ'; p.rotation.y = Math.PI / 2; const m = new THREE.Mesh(wg, tireMat); m.castShadow = true; p.add(m); root.add(p); wl.push(p); }
   return { root, wheels: wl, top: 0.5, radius: r, paintMesh: true };
 }
 
