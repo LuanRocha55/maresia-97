@@ -19,13 +19,13 @@ import { loadMeshy, meshyCar, meshyProps } from './meshy.js';
 import { VEH_SCALE } from '../entities/vehicles.js';
 import { makeRecorder } from './gravador.js';
 const buildingsList=()=>buildingsList_;
-import { S, player, cam, keys, view } from '../core/state.js';
+import { S, player, cam, keys, view, mouse } from '../core/state.js';
 import { checkpoints } from '../game/blitz.js';
 import { pf } from '../render/style97.js';
 import { loadCarModels, carModel, repaint } from './models.js';
 import { rioModel } from './rio97.js';
 import { loadMapProps, coneMesh } from './props.js';
-import { initPeople, beginPeople, putPerson, endPeople, lookOf, withHelmet, PLAYER_LOOK } from './gente97.js';
+import { initPeople, beginPeople, putPerson, endPeople, lookOf, withHelmet, PLAYER_LOOK, playerGun } from './gente97.js';
 import { swapScene, updateEnv, renderReal, renderPlain, initTextures } from './realista.js';
 import { initLights, setLightQuality, updateLights, lightsOn, withNightLights, nightLightsOn } from './luzes.js';
 
@@ -453,13 +453,18 @@ function syncPeople(){
   const vis=!player.car&&player.state==='play'&&!(player.inv>0&&Math.floor(S.gameTime*10)%2);
   const mv=keys['KeyW']||keys['KeyS']||keys['KeyA']||keys['KeyD']||keys['ArrowUp']||keys['ArrowDown']||keys['ArrowLeft']||keys['ArrowRight'];
   if(vis||player.state==='wasted'&&!player.car){
-    const run=keys['ShiftLeft']||keys['ShiftRight'];let pose,ph=player.anim;
+    const run=(keys['ShiftLeft']||keys['ShiftRight'])&&!player.aiming;let pose,ph=player.anim;
     if(player.state==='wasted')pose='down';
     else if(player.punchCd>0.15&&player.weapon==='punho'){pose='punch';ph=(0.4-player.punchCd)/0.25*Math.PI;}
     else if(mv)pose=run?'run':'walk';
-    else pose=player.weapon&&player.weapon!=='punho'?'aim':'idle';
+    else pose='idle';
     if(pose==='idle')ph=S.gameTime*3;
+    // arma na mão: mira (braços pra frente) segurando o botão direito ou logo depois de atirar; coice nos primeiros 0,12 s
+    const armed=player.weapon&&player.weapon!=='punho'&&(player.ammo[player.weapon]||0)>0, since=S.gameTime-(player.shotT??-9);
+    playerGun.kind=armed?player.weapon:null;playerGun.aim=armed&&(player.aiming||since<0.7);
+    playerGun.kick=armed&&since<0.14?1-since/0.14:0;
     putPerson(player.x*U,player.y*U,0,player.a,PLAYER_SCALE,PLAYER_LOOK,pose,ph);
+    playerGun.kind=null;
   }
   // quem está pilotando moto: sentado, de capacete
   for(const c of S.cars){
@@ -686,17 +691,64 @@ function syncPhoneRings(vx0,vx1,vz0,vz1){
 }
 // altura dos prédios por tile (pra saber se um prédio fica entre a câmera 3/4 e o jogador)
 let hgrid=null;
-function occluded(px,pz,fx,fz,back,up){
+function buildHgrid(){
   if(!hgrid){hgrid=new Float32Array(W*H);
     for(const b of buildingsList_){if(b.kind==='canopy')continue;const h=bh(b);
       for(let y=Math.floor(b.y0/T);y<Math.ceil(b.y1/T);y++)for(let x=Math.floor(b.x0/T);x<Math.ceil(b.x1/T);x++)
         if(x>=0&&y>=0&&x<W&&y<H&&hgrid[y*W+x]<h)hgrid[y*W+x]=h;}}
+  return hgrid;
+}
+const hAt=(x,z)=>{const gx=Math.floor(x),gz=Math.floor(z);return gx<0||gz<0||gx>=W||gz>=H?0:hgrid[gz*W+gx];};
+function occluded(px,pz,fx,fz,back,up){
+  buildHgrid();
   // linhas da traseira do carro (rente ao chão) até a câmera: no meio e dos dois lados
   const sx=-fz*0.9, sz=fx*0.9, ox=px-fx*0.7, oz=pz-fz*0.7, bk=back-0.7;
   for(let i=1;i<=12;i++){const t=i/12, ry=0.25+(up-0.25)*t;
     for(const o of [0,1,-1]){const gx=Math.floor(ox-fx*bk*t+sx*o), gz=Math.floor(oz-fz*bk*t+sz*o);
       if(gx<0||gz<0||gx>=W||gz>=H)continue;if(hgrid[gz*W+gx]>ry)return 1;}}
   return 0;
+}
+// ---------- câmera de ombro (a pé) ----------
+// Atrás e um pouco acima do jogador, perto. O mouse (ponteiro preso) gira pros lados e pra cima/baixo; sem mouse ela
+// vai sozinha pra trás de onde ele anda (o código da 3/4 acima). Mirando (botão direito) ela chega mais perto e vai
+// pro lado do ombro direito, com a mira no centro da tela. Parede entre a câmera e o jogador: a câmera encosta
+// (chega mais perto) em vez de subir. Entrar/sair do carro mistura as duas câmeras (R.ob vai de 0 a 1).
+const P0=0.3, _cp=new THREE.Vector3(), _ct=new THREE.Vector3(), _dir=new THREE.Vector3();
+function shoulderCam(dtc,fx0,fz0,shx,shz){
+  const om=view.ombro;
+  R.ob=lerp(R.ob||0,om?1:0,1-Math.exp(-dtc*(om?3.5:5)));if(!om&&R.ob<0.003)R.ob=0;
+  if(R.pitch===undefined)R.pitch=P0;
+  if(om&&mouse.locked&&(mouse.dx||mouse.dy)){
+    const k=0.0024*(player.aiming?0.6:1); // mirando: mais devagar, pra acertar
+    R.yaw+=mouse.dx*k;if(!player.aiming)R.pitch=clamp(R.pitch+mouse.dy*k*0.85,-0.2,1.0);R.mouseT=performance.now();}
+  mouse.dx=mouse.dy=0;
+  // mirando a câmera fica quase reta (o tiro é sempre na horizontal); sem mexer no mouse um tempo a inclinação volta pro normal
+  if(om&&player.aiming)R.pitch=lerp(R.pitch,0.1,1-Math.exp(-dtc*10));
+  else if(!mouse.locked||performance.now()-(R.mouseT||0)>2500)R.pitch=lerp(R.pitch,P0,1-Math.exp(-dtc*1.2));
+  R.az=lerp(R.az||0,om&&player.aiming?1:0,1-Math.exp(-dtc*9));
+  view.aim=null;
+  if(R.ob<=0)return;
+  const fx=Math.cos(R.yaw),fz=Math.sin(R.yaw),pit=R.pitch,cp=Math.cos(pit),sp=Math.sin(pit);
+  _dir.set(fx*cp,-sp,fz*cp);
+  // o pivô segue o jogador de perto (no carro não: a mistura usa o último ponto)
+  const lx=player.x*U,lz=player.y*U;
+  if(om){if(R.ox===undefined||Math.hypot(lx-R.ox,lz-R.oz)>3){R.ox=lx;R.oz=lz;}else{const kf=1-Math.exp(-dtc*14);R.ox=lerp(R.ox,lx,kf);R.oz=lerp(R.oz,lz,kf);}}
+  const side=lerp(0.05,0.4,R.az), dist=lerp(2.8,1.6,R.az), ph=lerp(0.78,0.74,R.az);
+  const bx=R.ox-fz*side, by=ph, bz=R.oz+fx*side;
+  // encosta na parede: anda do pivô pra trás e para antes do primeiro prédio mais alto que a linha
+  buildHgrid();let d=dist;
+  for(let i=1;i<=14;i++){const t=dist*i/14,x=bx-_dir.x*t,y=by-_dir.y*t,z=bz-_dir.z*t;
+    if(hAt(x,z)>y-0.08||hAt(x+0.15,z)>y-0.08||hAt(x-0.15,z)>y-0.08||hAt(x,z+0.15)>y-0.08||hAt(x,z-0.15)>y-0.08){d=Math.max(0.45,t-0.3);break;}}
+  R.od=R.od===undefined?d:lerp(R.od,d,1-Math.exp(-dtc*(d<R.od?25:3)));
+  // encostada na parede ela sobe um pouco, pra olhar por cima da cabeça
+  _cp.set(bx-_dir.x*R.od,Math.max(0.15,by-_dir.y*R.od+(dist-R.od)*0.22),bz-_dir.z*R.od);
+  _ct.copy(_cp).addScaledVector(_dir,6);
+  if(R.ob<1){ // mistura com a câmera de cima/atrás do carro
+    const oldT=new THREE.Vector3(0,0,-1).applyQuaternion(camera.quaternion).multiplyScalar(8).add(camera.position);
+    _cp.lerpVectors(camera.position,_cp,R.ob);_ct.lerpVectors(oldT,_ct,R.ob);}
+  camera.position.set(_cp.x+shx*0.3,_cp.y,_cp.z+shz*0.3);camera.lookAt(_ct);
+  // mira: um ponto bem à frente na direção da câmera (o jogador vira pra ele; o tiro sai na horizontal)
+  if(om)view.aim={x:(camera.position.x+fx*30)*T,y:(camera.position.z+fz*30)*T};
 }
 export function render3D(signalState){
   frameN++;adapt();
@@ -709,12 +761,15 @@ export function render3D(signalState){
   // câmera inclinada acima do jogador (afasta com a velocidade)
   const zn=cam.zoom/clamp(CH/820,0.7,1.6);camZ=lerp(camZ,zn,0.1);
   const dist=24/clamp(camZ,0.5,1.3);
-  {const sp=player.car?Math.abs(player.car.fwdSpeed()):0,fov=42+clamp((sp-150)/500,0,1)*5;
-    if(Math.abs(camera.fov-fov)>0.02){camera.fov=lerp(camera.fov,fov,0.06);camera.updateProjectionMatrix();}}
+  {const sp=player.car?Math.abs(player.car.fwdSpeed()):0,ob=R.ob||0,fov=lerp(42+clamp((sp-150)/500,0,1)*5,lerp(60,47,R.az||0),ob);
+    // de perto (câmera de ombro) o plano de corte da frente chega mais perto, senão a parede encostada some
+    const near=ob>0.3?0.1:0.5;if(camera.near!==near){camera.near=near;camera.updateProjectionMatrix();}
+    if(Math.abs(camera.fov-fov)>0.02){camera.fov=lerp(camera.fov,fov,ob>0&&ob<1?0.2:0.06);camera.updateProjectionMatrix();}}
   let tx=cam.x*U, tz=cam.y*U;
   const shx=(Math.random()-.5)*S.shake*0.05, shz=(Math.random()-.5)*S.shake*0.05;
   let hw,vz0,vz1,vx0,vx1;
   view.r34=!!(R.cam34&&!S.interior);
+  view.ombro=view.r34&&!player.car&&player.state==='play';
   if(S.camYaw!==undefined){R.yaw=S.camYaw;R.fx=undefined;R.lift=0;S.camYaw=undefined;} // saiu de um lugar: começa olhando pra rua
   if(view.r34){
     // câmera 3/4: atrás do carro, inclinada, gira com a direção dele com um atraso nas curvas.
@@ -725,7 +780,7 @@ export function render3D(signalState){
     else if(pc&&sp>8){
       // de ré a câmera não dá meia-volta: só segue o carro andando pra frente
       if(pc.fwdSpeed()>0)R.yaw+=Math.atan2(Math.sin(pc.a-R.yaw),Math.cos(pc.a-R.yaw))*(1-Math.exp(-dtc*3.2));}
-    else if(!pc&&S.gameTime-(player.walkT||-9)<0.15){
+    else if(!pc&&!mouse.locked&&!player.aiming&&S.gameTime-(player.walkT||-9)<0.15){
       // a pé: a câmera vai pra trás de onde o jogador está andando (mirar com o mouse não gira a câmera).
       // Andando pra trás (rumo à câmera) ela não dá meia-volta
       const da=Math.atan2(Math.sin(player.moveA-R.yaw),Math.cos(player.moveA-R.yaw));
@@ -748,8 +803,10 @@ export function render3D(signalState){
     if(R.cb===undefined){R.cb=back;R.cu=up;R.ca=ahead;}
     R.cb=lerp(R.cb,back,k);R.cu=lerp(R.cu,up,k);R.ca=lerp(R.ca,ahead,k);
     camera.position.set(px-fx*R.cb+shx,R.cu,pz-fz*R.cb+shz);camera.lookAt(px+fx*R.ca,0,pz+fz*R.ca);
+    shoulderCam(dtc,fx,fz,shx,shz);
     // o que aparece na tela fica mais à frente: carrega um quadrado em volta desse ponto
-    const cx=px+fx*14,cz=pz+fz*14, r=34;
+    // (na câmera de ombro dá pra ver mais longe: o quadrado vai mais pra frente)
+    const fa=lerp(14,18,R.ob),cx=R.fx+Math.cos(R.yaw)*fa,cz=R.fz+Math.sin(R.yaw)*fa, r=lerp(34,38,R.ob);
     hw=r;vx0=cx-r;vx1=cx+r;vz0=cz-r;vz1=cz+r;tx=cx;tz=cz;
   }else{
   camera.position.set(tx+shx,dist*0.92,tz+dist*0.62+shz);camera.lookAt(tx,0,tz-1);

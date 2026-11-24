@@ -5,6 +5,23 @@ O número segue o padrão `MAIOR.MENOR.CORREÇÃO`:
 - **MENOR** — novidade (sistema, missão, veículo, reorganização)
 - **CORREÇÃO** — conserto de bug ou ajuste pequeno
 
+## 1.20.0 — 24/11/2026
+**Câmera de ombro a pé e pose de tiro com arma na mão**
+
+![a pé: antes e depois](docs/capturas/1.20.0/1-a-pe-antes-depois.jpg)
+![mirando: antes e depois](docs/capturas/1.20.0/2-mirando-antes-depois.jpg)
+![poses das armas de lado](docs/capturas/1.20.0/3-poses-de-lado.jpg)
+![câmera encostando na parede](docs/capturas/1.20.0/4-parede.jpg)
+
+- A pé a câmera agora fica atrás do jogador, perto e baixa (estilo jogo de mundo aberto em 3ª pessoa). No carro continua a câmera 3/4 de antes; entrar e sair mistura as duas sem pulo
+- Clique na rua prende o mouse no jogo: o mouse gira a câmera pros lados e pra cima/baixo, e W anda pra onde a câmera olha. ESC solta o mouse (e pausa). Carro, menu, mapa, interior e pausa soltam sozinhos
+- Sem mouse preso (só teclado) a câmera vai sozinha pra trás de onde ele anda, como antes
+- Botão direito segurado com arma: mira. A câmera chega mais perto, vai pro ombro direito, aparece a mira e ele anda de lado, devagar, sempre virado pra mira. Esquerdo atira (dá pra atirar sem mirar também: ele vira pra frente da câmera). F continua entrando no carro e nas portas
+- Prédio entre a câmera e o jogador: a câmera encosta (chega mais perto e sobe um pouco) em vez de atravessar a parede
+- Arma na mão: pistola, escopeta e submetralhadora feitas por código (poucas caixas, sem textura)
+- Poses novas: pistola com as duas mãos esticadas; escopeta e submetralhadora com a coronha no ombro e a outra mão no cano; andando com arma comprida ela fica atravessada no peito; coice a cada tiro. Dá pra mirar andando (pernas andam, braços miram)
+- C continua trocando pra câmera de cima (aí o mouse volta a ser a mira na tela, como antes)
+
 ## 1.19.2 — 24/11/2026
 **Rodas girando no eixo certo e barcos no cais**
 

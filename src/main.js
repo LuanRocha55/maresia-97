@@ -14,9 +14,9 @@ import { renderInterior3D } from './render3d/interior3d.js';
 import { init3D, set3D, render3D, R, applyQuality, getQuality, QNAMES, gfxInfo, cycleGfx, toggleRetro } from './render3d/r3d.js';
 import { signalState } from './world/districts.js';
 import { msg } from './game/world.js';
-import { S, player, cam, keys } from './core/state.js';
+import { S, player, cam, keys, view } from './core/state.js';
 import { resetWorld } from './game/world.js';
-import './core/input.js';
+import { syncPointerLock } from './core/input.js';
 import { loadFonts, pf } from './render/style97.js';
 
 // as fontes entram nas texturas do chão e dos telhados: espera carregar (no máximo 2,5 s)
@@ -33,7 +33,7 @@ try{R.cam34=localStorage.getItem('aq_cam')!=='cima';}catch(e){}
 window.addEventListener('keydown',e=>{if(!S.started||S.menu||S.paused)return;
   if(e.code==='KeyC'){if(!R.on){msg('A câmera 3/4 só funciona no 3D (G troca).',2.5);return;}
     R.cam34=!R.cam34;R.yaw=undefined;try{localStorage.setItem('aq_cam',R.cam34?'34':'cima');}catch(err){}
-    msg('Câmera '+(R.cam34?'3/4 (atrás do carro)':'de cima')+'  (C troca)',2.5);}
+    msg('Câmera '+(R.cam34?'atrás (carro) e no ombro (a pé)':'de cima')+'  (C troca)',2.5);}
   else if(e.code==='KeyG')msg(cycleGfx()+'  (G troca)',2.5);
   else if(e.code==='KeyV'){if(!R.on){msg('O Filtro 97 só funciona no 3D (G troca).',2.5);return;}toggleRetro();msg('Filtro 97 '+(R.retro?'ligado':'desligado')+'  (V troca)',2.5);}});
 let last=performance.now();
@@ -96,6 +96,8 @@ function frame(now){
     const use3D=R.on;
     document.getElementById('gl').style.visibility=use3D?'visible':'hidden';
     if(S.interior){if(use3D)renderInterior3D();else renderInterior();}else if(use3D)render3D(signalState);else render();
+    if(!use3D||S.interior)view.ombro=false;
+    syncPointerLock();
     perf.rd+=performance.now()-_t2;perf.frames++;perf.acc+=now-(perf.lastNow||now);perf.lastNow=now;
     if(perf.acc>=500){perf.shown={fps:Math.round(perf.frames*1000/perf.acc),up:(perf.up/perf.frames).toFixed(1),rd:(perf.rd/perf.frames).toFixed(1)};perf.frames=0;perf.acc=0;perf.up=0;perf.rd=0;}
     R.wantGpu=perf.mode===2;

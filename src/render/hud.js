@@ -30,8 +30,16 @@ const fmtLcd=v=>{const n=Math.max(0,Math.floor(Math.abs(v)));return (v<0?'-':'')
 function drawCrosshair(g){
   const playing=S.started&&!S.paused&&!S.menu&&!S.mapOpen&&player.state==='play';
   cv.style.cursor=(playing&&mouse.active)?'none':'default';
-  if(!playing||!mouse.active)return;
-  const x=Math.round(mouse.x),y=Math.round(mouse.y),armed=player.weapon!=='punho';
+  if(!playing)return;
+  let x,y;const armed=player.weapon!=='punho';
+  // a pé na câmera de ombro sem o mouse preso: lembra que um clique liga o mouse na câmera
+  if(view.ombro&&!mouse.locked&&!player.car)ptxt(g,'clique: o mouse gira a câmera  ·  ESC solta',CW/2,CH-10,12,'rgba(236,232,223,0.7)','center');
+  if(mouse.locked){
+    // câmera de ombro: a mira aparece mirando (botão direito) ou atirando, onde o tiro vai passar (perto do centro da tela)
+    if(!armed||player.car||!(player.aiming||mouse.down||S.gameTime-(player.shotT??-9)<0.5))return;
+    const a=player.a,d=320,p=view.project(player.x+Math.cos(a)*d,player.y+Math.sin(a)*d,0.45);
+    if(p.behind)return;x=Math.round(p.x);y=Math.round(p.y);
+  }else{if(!mouse.active)return;x=Math.round(mouse.x);y=Math.round(mouse.y);}
   const col=armed?'#ff5a4a':'#ffffff';
   // mira em pixel: quatro tracinhos e um ponto
   for(const [dx,dy,w,h] of [[4,-1,8,3],[-12,-1,8,3],[-1,4,3,8],[-1,-12,3,8]]){g.fillStyle='#000';g.fillRect(x+dx-1,y+dy-1,w+2,h+2);g.fillStyle=col;g.fillRect(x+dx,y+dy,w,h);}
@@ -235,8 +243,8 @@ export function drawInteriorHUD(g,title,hint){
 const CONTROLS=[
   ['WASD / setas','dirigir ou andar'],['ESPAÇO','freio de mão (carro) / soco (a pé)'],['F ou ENTER','entrar, sair, roubar carro'],
   ['SHIFT','correr a pé'],['H','buzina'],['Q / E ou 1-4','trocar arma'],['X','atirar do carro pra frente'],
-  ['MOUSE','mira · esquerdo atira · direito entra/sai · roda troca arma'],['M ou TAB','mapa (guia de ruas)'],['J','empregos: táxi, motoboy, busão, guincho, vigilante'],
-  ['C','câmera: 3/4 atrás do carro ou de cima'],['G','gráficos (3D alta, média, leve, clássico)'],['V','liga/desliga o Filtro 97'],['N','som'],['P ou ESC','pausa'],['F3','desempenho'],
+  ['MOUSE','a pé: clique prende o mouse e ele gira a câmera · direito segura a mira · esquerdo atira · roda troca arma'],['M ou TAB','mapa (guia de ruas)'],['J','empregos: táxi, motoboy, busão, guincho, vigilante'],
+  ['C','câmera: atrás do carro e no ombro a pé, ou de cima'],['G','gráficos (3D alta, média, leve, clássico)'],['V','liga/desliga o Filtro 97'],['N','som'],['P ou ESC','pausa'],['F3','desempenho'],
 ];
 const TIPS=['Orelhão amarelo tocando = missão no bip.','PINTURA EXPRESS ($500 por estrela) apaga a polícia.','OFICINA DO ZÉ compra carro roubado.','ARMAS DO TONHÃO vende arma · POSTO conserta o carro ($150).'];
 export function drawTitle(){
