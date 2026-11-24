@@ -58,8 +58,12 @@ function drawPerf(){
     'tela 3D: '+info.w+'x'+info.h+' (escala '+info.dpr.toFixed(2)+')  ·  qualidade '+QNAMES[info.quality]+'  ·  sombras '+(info.shadows?'sim':'não'),
     'chamadas de desenho: '+info.calls+'  ·  triângulos: '+Math.round(info.tris/1000)+' mil  ·  pedaços de chão: '+info.chunks);
     if(/intel|uhd|iris|microsoft basic|swiftshader|llvmpipe/i.test(info.gpu))lines.push('! O navegador está usando a placa integrada/software, não a dedicada.');
-    const cpu=parseFloat(perf.shown.up)+parseFloat(perf.shown.rd), ms=1000/Math.max(1,perf.shown.fps);
-    if(ms>20)lines.push(cpu<ms*0.5?'-> o gargalo é a placa de vídeo (a CPU fica esperando)':'-> o gargalo é o processador');}
+    // "desenho (CPU)" inclui a CPU parada esperando a placa de vídeo (ao mandar textura, por exemplo). O que sobra
+    // do quadro além de lógica + desenho é a CPU sem nada pra fazer: se é muito, quem segura é a placa de vídeo.
+    const cpu=parseFloat(perf.shown.up)+parseFloat(perf.shown.rd), ms=1000/Math.max(1,perf.shown.fps), idle=Math.max(0,ms-cpu);
+    lines.push('placa de vídeo desenhando: '+(info.gpuMs!=null?info.gpuMs.toFixed(1)+' ms':info.gpuTimer===false?'(o navegador não deixa medir)':'medindo...')+'  ·  CPU à toa: '+idle.toFixed(1)+' ms');
+    if(ms>18){const gpuBound=info.gpuMs!=null?info.gpuMs>cpu*0.9:idle>ms*0.25;
+      lines.push(gpuBound?'-> o limite é a placa de vídeo (o processador fica esperando)':'-> o limite é o processador');}}
   else lines.push('(modo clássico ou interior: só 2D)');
   g.setTransform(DPR,0,0,DPR,0,0);g.font=pf(12);g.textAlign='left';
   const w=Math.max(...lines.map(l=>g.measureText(l).width))+20, x=CW-w-14, y=200;
@@ -94,6 +98,7 @@ function frame(now){
     if(S.interior){if(use3D)renderInterior3D();else renderInterior();}else if(use3D)render3D(signalState);else render();
     perf.rd+=performance.now()-_t2;perf.frames++;perf.acc+=now-(perf.lastNow||now);perf.lastNow=now;
     if(perf.acc>=500){perf.shown={fps:Math.round(perf.frames*1000/perf.acc),up:(perf.up/perf.frames).toFixed(1),rd:(perf.rd/perf.frames).toFixed(1)};perf.frames=0;perf.acc=0;perf.up=0;perf.rd=0;}
+    R.wantGpu=perf.mode===2;
     if(perf.mode===2&&perf.shown.fps!==undefined)drawPerf();
     if(S.mapOpen&&!S.interior)drawBigMap();
     if(S.menu)drawMenu();
