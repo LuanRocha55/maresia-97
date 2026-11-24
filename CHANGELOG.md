@@ -5,6 +5,21 @@ O número segue o padrão `MAIOR.MENOR.CORREÇÃO`:
 - **MENOR** — novidade (sistema, missão, veículo, reorganização)
 - **CORREÇÃO** — conserto de bug ou ajuste pequeno
 
+## 1.17.0 — 24/11/2026
+**Modelos do Meshy no jogo e veículos no tamanho de verdade**
+
+![carro antes e depois](docs/capturas/1.17.0/1-carro-antes-depois.jpg)
+![ônibus antes e depois](docs/capturas/1.17.0/2-onibus-antes-depois.jpg)
+![orelhão antes e depois](docs/capturas/1.17.0/3-orelhao-antes-depois.jpg)
+![banca antes e depois](docs/capturas/1.17.0/4-banca-antes-depois.jpg)
+![barco antes e depois](docs/capturas/1.17.0/5-barco-antes-depois.jpg)
+
+- **Jegue** agora é um hatch de 3 portas dos anos 90 e o **Busão** é um ônibus urbano com fileira de janelas. Os dois foram gerados no Meshy, reduzidos e pintados pro jogo. A lataria do Jegue e a faixa do ônibus continuam com as cores variadas do trânsito
+- **Orelhão** com a concha laranja de fibra (aberta pra rua), **banca de jornal** verde com as portas abertas e revistas, e **barco de pesca** pintado com cabine e motor de popa na Vila dos Pescadores
+- **Todos os veículos ficaram ~1,9x maiores**, no tamanho certo perto das pessoas (antes um carro tinha o comprimento de uma pessoa). As ruas não mudaram. Motoca, viatura, lotação, caminhão e o resto crescem junto; quem pilota a moto senta na altura nova
+- Os becos da Vila continuam só pra carro pequeno (Jegue, Brisa, Táxi, Bugue, Motoca, Viatura), agora marcado por tipo e não mais pelo comprimento
+- Os modelos novos aparecem nas qualidades média e alta (na leve continuam as peças feitas por código) e pesam pouco: 570 KB no total
+
 ## 1.16.0 — 24/11/2026
 **Portas de verdade viradas pra rua, e interiores novos**
 

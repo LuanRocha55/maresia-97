@@ -14,7 +14,9 @@ import { drawHUD, drawKeycap } from '../render/hud.js';
 import { ICONS, KIND_ICON, drawIcon } from '../render/icons.js';
 import { enterables } from '../game/interiors.js';
 import { buildCity, U, bh, facadeOf } from './build.js';
-import { buildings as buildingsList_, lamps as lampsList } from '../world/map.js';
+import { buildings as buildingsList_, lamps as lampsList, phones as phonesList, decor as decorList, tileAt, ROAD } from '../world/map.js';
+import { loadMeshy, meshyCar, meshyProps } from './meshy.js';
+import { VEH_SCALE } from '../entities/vehicles.js';
 const buildingsList=()=>buildingsList_;
 import { S, player, cam, keys, view } from '../core/state.js';
 import { checkpoints } from '../game/blitz.js';
@@ -86,6 +88,8 @@ export function init3D(){
     overlayMesh=new THREE.Mesh(og,new THREE.MeshLambertMaterial({map:overlayTex,transparent:true,depthWrite:false}));overlayMesh.material.userData.pbr={r:0.95};overlayMesh.renderOrder=1;overlayMesh.receiveShadow=true;scene.add(overlayMesh);
     initPeople(scene);initParticles();
     loadCarModels().then(ok=>{if(ok)rebuildCars();});
+    // modelos do Meshy: Jegue e Busão, orelhão, banca e barco
+    loadMeshy().then(ok=>{if(!ok)return;rebuildCars();meshyMeshes=meshyProps(scene,meshyList());applyProps();}).catch(e=>console.warn('Modelos Meshy:',e));
     // árvores, postes, casas e cones (props.js): troca as peças feitas por código quando chegam
     loadMapProps(scene).then(r=>{mapProps=r;applyProps();movePools();for(const g of cpMeshes.values())scene.remove(g);cpMeshes.clear();}).catch(e=>console.warn('Modelos do mapa:',e));
     R.ok=true;DBG.renderer=renderer;DBG.scene=scene;
@@ -268,11 +272,13 @@ function mergeBoxes(list){
     for(let i=0;i<P.count;i++){pos.push(P.getX(i)*sx+x,P.getY(i)*sy+y,P.getZ(i)*sz+z);nor.push(N.getX(i),N.getY(i),N.getZ(i));col.push(c.r,c.g,c.b);}}
   const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setAttribute('normal',new THREE.Float32BufferAttribute(nor,3));g.setAttribute('color',new THREE.Float32BufferAttribute(col,3));
   g.computeBoundingSphere();return g;}
+const LS=1/VEH_SCALE; // faróis e lanternas continuam do tamanho antigo (o carro inteiro cresce)
 const HEIGHTS={lotacao:0.7,busao:1.15,caminhao:1.25,camin:0.5,suv:0.55,moto:0.3,guincho:0.55,viatura:0.42,swat:0.85,fbi:0.4,exercito:0.45,blindado:0.8};
 const carGeo={};
 function carParts(c){
   const key=c.type+'|'+c.t.len+'|'+c.t.wid;if(carGeo[key])return carGeo[key];
-  const L=c.t.len*U, Wd=c.t.wid*U, h=HEIGHTS[c.type]||0.42, D=[];let body,brake=null,head=null,siren=null,cabin=null;
+  // tudo montado no tamanho antigo; o carro inteiro cresce VEH_SCALE no makeCar
+  const L=c.t.len*U/VEH_SCALE, Wd=c.t.wid*U/VEH_SCALE, h=HEIGHTS[c.type]||0.42, D=[];let body,brake=null,head=null,siren=null,cabin=null;
   const GL='#86c5da', TIRE='#151515', HUB='#b8bdc2', TRIM='#2a2a2e';
   // vidro em volta de uma cabine (frente, trás e laterais), um pouco mais larga que ela pra aparecer dos lados
   const glassAround=(cx,len,y,hh,w)=>D.push([GL,0.05,hh,w*0.9,cx+len/2+0.01,y,0],[GL,0.05,hh*0.9,w*0.86,cx-len/2-0.01,y,0],[GL,len*0.78,hh*0.85,w+0.02,cx,y,0]);
@@ -299,8 +305,8 @@ function carParts(c){
     // rodas redondas com calota
     if(c.type!=='blindado'){const big=c.type==='busao'||c.type==='caminhao',r=big?0.4:0.34,ax=big?0.36:0.32;
       for(const sx of[-1,1])for(const sz of[-1,1]){const z=sz*Wd*0.5;D.push([TIRE,r,r,0.13,sx*L*ax,r/2,z,'cyl'],[HUB,r*0.5,r*0.5,0.02,sx*L*ax,r/2,z+sz*0.07,'cyl']);}}
-    brake=mergeBoxes([['#fff',0.04,0.1,0.18,-L/2-0.01,0.18+h*0.65,-Wd*0.32],['#fff',0.04,0.1,0.18,-L/2-0.01,0.18+h*0.65,Wd*0.32]]);
-    head=mergeBoxes([['#fff',0.04,0.1,0.18,L/2+0.01,0.18+h*0.6,-Wd*0.32],['#fff',0.04,0.1,0.18,L/2+0.01,0.18+h*0.6,Wd*0.32]]);
+    brake=mergeBoxes([['#fff',LS*0.04,LS*0.1,LS*0.18,-L/2-0.01,0.18+h*0.65,-Wd*0.32],['#fff',LS*0.04,LS*0.1,LS*0.18,-L/2-0.01,0.18+h*0.65,Wd*0.32]]);
+    head=mergeBoxes([['#fff',LS*0.04,LS*0.1,LS*0.18,L/2+0.01,0.18+h*0.6,-Wd*0.32],['#fff',LS*0.04,LS*0.1,LS*0.18,L/2+0.01,0.18+h*0.6,Wd*0.32]]);
     if(c.type==='viatura')siren=[[0.18,0.1,Wd*0.4,-L*0.05,0.18+h+0.34,-Wd*0.22],[0.18,0.1,Wd*0.4,-L*0.05,0.18+h+0.34,Wd*0.22]];
   }
   return carGeo[key]={detail:D.length?mergeBoxes(D):null,body,cabin,brake,head,siren,L,Wd,h};
@@ -311,7 +317,8 @@ function makeCar(c){
   g.userData.col=c.color;
   // viatura e lotação de 97 (feitas por código, leves: valem em todas as qualidades); os outros usam o
   // modelo 3D (Kenney) quando tem e já carregou; senão, o carro de caixas
-  const M=rioModel(c.type,P.L,P.Wd)||(useModels()?carModel(c.type,c.color,P.L):null);
+  g.scale.setScalar(VEH_SCALE);
+  const M=rioModel(c.type,P.L,P.Wd)||(useModels()?(meshyCar(c.type,c.color,1/VEH_SCALE)||carModel(c.type,c.color,P.L)):null);
   let ly=0; // quanto subir/descer faróis e lanternas pra encaixar no modelo
   if(M){g.add(M.root);g.userData.model=M;if(M.repaint)M.repaint(c.color);ly=M.top*0.42-(0.18+P.h*0.65);}
   else{
@@ -341,9 +348,22 @@ const sirR=[new THREE.MeshBasicMaterial({color:'#ff2020'}),new THREE.MeshLambert
 const wreckMat=new THREE.MeshLambertMaterial({color:'#2b2724',userData:{pbr:{r:1}}});
 // modelos 3D só nas qualidades média e alta (na leve, as peças feitas por código pesam menos)
 const useModels=()=>quality>0;
-let mapProps=null;
+let mapProps=null, meshyMeshes=null;
+// onde vão os objetos do Meshy: orelhão com a concha aberta pra rua, banca de frente pra calçada, barco no comprido
+function meshyList(){
+  const out=[];
+  for(const ph of phonesList){let dir=[0,1];
+    for(let d=1;d<=3;d++){const f=[[1,0],[-1,0],[0,1],[0,-1]].find(([dx,dy])=>tileAt(ph.x+dx*d*T,ph.y+dy*d*T)===ROAD);if(f){dir=f;break;}}
+    out.push({name:'orelhao',x:ph.x*U,z:ph.y*U,rot:Math.atan2(dir[0],dir[1])});}
+  for(const d of decorList){
+    if(d.type==='banca')out.push({name:'banca',x:d.x*U,z:d.y*U,rot:Math.atan2(d.face[0],d.face[1])});
+    else if(d.type==='barco')out.push({name:'barco',x:d.x*U,z:d.y*U,rot:-d.a});}
+  return out;
+}
 function applyProps(){
-  if(!mapProps)return;const on=useModels();
+  const on=useModels();
+  if(meshyMeshes){for(const m of meshyMeshes)m.visible=on;for(const m of city.swap.meshy)m.visible=!on;}
+  if(!mapProps)return;
   for(const m of mapProps.meshes)m.visible=on;
   for(const k of ['trees','lamps','houses'])if(mapProps.done[k])for(const m of city.swap[k])m.visible=!on;
 }
@@ -366,7 +386,7 @@ function syncCars(night){
     if(M){ // carro com modelo: rodas giram, carcaça queimada vira cinza escuro
       if(c.wreck){if(!g.userData.burnt){g.userData.burnt=true;M.root.traverse(o=>{if(o.isMesh)o.material=wreckMat;});}}
       else{if(g.userData.col!==c.color){if(M.repaint)M.repaint(c.color);else repaint(M,c.color);g.userData.col=c.color;}
-        const spin=(c.fwdSpeed?c.fwdSpeed():0)*U/60/M.radius;for(const w of M.wheels)w.rotation.x+=spin;}
+        const spin=(c.fwdSpeed?c.fwdSpeed():0)*U/60/(M.radius*VEH_SCALE);for(const w of M.wheels)w.rotation.x+=spin;}
     }else{
     const b=g.userData.body,cb=g.userData.cabin;
     if(c.wreck){if(b.material!==wreckMat){b.material=wreckMat;if(cb)cb.material=wreckMat;}}
@@ -443,9 +463,9 @@ function syncPeople(){
   for(const c of S.cars){
     if(c.type!=='moto'||!c.driver||c.wreck)continue;
     const dx=c.x-cam.x,dy=c.y-cam.y;if(dx*dx+dy*dy>(46*T)*(46*T))continue;
-    const me=c.driver==='player',sc=me?PLAYER_SCALE*0.85:PED_SCALE,back=-0.13,ca=Math.cos(c.a),sa=Math.sin(c.a);
+    const me=c.driver==='player',sc=me?PLAYER_SCALE*0.85:PED_SCALE,back=-0.13*VEH_SCALE,ca=Math.cos(c.a),sa=Math.sin(c.a);
     const L=me?withHelmet(PLAYER_LOOK,'#e53935'):withHelmet(lookOf(riderOf(c)),'#f4f4f0');
-    putPerson(c.x*U+ca*back,c.y*U+sa*back,0.3-0.56*sc,c.a,sc,L,'sit',0);
+    putPerson(c.x*U+ca*back,c.y*U+sa*back,0.3*VEH_SCALE-0.56*sc,c.a,sc,L,'sit',0);
   }
   // só quem está perto da câmera (o resto não aparece mesmo)
   const r2=(46*T)*(46*T);
