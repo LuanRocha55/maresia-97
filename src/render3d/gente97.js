@@ -41,12 +41,13 @@ const CAST = new Set(['torso', 'pelvis', 'head', 'thigh']);
 export function initPeople(scene) { IM = makePeopleSet(scene); return IM; }
 // um conjunto de bonecos por cena (a rua e o interior dos lugares): usePeopleSet troca o conjunto ativo e devolve o anterior
 export function usePeopleSet(set) { const old = IM; IM = set; return old; }
+const sceneOf = new WeakMap(); // conjunto -> cena (onde o protagonista Meshy é posto)
 export function makePeopleSet(scene) {
-  const IM = {};
+  const IM = {}; sceneOf.set(IM, scene);
   for (const [k, per] of Object.entries(PARTS)) {
     const m = new THREE.MeshLambertMaterial({ color: '#ffffff' }); m.userData.pbr = { r: k === 'hair' || k === 'long' ? 0.6 : 0.85 };
     const im = new THREE.InstancedMesh(GEO[k], m, MAXP * per); im.count = 0; im.frustumCulled = false; im.castShadow = CAST.has(k);
-    im.instanceMatrix.setUsage(THREE.DynamicDrawUsage); im.setColorAt(0, new THREE.Color(1, 1, 1)); scene.add(im); IM[k] = { im, n: 0 };
+    im.instanceMatrix.setUsage(THREE.DynamicDrawUsage); im.setColorAt(0, new THREE.Color(1, 1, 1)); im.userData.gente = true; scene.add(im); IM[k] = { im, n: 0 };
   }
   return IM;
 }
@@ -90,19 +91,15 @@ export function withHelmet(L, hex) { const c = col(hex); let H = helmets.get(L);
 
 // ---------- montagem por quadro ----------
 const B = new THREE.Matrix4(), M = new THREE.Matrix4(), R = new THREE.Matrix4(), J = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), v = new THREE.Vector3(), s3 = new THREE.Vector3(), ZERO = new THREE.Matrix4().makeScale(0, 0, 0);
-export function beginPeople() { if (IM) for (const k in IM) IM[k].n = 0; }
+export function beginPeople() { if (IM) for (const k in IM) IM[k].n = 0; const pm = IM && playerMeshes.get(IM); if (pm) pm.mesh.visible = false; }
 function put(k, mat, c) { const P = IM[k]; if (P.n >= MAXP * PARTS[k]) return; P.im.setMatrixAt(P.n, mat); P.im.setColorAt(P.n, c || col('#fff')); P.n++; }
 const rotZ = a => R.makeRotationZ(a);
 // junta: pivô (x,y,z) no corpo, gira a em Z (pra frente/trás) e opcionalmente b em X (abre pro lado)
 function joint(out, base, x, y, z, a, b = 0) { e.set(b, 0, a, 'XYZ'); q.setFromEuler(e); J.compose(v.set(x, y, z), q, s3.set(1, 1, 1)); return out.multiplyMatrices(base, J); }
 const tmpA = new THREE.Matrix4(), tmpB = new THREE.Matrix4(), body = new THREE.Matrix4();
 // pose: 'walk' | 'run' | 'idle' | 'down' | 'sit' | 'punch' | 'aim'. ph = fase da passada (em radianos).
-export function putPerson(x, y, z, a, scale, L, pose, ph) {
-  if (!IM || IM.torso.n >= MAXP) return;
-  const down = pose === 'down';
-  e.set(0, -a, down ? Math.PI / 2 : 0, 'YXZ'); q.setFromEuler(e);
-  B.compose(v.set(x, down ? z + 0.14 * scale : z, y), q, s3.set(scale, scale, scale));
-  // ângulos (Z positivo = pé/mão pra frente)
+// ângulos da pose (Z positivo = pé/mão pra frente). Os mesmos pro boneco de peças e pro protagonista Meshy.
+function poseAngles(pose, ph) {
   let hipA = 0, hipB = 0, kneeA = 0, kneeB = 0, shA = 0, shB = 0, elA = 0, elB = 0, lean = 0, bob = 0, sideR = 0.135, shR = 0;
   if (pose === 'walk' || pose === 'run') {
     const run = pose === 'run', amp = run ? 0.75 : 0.42, s = Math.sin(ph), c = Math.cos(ph);
@@ -113,6 +110,15 @@ export function putPerson(x, y, z, a, scale, L, pose, ph) {
   else if (pose === 'sit') { hipA = hipB = 1.45; kneeA = kneeB = -1.35; shA = shB = 0.95; elA = elB = 0.35; lean = -0.12; sideR = 0.15; }
   else if (pose === 'punch') { const k = Math.max(0, Math.sin(ph)); shB = 0.25; elB = 1.4; shA = 1.45 * k + 0.2; elA = 0.15; lean = -0.1 * k; shR = 0.1; }
   else if (pose === 'aim') { shA = 1.5; elA = 0.05; shB = 0.6; elB = 0.8; lean = -0.04; }
+  return { hipA, hipB, kneeA, kneeB, shA, shB, elA, elB, lean, bob, sideR, shR };
+}
+export function putPerson(x, y, z, a, scale, L, pose, ph) {
+  if (!IM || IM.torso.n >= MAXP) return;
+  const down = pose === 'down';
+  e.set(0, -a, down ? Math.PI / 2 : 0, 'YXZ'); q.setFromEuler(e);
+  B.compose(v.set(x, down ? z + 0.14 * scale : z, y), q, s3.set(scale, scale, scale));
+  const { hipA, hipB, kneeA, kneeB, shA, shB, elA, elB, lean, bob, sideR, shR } = poseAngles(pose, ph);
+  if (L === PLAYER_LOOK && PLAYER_MODEL && pose !== 'sit') { posePlayer(B, pose, { hipA, hipB, kneeA, kneeB, shA, shB, elA, elB, lean, bob, shR }); return; }
   // corpo (quadril pra cima): balanço e inclinação
   body.multiplyMatrices(B, J.makeTranslation(0, bob, 0)).multiply(R.makeTranslation(0, 0.56, 0)).multiply(rotZ(lean)).multiply(M.makeTranslation(0, -0.56, 0));
   const skin = L.skin;
@@ -137,4 +143,82 @@ export function putPerson(x, y, z, a, scale, L, pose, ph) {
 export function endPeople() {
   if (!IM) return;
   for (const k in IM) { const P = IM[k]; P.im.count = P.n; P.im.instanceMatrix.needsUpdate = true; if (P.im.instanceColor) P.im.instanceColor.needsUpdate = true; }
+}
+
+// ---------- protagonista feito no Meshy (malha com esqueleto) ----------
+// O modelo vem em A-pose (braços abertos ~30°). Cada osso gira com os mesmos ângulos do boneco de peças; antes, o braço/perna
+// "desabre" da A-pose (Rx(-abertura)), então andar, correr, socar e mirar ficam iguais. Escala uniforme: o modelo não é esticado.
+// Juntas medidas no próprio modelo (unidades do jogo, escala 1, frente +X). Lado +Z e -Z são espelhados.
+const PJ = { hip: [0.005, 0.538, 0.063], knee: [-0.02, 0.297, 0.092], ankle: [-0.006, 0.076, 0.104],
+  shoulder: [-0.019, 0.93, 0.126], elbow: [-0.013, 0.753, 0.234], wrist: [0.019, 0.639, 0.297] };
+const ARM_OPEN = Math.atan2(PJ.wrist[2] - PJ.shoulder[2], PJ.shoulder[1] - PJ.wrist[1]);   // ~30°
+const LEG_OPEN = Math.atan2(PJ.ankle[2] - PJ.hip[2], PJ.hip[1] - PJ.ankle[1]);             // ~5°
+let PLAYER_MODEL = null;
+const playerMeshes = new WeakMap();   // conjunto de pessoas -> { mesh, bones }
+export function setPlayerModel(geo) { PLAYER_MODEL = geo && (geo.attributes.skinIndex ? geo : skinWeights(geo)); }
+export const playerModel = () => PLAYER_MODEL;
+const sstep = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+// ossos: 0 raiz, 1 corpo, 2-4 coxa/canela/pé (+Z), 5-7 (-Z), 8-9 braço/antebraço (+Z), 10-11 (-Z)
+function skinWeights(geo) {
+  const P = geo.attributes.position, n = P.count, si = new Uint16Array(n * 4), sw = new Float32Array(n * 4);
+  const sl = PJ.wrist[1] - PJ.shoulder[1], sz = PJ.wrist[2] - PJ.shoulder[2], slen = Math.hypot(sl, sz);
+  const tEl = Math.hypot(PJ.elbow[1] - PJ.shoulder[1], PJ.elbow[2] - PJ.shoulder[2]) / slen;
+  for (let i = 0; i < n; i++) {
+    const y = P.getY(i), z = P.getZ(i), az = Math.abs(z), side = z >= 0 ? 0 : 1;
+    let a = 1, b = 1, w = 1;   // osso a com peso w, osso b com 1-w
+    // braço: fora do tronco abaixo da axila, e misturando com o corpo no ombro
+    const armW = y < 0.84 ? (az > 0.14 ? 1 : 0) : sstep(0.09, 0.17, az) * (y < 0.98 ? 1 : 0);
+    if (armW > 0 && y > 0.5) {
+      const t = ((y - PJ.shoulder[1]) * sl + (az - PJ.shoulder[2]) * sz) / (slen * slen); // 0 ombro .. 1 pulso
+      const up = 8 + side * 2, fw = sstep(tEl - 0.07, tEl + 0.07, t);
+      if (fw > 0.999) { a = up + 1; w = 1; } else if (fw < 0.001) { a = up; b = 1; w = armW; } else { a = up + 1; b = up; w = fw; }
+    } else if (y < 0.6) {
+      const base = 2 + side * 3;
+      if (y < 0.13) { const f = sstep(0.07, 0.13, y); a = base + 2; b = base + 1; w = 1 - f; }           // pé / canela
+      else if (y < 0.36) { const k = sstep(PJ.knee[1] - 0.04, PJ.knee[1] + 0.05, y); a = base + 1; b = base; w = 1 - k; } // canela / coxa
+      else { a = base; b = 1; w = 1 - sstep(0.47, 0.6, y); }                                             // coxa / quadril
+    }
+    si[i * 4] = a; si[i * 4 + 1] = b; sw[i * 4] = w; sw[i * 4 + 1] = 1 - w;
+  }
+  geo.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(si, 4)); geo.setAttribute('skinWeight', new THREE.Float32BufferAttribute(sw, 4));
+  return geo;
+}
+const playerMat = new THREE.MeshLambertMaterial({ vertexColors: true }); playerMat.userData.pbr = { r: 0.75 };
+function makePlayerMesh(scene) {
+  const B = () => new THREE.Bone(), bones = Array.from({ length: 12 }, B);
+  const [root, body] = bones; root.add(body); body.position.set(0, PJ.hip[1], 0);
+  for (const s of [0, 1]) {
+    const sg = s ? -1 : 1, L = 2 + s * 3, A = 8 + s * 2;
+    const th = bones[L], sh = bones[L + 1], ft = bones[L + 2], up = bones[A], fo = bones[A + 1];
+    root.add(th); th.position.set(PJ.hip[0], PJ.hip[1], sg * PJ.hip[2]);
+    th.add(sh); sh.position.set(PJ.knee[0] - PJ.hip[0], PJ.knee[1] - PJ.hip[1], sg * (PJ.knee[2] - PJ.hip[2]));
+    sh.add(ft); ft.position.set(PJ.ankle[0] - PJ.knee[0], PJ.ankle[1] - PJ.knee[1], sg * (PJ.ankle[2] - PJ.knee[2]));
+    body.add(up); up.position.set(PJ.shoulder[0], PJ.shoulder[1] - PJ.hip[1], sg * PJ.shoulder[2]);
+    up.add(fo); fo.position.set(PJ.elbow[0] - PJ.shoulder[0], PJ.elbow[1] - PJ.shoulder[1], sg * (PJ.elbow[2] - PJ.shoulder[2]));
+  }
+  const mesh = new THREE.SkinnedMesh(PLAYER_MODEL, playerMat);
+  mesh.add(root); root.updateMatrixWorld(true); mesh.bind(new THREE.Skeleton(bones));
+  mesh.castShadow = true; mesh.frustumCulled = false; mesh.visible = false; mesh.userData.gente = true; scene.add(mesh);
+  return { mesh, bones };
+}
+const qa = new THREE.Quaternion(), qb = new THREE.Quaternion(), XA = new THREE.Vector3(1, 0, 0), m4 = new THREE.Matrix4();
+// rotação de junta "desabrindo" a A-pose: Euler(b, 0, a) depois de Rx(-abre)
+function limbRot(out, a, b, open) { e.set(b, 0, a, 'XYZ'); out.setFromEuler(e); return out.multiply(qb.setFromAxisAngle(XA, -open)); }
+// junta filha no mesmo membro: Rx(abre)·Rz(a)·Rx(-abre)
+function childRot(out, a, open) { out.setFromAxisAngle(XA, open); e.set(0, 0, a); out.multiply(qa.setFromEuler(e)); return out.multiply(qb.setFromAxisAngle(XA, -open)); }
+function posePlayer(Bm, pose, g) {
+  let pm = playerMeshes.get(IM);
+  if (!pm) { const sc = sceneOf.get(IM); if (!sc) return; pm = makePlayerMesh(sc); playerMeshes.set(IM, pm); }
+  const bn = pm.bones; pm.mesh.visible = true;
+  m4.multiplyMatrices(Bm, J.makeTranslation(0, g.bob, 0)); m4.decompose(bn[0].position, bn[0].quaternion, bn[0].scale);
+  bn[1].quaternion.setFromAxisAngle(new THREE.Vector3(0, 0, 1), g.lean);
+  const legs = [[g.hipA, g.kneeA], [g.hipB, g.kneeB]];
+  for (const s of [0, 1]) {
+    const sg = s ? -1 : 1, L = 2 + s * 3, A = 8 + s * 2, lo = -sg * LEG_OPEN, ao = -sg * ARM_OPEN;
+    const [ha, ka] = legs[s];
+    limbRot(bn[L].quaternion, ha, 0, lo); childRot(bn[L + 1].quaternion, ka, lo);
+    childRot(bn[L + 2].quaternion, pose === 'sit' ? 0.1 : -ka * 0.4 - ha * 0.3, lo);
+    const sa = s ? g.shB : g.shA, ea = s ? g.elB : g.elA, op = s ? 0.08 : -0.08 - g.shR;
+    limbRot(bn[A].quaternion, sa, op, ao); childRot(bn[A + 1].quaternion, ea, ao);
+  }
 }
