@@ -5,6 +5,14 @@ O número segue o padrão `MAIOR.MENOR.CORREÇÃO`:
 - **MENOR** — novidade (sistema, missão, veículo, reorganização)
 - **CORREÇÃO** — conserto de bug ou ajuste pequeno
 
+## 1.18.1 — 24/11/2026
+**Conserto: o jogador não fica mais preso ao entrar em casa**
+
+![entrada da casa livre](docs/capturas/1.18.1/casa-entrada-livre.jpg)
+
+- Na 1.16.0 a estante com a TV foi posta bem na frente da porta da casa, exatamente onde o jogador aparece ao entrar. Ele nascia dentro do móvel e não conseguia andar nem sair. O sofá e a TV foram pro lado direito da sala (a TV continua virada pro sofá) e a passagem da porta ficou livre
+- Proteção pra todos os interiores: se o lugar de entrada cair dentro de um móvel, o jogador aparece no chão livre mais perto. E se por qualquer motivo ficar dentro de um móvel, ao andar ele é empurrado pra fora em vez de travar
+
 ## 1.18.0 — 24/11/2026
 **Mais quadros por segundo na qualidade alta e realista, sem mudar a imagem**
 

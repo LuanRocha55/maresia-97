@@ -99,9 +99,9 @@ const PLANS = {
     '#.......#...TTT..#',
     '#P..........ccc.P#',
     '###.#####........#',
-    '#.......VVV......#',
+    '#..........VVV...#',
     '#D3..............#',
-    '#D.......X.......#',
+    '#D..........X....#',
     '#.......EEE......#',
     '##################'],
 };
@@ -153,6 +153,7 @@ export function enterInterior(b){
   // posição do jogador: logo acima da porta
   const e=it.exit[Math.floor(it.exit.length/2)];
   it.px=e.x;it.py=e.y-ITS*1.2;it.pa=-Math.PI/2;it.anim=0;
+  if(blockedAt(it,it.px,it.py)){const f=nearestFree(it,it.px,it.py);if(f){it.px=f.x;it.py=f.y;}} // nunca nascer dentro de um móvel
   it.outside={x:player.x,y:player.y};
   S.interior=it;
   sfxTone(520,0.06,0.06,'square');sfxTone(390,0.08,0.05,'square',0.06);
@@ -170,6 +171,20 @@ export function interiorSolid(it,px,py){
   const x=Math.floor(px/ITS),y=Math.floor(py/ITS);
   if(x<0||y<0||x>=it.W||y>=it.H)return true;
   return SOLID.has(it.plan[y][x]);
+}
+const PR=12; // raio do jogador dentro de casa
+function blockedAt(it,x,y){
+  return interiorSolid(it,x,y)||interiorSolid(it,x-PR,y-PR)||interiorSolid(it,x+PR,y-PR)||interiorSolid(it,x-PR,y+PR)||interiorSolid(it,x+PR,y+PR);
+}
+// chão livre mais perto (sem ser o tapete de saída), pra tirar o jogador de dentro de um móvel
+function nearestFree(it,px,py){
+  let best=null,bd=Infinity;
+  for(let y=1;y<it.H-1;y++)for(let x=1;x<it.W-1;x++){
+    const ch=it.plan[y][x];if(SOLID.has(ch)||ch==='E')continue;
+    const cx=(x+.5)*ITS,cy=(y+.5)*ITS;if(blockedAt(it,cx,cy))continue;
+    const d=hyp(cx-px,cy-py);if(d<bd){bd=d;best={x:cx,y:cy};}
+  }
+  return best;
 }
 function randomFloor(it){
   for(let k=0;k<60;k++){const x=1+Math.floor(Math.random()*(it.W-2)),y=1+Math.floor(Math.random()*(it.H-3));if(it.plan[y][x]==='.'||it.plan[y][x]==='c')return{x:(x+.5)*ITS,y:(y+.5)*ITS};}
@@ -194,8 +209,10 @@ export function updateInterior(dt){
   const up=keys['KeyW']||keys['ArrowUp'],dn=keys['KeyS']||keys['ArrowDown'],lf=keys['KeyA']||keys['ArrowLeft'],rt=keys['KeyD']||keys['ArrowRight'];
   let mx=(rt?1:0)-(lf?1:0),my=(dn?1:0)-(up?1:0);
   if(mx||my){const l=Math.hypot(mx,my);mx/=l;my/=l;const sp=(keys['ShiftLeft']||keys['ShiftRight'])?190:130;
-    it.pa=Math.atan2(my,mx);const r=12;
+    it.pa=Math.atan2(my,mx);const r=PR;
     const nx=it.px+mx*sp*dt,ny=it.py+my*sp*dt;
+    // se por algum motivo ficou dentro de um móvel, empurra pro chão livre mais perto em vez de travar
+    if(interiorSolid(it,it.px,it.py)){const f=nearestFree(it,it.px,it.py);if(f){it.px=f.x;it.py=f.y;}}
     if(!interiorSolid(it,nx+Math.sign(mx)*r,it.py)&&!interiorSolid(it,nx+Math.sign(mx)*r,it.py+r*0.6)&&!interiorSolid(it,nx+Math.sign(mx)*r,it.py-r*0.6))it.px=nx;
     if(!interiorSolid(it,it.px,ny+Math.sign(my)*r)&&!interiorSolid(it,it.px+r*0.6,ny+Math.sign(my)*r)&&!interiorSolid(it,it.px-r*0.6,ny+Math.sign(my)*r))it.py=ny;
     it.anim+=dt*sp*0.012;it.moving=true;it.running=sp>150;
