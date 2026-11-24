@@ -70,7 +70,7 @@ Depois do tutorial aparecem dicas só na primeira vez que algo acontece (primeir
 ### Dentro dos lugares e nos menus
 
 - WASD anda, Shift corre. **F, Enter ou E** fala com o atendente, deita na cama ou usa o computador (no ponto marcado com anel no chão). Clique direito também interage.
-- Pra sair, anda pra baixo em cima do tapete vermelho da porta.
+- Pra sair, anda pra baixo até a porta (o vão na parede da frente, com o capacho e a calçada lá fora). No 2D clássico a saída é o tapete vermelho.
 - Nos menus: setas ou W/S escolhem, **Enter/Espaço/F** compra, **1-9** escolhe direto, **Esc/Backspace** fecha. Com o mouse, clique escolhe e clique direito fecha.
 
 > No teclado, o tiro a pé tem mira automática forte. Com o mouse, a mira é exata e a ajuda é bem pequena.
@@ -228,7 +228,7 @@ O estádio fica no Centro. Todo dia de jogo, das **15h30 às 18h**, o **Jacarand
 
 ## Comércios e interiores
 
-Portas com ícone no chão e toldo colorido podem ser abertas com **F** (ou clique direito). Lá dentro você anda numa sala em 3D e fala com o atendente no balcão. O tempo continua passando lá fora.
+Todo lugar que dá pra entrar tem uma porta de verdade virada pra rua, com o ícone do lugar flutuando em cima (no 2D clássico, ícone no chão e toldo colorido). Chega na porta e aperta **F** (ou clique direito). Lá dentro você anda numa sala em 3D, com a câmera 3/4 seguindo atrás (C troca pra de cima, com a sala inteira), e fala com o atendente no balcão. O tempo continua passando lá fora. Ao sair você fica na calçada, virado pra rua.
 
 - **Procurado não entra**, a não ser na Carceragem Central.
 - Quando o menu está aberto, o mundo pausa.

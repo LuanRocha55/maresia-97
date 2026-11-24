@@ -11,8 +11,9 @@ import { doorOf } from '../game/jobs.js';
 import { matchOn, match, opponent, HOME } from '../game/stadium.js';
 import { drawGround2D, label } from '../render/draw.js';
 import { drawHUD, drawKeycap } from '../render/hud.js';
-import { ICONS, KIND_ICON } from '../render/icons.js';
-import { buildCity, U, bh } from './build.js';
+import { ICONS, KIND_ICON, drawIcon } from '../render/icons.js';
+import { enterables } from '../game/interiors.js';
+import { buildCity, U, bh, facadeOf } from './build.js';
 import { buildings as buildingsList_, lamps as lampsList } from '../world/map.js';
 const buildingsList=()=>buildingsList_;
 import { S, player, cam, keys, view } from '../core/state.js';
@@ -134,6 +135,7 @@ function neonTex(text,col,col2){
   g.shadowBlur=0;g.fillStyle=col2&&col2!=='cruz'?col2:'#ffffff';g.fillText(text,x,66);
   const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=4;return t;
 }
+let neonBack=null;
 function buildNeon(){
   const group=new THREE.Group(),byKind={};
   for(const b of buildingsList()){
@@ -144,22 +146,26 @@ function buildNeon(){
   for(const [k,bs] of Object.entries(byKind)){
     const [text,col,col2]=NEON[k];
     const pos=[],uv=[],idx=[];let v=0;
-    for(const b of bs){const x0=b.x0*U,x1=b.x1*U,z1=b.y1*U,H=bh(b);
-      const w=Math.min((x1-x0)*0.9,k==='hospital'||k==='policia'||k.startsWith('sign:')?6:5),h=w/4,cx=(x0+x1)/2,y0=H+0.06,z=z1-0.12;
-      pos.push(cx-w/2,y0,z, cx+w/2,y0,z, cx+w/2,y0+h,z, cx-w/2,y0+h,z);uv.push(0,0,1,0,1,1,0,1);idx.push(v,v+1,v+2,v,v+2,v+3);v+=4;
+    // o letreiro fica em cima da fachada da frente (o lado da porta, virado pra rua)
+    for(const b of bs){const f=facadeOf(b),H=bh(b),uc=(f.a0+f.a1)/2;
+      const w=Math.min((f.a1-f.a0)*0.9,k==='hospital'||k==='policia'||k.startsWith('sign:')?6:5),h=w/4,y0=H+0.06;
+      for(const [u,y] of [[uc-w/2,y0],[uc+w/2,y0],[uc+w/2,y0+h],[uc-w/2,y0+h]])pos.push(...f.P(f.s>0===f.alongX?u:2*uc-u,-0.12,y));
+      uv.push(0,0,1,0,1,1,0,1);idx.push(v,v+1,v+2,v,v+2,v+3);v+=4;
     }
     const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));geo.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));geo.setIndex(idx);geo.computeBoundingSphere();
-    const mat=new THREE.MeshBasicMaterial({map:neonTex(text,col,col2),transparent:true,side:THREE.DoubleSide,fog:true});
-    const glow=new THREE.MeshBasicMaterial({map:radialTex(hexRgb(col)),transparent:true,opacity:0,depthWrite:false,blending:THREE.AdditiveBlending,fog:false});
+    const mat=new THREE.MeshBasicMaterial({map:neonTex(text,col,col2),transparent:true,fog:true}); // só de frente: de costas aparece a chapa escura (não o letreiro espelhado)
+    const glow=new THREE.MeshBasicMaterial({map:radialTex(hexRgb(col)),transparent:true,opacity:0,depthWrite:false,blending:THREE.AdditiveBlending,fog:false,side:THREE.DoubleSide});
     const gpos=[],gidx=[];let gv=0;
-    for(const b of bs){const x0=b.x0*U,x1=b.x1*U,z1=b.y1*U,H=bh(b);const w0=Math.min((x1-x0)*0.9,k==='hospital'||k==='policia'||k.startsWith('sign:')?6:5),w=w0*1.3,h=w0*0.5,cx=(x0+x1)/2,cy=H+0.06+w0/8,z=z1+0.05;
-      gpos.push(cx-w/2,cy-h/2,z, cx+w/2,cy-h/2,z, cx+w/2,cy+h/2,z, cx-w/2,cy+h/2,z);gidx.push(gv,gv+1,gv+2,gv,gv+2,gv+3);gv+=4;}
+    for(const b of bs){const f=facadeOf(b),H=bh(b),uc=(f.a0+f.a1)/2;const w0=Math.min((f.a1-f.a0)*0.9,k==='hospital'||k==='policia'||k.startsWith('sign:')?6:5),w=w0*1.3,h=w0*0.5,cy=H+0.06+w0/8;
+      for(const [u,y] of [[uc-w/2,cy-h/2],[uc+w/2,cy-h/2],[uc+w/2,cy+h/2],[uc-w/2,cy+h/2]])gpos.push(...f.P(u,0.05,y));
+      gidx.push(gv,gv+1,gv+2,gv,gv+2,gv+3);gv+=4;}
     const gg=new THREE.BufferGeometry();gg.setAttribute('position',new THREE.Float32BufferAttribute(gpos,3));gg.setAttribute('uv',new THREE.Float32BufferAttribute(Array(bs.length).fill([0,0,1,0,1,1,0,1]).flat(),2));gg.setIndex(gidx);gg.computeBoundingSphere();
     const m1=new THREE.Mesh(geo,mat),m2=new THREE.Mesh(gg,glow);m2.renderOrder=4;group.add(m1);group.add(m2);
+    {const bg=geo.clone();bg.setIndex(idx.slice().reverse());group.add(new THREE.Mesh(bg,neonBack||(neonBack=new THREE.MeshLambertMaterial({color:'#1b1b1f'}))));}
     const ent={k,mat,glow,on:0};list.push(ent);
     // posição de cada letreiro pra luz colorida que ele joga na fachada e na calçada (luzes.js)
     const lc=new THREE.Color(col);
-    for(const b of bs){const x0=b.x0*U,x1=b.x1*U,w0=Math.min((x1-x0)*0.9,6);signs.push({x:(x0+x1)/2,y:bh(b)+0.06+w0/8,z:b.y1*U,col:lc,on:()=>ent.on});}
+    for(const b of bs){const f=facadeOf(b),w0=Math.min((f.a1-f.a0)*0.9,6),p=f.P((f.a0+f.a1)/2,0,bh(b)+0.06+w0/8),n=f.N(0,1,0);signs.push({x:p[0],y:p[1],z:p[2],nx:n[0],nz:n[2],col:lc,on:()=>ent.on});}
   }
   return {group,list,signs};
 }
@@ -651,6 +657,7 @@ export function render3D(signalState){
   const shx=(Math.random()-.5)*S.shake*0.05, shz=(Math.random()-.5)*S.shake*0.05;
   let hw,vz0,vz1,vx0,vx1;
   view.r34=!!(R.cam34&&!S.interior);
+  if(S.camYaw!==undefined){R.yaw=S.camYaw;R.fx=undefined;R.lift=0;S.camYaw=undefined;} // saiu de um lugar: começa olhando pra rua
   if(view.r34){
     // câmera 3/4: atrás do carro, inclinada, gira com a direção dele com um atraso nas curvas.
     // A pé ela fica parada na última direção e sobe um pouco (mais fácil de mirar com o mouse).
@@ -730,8 +737,12 @@ function drawPrompts(g){
     const nc=nearestCar(26);
     const carCloser=nc&&(!nearB||hyp(nc.x-player.x,nc.y-player.y)-nc.t.wid/2<hyp(doorOf(nearB).x-player.x,doorOf(nearB).y-player.y));
     if(nc&&carCloser){const p=P(nc.x,nc.y,1.2);g.font=pf(12);const t=(nc.driver==='ai'?'Roubar ':'Entrar: ')+nc.t.name;drawKeycap(g,'F',p.x-(g.measureText(t).width+28)/2,p.y,t,12);}
-    else if(nearB){const d=doorOf(nearB);const p=P(d.x,d.y,1.4);const name=ICONS[KIND_ICON[nearB.kind]].name.split(' (')[0].split(' ·')[0];g.font=pf(13);drawKeycap(g,'F',p.x-(g.measureText('Entrar: '+name).width+30)/2,p.y,'Entrar: '+name,13);}
+    else if(nearB){const d=doorOf(nearB);const p=P(d.x,d.y,1.75);const name=ICONS[KIND_ICON[nearB.kind]].name.split(' (')[0].split(' ·')[0];g.font=pf(13);drawKeycap(g,'F',p.x-(g.measureText('Entrar: '+name).width+30)/2,p.y,'Entrar: '+name,13);}
   }
+  // ícone do lugar flutuando em cima da porta (some de perto, quando aparece o F)
+  if(!player.car||Math.abs(player.car.fwdSpeed())<200)for(const b of enterables()){if(b===nearB||b.kind==='estadio')continue;const d=doorOf(b);const dd=hyp(d.x-player.x,d.y-player.y);if(dd>620)continue;
+    const q=P(d.x,d.y,2.15+Math.sin(S.gameTime*2.5+b.x0)*0.06);if(q.behind||q.x<-30||q.y<-30||q.x>CW+30||q.y>CH+30)continue;
+    g.globalAlpha=clamp((620-dd)/150,0,1)*0.92;drawIcon(g,KIND_ICON[b.kind],q.x,q.y,dd<200?22:18);g.globalAlpha=1;}
   // passageiro esperando e carros da missão: setinha amarela em cima
   for(const p of S.peds)if(p.state==='wait'){const q=P(p.x,p.y,1.05+Math.sin(S.gameTime*6)*0.1);arrowDown(g,q.x,q.y);}
   if(S.mission)for(const c of S.cars)if(c.mission===S.mission&&!c.wreck){const q=P(c.x,c.y,1.8+Math.sin(S.gameTime*6)*0.1);arrowDown(g,q.x,q.y);

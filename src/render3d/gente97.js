@@ -38,13 +38,17 @@ const GEO = {
 let IM = null;
 const PARTS = { thigh: 2, shin: 2, foot: 2, upper: 2, fore: 2, pelvis: 1, torso: 1, head: 1, hair: 1, long: 1, cap: 1, helmet: 1, visor: 1, stripe: 1 };
 const CAST = new Set(['torso', 'pelvis', 'head', 'thigh']);
-export function initPeople(scene) {
-  IM = {};
+export function initPeople(scene) { IM = makePeopleSet(scene); return IM; }
+// um conjunto de bonecos por cena (a rua e o interior dos lugares): usePeopleSet troca o conjunto ativo e devolve o anterior
+export function usePeopleSet(set) { const old = IM; IM = set; return old; }
+export function makePeopleSet(scene) {
+  const IM = {};
   for (const [k, per] of Object.entries(PARTS)) {
     const m = new THREE.MeshLambertMaterial({ color: '#ffffff' }); m.userData.pbr = { r: k === 'hair' || k === 'long' ? 0.6 : 0.85 };
     const im = new THREE.InstancedMesh(GEO[k], m, MAXP * per); im.count = 0; im.frustumCulled = false; im.castShadow = CAST.has(k);
     im.instanceMatrix.setUsage(THREE.DynamicDrawUsage); im.setColorAt(0, new THREE.Color(1, 1, 1)); scene.add(im); IM[k] = { im, n: 0 };
   }
+  return IM;
 }
 
 // ---------- roupa de 97 ----------

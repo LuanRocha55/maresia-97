@@ -5,6 +5,23 @@ O número segue o padrão `MAIOR.MENOR.CORREÇÃO`:
 - **MENOR** — novidade (sistema, missão, veículo, reorganização)
 - **CORREÇÃO** — conserto de bug ou ajuste pequeno
 
+## 1.16.0 — 24/11/2026
+**Portas de verdade viradas pra rua, e interiores novos**
+
+![antes e depois da fachada](docs/capturas/1.16.0/1-fachada-antes-depois.jpg)
+![antes e depois do interior](docs/capturas/1.16.0/2-interior-antes-depois.jpg)
+
+- **Porta de verdade** em todo lugar que dá pra entrar, no lado que dá pra rua: comércio com a porta de aço de enrolar recolhida, o vão aberto mostrando a prateleira e vitrine dos lados; porta de vidro na farmácia e no posto; grade e aço meio baixado no Tonhão; porta de madeira com telhadinho, capacho e arandela na sua casa; porta de vidro com marquise no hospital (placa com a cruz) e na Carceragem (luz azul); portão de ferro verde na escola. As placas não têm letra
+- **Tudo virado pra rua**: o toldo e o letreiro de neon iam sempre pro lado sul do prédio, mesmo quando a porta ficava em outro lado (às vezes de costas pra rua). Agora ficam em cima da porta, e a luz colorida do neon cai na calçada certa. Visto de trás, o letreiro mostra a chapa escura (não o texto espelhado)
+- **Sem o quadradinho no chão**: no 3D o ícone do lugar flutua em cima da porta (aparece de longe e some quando chega perto, onde aparece o F). No chão só um brilho quando você está na porta. Poste não fica mais plantado na frente de porta
+- **Sair** te deixa na calçada do lado certo (antes sempre saía pro sul), virado e com a câmera olhando pra rua
+- **Interiores na qualidade da rua**: piso com textura (cerâmica, xadrez de lanchonete, granilite de repartição, taco em casa e na escola), azulejo branco com faixa colorida na padaria, lanchonete, farmácia e hospital, barra de tinta na escola e na delegacia, rodapé, janelas basculantes que clareiam e escurecem com a hora, luminárias de parede, relógio e quadros
+- **Luz de lâmpada**: fluorescente branca nas lojas e repartições, amarelada em casa, na lanchonete e na padaria, com sombra dos móveis e reflexo no piso e no balcão
+- **Móveis de 97 feitos pro jogo**: gôndola de mercadinho com faixa de preço e centenas de caixinhas, latas e garrafas; geladeira de vidro acesa por dentro; balcão com tampo de granito e caixa registradora; vitrine de salgados e pão nas prateleiras da padaria; mesa de bar de lata amarela com cadeira de plástico; longarina azul no hospital, leito com soro; computador de tubo bege nas mesas; carteira escolar; espada-de-são-jorge no vaso; e em casa pia, geladeira com filtro de barro, mesa com fruteira, sofá vinho, cama de casal com criado-mudo e abajur, e televisão de tubo na estante
+- **Pessoas iguais às da rua** lá dentro (o mesmo boneco de 97, com roupa sorteada; na escola os alunos sentados de frente pro quadro)
+- **Saída**: no lugar do tapete vermelho, o vão da porta com soleira e a calçada lá fora (clara de dia, escura de noite)
+- **Câmera 3/4 dentro também**: segue o jogador por trás, macia, sem sair da sala. A tecla C continua trocando pra de cima, que mostra a sala inteira
+
 ## 1.15.1 — 23/11/2026
 **Câmera a pé que acompanha, e polícia sem atraso**
 

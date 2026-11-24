@@ -106,14 +106,110 @@ function ring(G,x0,z0,x1,z1,y0,y1,t,col){
   G.box(x0-t,z0-t,x1+t,z0+t,y0,y1,hx,hx);G.box(x0-t,z1-t,x1+t,z1+t,y0,y1,hx,hx);
   G.box(x0-t,z0+t,x0+t,z1-t,y0,y1,hx,hx);G.box(x1-t,z0+t,x1+t,z1-t,y0,y1,hx,hx);
 }
-// toldo listrado na fachada da frente (lado sul, onde fica a porta e o letreiro)
+// ---------- fachada da frente: sempre o lado da porta, virado pra rua ----------
+// b.door.out (map.js) aponta da porta pra rua. Sem porta, a frente é o sul.
+// Tudo da fachada (porta, toldo, letreiro, luminária) é montado em coordenadas da fachada:
+// u = ao longo da parede (em unidades do mundo), v = pra fora da parede (0 = rente), y = altura.
+export function facadeOf(b){
+  const o=(b.door&&b.door.out)||[0,1], alongX=o[1]!==0, s=alongX?o[1]:o[0];
+  const x0=b.x0*U,z0=b.y0*U,x1=b.x1*U,z1=b.y1*U;
+  const wall=o[1]>0?z1:o[1]<0?z0:o[0]>0?x1:x0, a0=alongX?x0:z0, a1=alongX?x1:z1;
+  const d=b.door, uc0=d?(alongX?d.x*U:d.y*U):(a0+a1)/2;
+  const P=(u,v,y)=>alongX?[u,y,wall+s*v]:[wall+s*v,y,u];                 // ponto
+  const N=(nu,nv,ny)=>alongX?[nu,ny,s*nv]:[s*nv,ny,nu];                 // direção
+  const box=(G,u0,u1,v0,v1,y0,y1,top,side,shade=true)=>{const w0=wall+s*v0,w1=wall+s*v1,lo=Math.min(w0,w1),hi=Math.max(w0,w1);
+    if(alongX)G.box(u0,lo,u1,hi,y0,y1,top,side,shade);else G.box(lo,u0,hi,u1,y0,y1,top,side,shade);};
+  // quadrilátero (u,v,y) com normal local (nu,nv,ny)
+  const face=(G,a,b2,c,d2,n,col)=>{const w=N(...n);G.face(P(...a),P(...b2),P(...c),P(...d2),w[0],w[1],w[2],col);};
+  return {o,alongX,s,wall,a0,a1,uc0,P,N,box,face};
+}
+// toldo listrado em cima da porta
 const AWNING={farmacia:'#2e9e4f',lanchonete:'#d83a2e',mercadinho:'#c2185b',padaria:'#e08a1e',lojaposto:'#d83a2e',armas:'#7a1f1f',ze:'#e07a1e',pintura:'#1e88c8',pintura2:'#1e88c8'};
-function awning(G,x0,x1,z1,H,hex){
-  const w=x1-x0,a=x0+w*0.1,bx=x1-w*0.1,yt=Math.min(1.25,H*0.6),yb=yt-0.28,out=0.65,n=Math.max(4,Math.round((bx-a)/0.35));
+function awning(G,f,yt,hex,u0,u1){
+  const a=u0,bx=u1,yb=yt-0.28,out=0.65,n=Math.max(4,Math.round((bx-a)/0.35));
   const c1=C(hex),c2=C('#f4efe6');
   for(let k=0;k<n;k++){const s0=a+(bx-a)*k/n,s1=a+(bx-a)*(k+1)/n,col=k%2?c2:c1;
-    G.quad([s0,yb,z1+out],[s1,yb,z1+out],[s1,yt,z1+0.02],[s0,yt,z1+0.02],0,0.85,0.5,col);
-    G.quad([s0,yb-0.12,z1+out],[s1,yb-0.12,z1+out],[s1,yb,z1+out],[s0,yb,z1+out],0,0,1,col.clone().multiplyScalar(0.85));}
+    f.face(G,[s0,out,yb],[s1,out,yb],[s1,0.02,yt],[s0,0.02,yt],[0,0.5,0.85],col);
+    f.face(G,[s0,out,yb-0.12],[s1,out,yb-0.12],[s1,out,yb],[s0,out,yb],[0,1,0],col.clone().multiplyScalar(0.85));}
+}
+// porta de verdade na fachada da frente, de cada tipo de lugar (G = paredes, Gw = vidro, Gl = luz que acende de noite)
+const SHOP_IN={farmacia:['#f4f7f4','#2e9e4a','#e53935'],mercadinho:['#5a3a22','#e53935','#fdd835'],padaria:['#7a4f2a','#e0a35a','#f3d9a4'],
+  lanchonete:['#5a2a20','#fdd835','#c0392b'],lojaposto:['#d5d5d5','#1e88e5','#fdd835'],armas:['#2a2622','#555','#777']};
+function doorFront(G,Gw,Gl,b,H){
+  const f=facadeOf(b),k=b.kind, box=(...a)=>f.box(G,...a), glass=(...a)=>f.box(Gw,...a), lit=(u0,u1,y0,y1,v,col)=>f.box(Gl,u0,u1,v,v+0.004,y0,y1,null,col,false);
+  const big=k==='hospital'||k==='policia'||k==='escola', hw=k==='casa'?0.36:k==='hospital'?0.85:big?0.7:0.55;
+  const uc=Math.min(f.a1-hw-0.3,Math.max(f.a0+hw+0.3,f.uc0)), dh=Math.max(0.9,Math.min(k==='casa'?1.2:big?1.5:1.3,H-0.38));
+  const u0=uc-hw,u1=uc+hw;
+  // degrau/calçadinha na frente da porta
+  box(u0-0.2,u1+0.2,0,0.4,0,0.07,'#cfc9bc','#b5afa2');
+  if(k==='casa'){
+    const fr='#f4efe6';
+    box(u0,u1,0,0.012,0,dh,null,'#2a1d14');                                    // vão
+    box(u0+0.03,u1-0.03,0.012,0.05,0.07,dh-0.02,'#6b3f22','#7a4a2a');         // porta de madeira
+    for(const y of [0.25,0.7])box(u0+0.09,u1-0.09,0.05,0.065,y,y+0.32,'#5b3419','#5b3419');   // almofadas
+    box(u1-0.14,u1-0.09,0.05,0.1,0.58,0.64,'#d4af37','#c49a2c');              // maçaneta
+    box(u0-0.07,u0,0,0.07,0,dh+0.07,fr,fr);box(u1,u1+0.07,0,0.07,0,dh+0.07,fr,fr);box(u0-0.07,u1+0.07,0,0.07,dh,dh+0.07,fr,fr);
+    // telhadinho em cima da porta e o capacho
+    f.face(G,[u0-0.3,0.55,dh+0.12],[u1+0.3,0.55,dh+0.12],[u1+0.3,0.02,dh+0.36],[u0-0.3,0.02,dh+0.36],[0,0.6,0.8],C(b.roof||'#9c4a32'));
+    box(u0-0.3,u1+0.3,0.02,0.55,dh+0.06,dh+0.12,null,'#f4efe6');
+    box(uc-0.3,uc+0.3,0.42,0.82,0,0.02,'#7a5a3a','#7a5a3a');
+    // luminária do lado da porta
+    box(u1+0.14,u1+0.24,0,0.1,dh-0.1,dh+0.06,'#3a3a3a','#3a3a3a');lit(u1+0.15,u1+0.23,dh-0.08,dh+0.04,0.101,'#ffd27a');
+    return;
+  }
+  if(k==='hospital'||k==='policia'){
+    const fr=k==='hospital'?'#b9c2c8':'#1f3a6b', mq=k==='hospital'?'#f2f2ee':'#c8d2e0';
+    box(u0,u1,0,0.012,0,dh,null,'#2b3238');
+    glass(u0+0.02,uc-0.01,0.015,0.03,0.07,dh-0.02,null,'#7aa7c7');glass(uc+0.01,u1-0.02,0.015,0.03,0.07,dh-0.02,null,'#7aa7c7');
+    lit(u0+0.03,u1-0.03,0.07,dh-0.03,0.032,'#fff3d6');
+    for(const u of [u0-0.06,uc-0.025,u1])box(u,u+0.06,0,0.05,0,dh,fr,fr);box(u0-0.06,u1+0.06,0,0.05,dh,dh+0.06,fr,fr);
+    // marquise de concreto com dois pilares
+    // marquise de concreto em balanço (estreita, pra porta aparecer de cima)
+    const mw=hw+0.6;box(uc-mw,uc+mw,0,0.6,dh+0.16,dh+0.3,mq,mq);
+    // placa em cima (sem letra): cruz vermelha no hospital, azul na delegacia
+    const py=Math.min(H-0.25,dh+0.45);
+    if(k==='hospital'){box(uc-0.32,uc+0.32,0,0.05,py,py+0.55,'#ffffff','#ffffff');box(uc-0.2,uc+0.2,0.05,0.07,py+0.21,py+0.34,'#d32f2f','#d32f2f');box(uc-0.065,uc+0.065,0.05,0.07,py+0.08,py+0.47,'#d32f2f','#d32f2f');}
+    else{box(uc-0.5,uc+0.5,0,0.05,py,py+0.3,'#1f3a6b','#1f3a6b');box(uc-0.44,uc+0.44,0.05,0.06,py+0.04,py+0.26,'#e9eef5','#e9eef5');
+      box(uc+mw-0.25,uc+mw-0.1,0.4,0.55,dh+0.3,dh+0.42,'#2a4f9a','#2a4f9a');lit(uc+mw-0.24,uc+mw-0.11,dh+0.31,dh+0.41,0.551,'#4d7dff');}
+    return;
+  }
+  if(k==='escola'){
+    // portão de ferro verde de duas folhas, pilares e a placa azul (sem nome)
+    box(u0,u1,0,0.012,0,dh,null,'#3a3328');
+    const gate='#2f6b45';
+    for(let u=u0+0.06;u<u1-0.03;u+=0.11)box(u,u+0.03,0.03,0.06,0.05,dh-0.05,gate,gate,false);
+    for(const y of [0.08,dh*0.5,dh-0.1])box(u0,u1,0.03,0.07,y,y+0.05,gate,gate);
+    box(uc-0.015,uc+0.015,0.03,0.07,0.05,dh-0.05,gate,gate);
+    for(const u of [u0-0.16,u1])box(u,u+0.16,0,0.16,0,dh+0.2,'#e7e0c9','#d9d1b6');
+    const py=Math.min(H-0.3,dh+0.3);box(uc-0.6,uc+0.6,0,0.05,py,py+0.28,'#3f6fb0','#3f6fb0');box(uc-0.54,uc+0.54,0.05,0.06,py+0.04,py+0.24,'#f4efe6','#f4efe6');
+    return;
+  }
+  // comércio: porta de aço de enrolar recolhida, o vão aberto mostrando a loja e vitrine do lado
+  const [inC,p1,p2]=SHOP_IN[k]||['#4a3a2a','#e53935','#1e88e5'], fr='#3a3d42';
+  box(u0,u1,0,0.012,0,dh,null,inC);
+  // prateleira lá dentro (só a sugestão, com produtos coloridos)
+  for(const y of [0.3,0.62,0.94])if(y<dh-0.1){box(u0+0.06,u1-0.06,0.012,0.02,y,y+0.03,null,'#d8cfc0',false);
+    for(let u=u0+0.1;u<u1-0.12;u+=0.12)box(u,u+0.08,0.012,0.018,y+0.03,y+0.15,null,((u*7.3+y*3)%1)<0.5?p1:p2,false);}
+  lit(u0+0.02,u1-0.02,0.02,dh-0.02,0.022,'#ffe2a8');
+  if(k==='farmacia'||k==='lojaposto'){ // porta de vidro
+    glass(u0+0.02,uc-0.01,0.026,0.04,0.07,dh-0.02,null,'#8fb6cc');glass(uc+0.01,u1-0.02,0.026,0.04,0.07,dh-0.02,null,'#8fb6cc');
+    box(uc-0.02,uc+0.02,0,0.05,0,dh,fr,fr);}
+  if(k==='armas'){for(let u=u0+0.05;u<u1;u+=0.1)box(u,u+0.025,0.03,0.05,0.07,dh,'#5a5a5a','#5a5a5a',false); // grade
+    box(u0,u1,0.03,0.06,dh*0.55,dh,'#8a8f96','#9aa0a6');for(let y=dh*0.55+0.05;y<dh;y+=0.07)box(u0,u1,0.06,0.065,y,y+0.012,'#6f747a','#6f747a',false);} // aço meio baixado
+  for(const u of [u0-0.07,u1])box(u,u+0.07,0,0.06,0,dh+0.06,fr,fr);
+  box(u0-0.12,u1+0.12,0,0.2,dh+0.02,dh+0.24,'#8d939a','#a3a9b0'); // caixa da porta de aço
+  for(let y=dh+0.06;y<dh+0.22;y+=0.05)box(u0-0.12,u1+0.12,0.2,0.205,y,y+0.012,'#6f747a','#6f747a',false);
+  // vitrine dos dois lados, se couber
+  for(const sg of [-1,1]){const a=sg<0?u0-0.2:u1+0.2, c=a+sg*Math.min(1.1,(sg<0?u0-f.a0:f.a1-u1)-0.45);if(sg*(c-a)<0.4)continue;
+    const v0=Math.min(a,c),v1=Math.max(a,c);
+    box(v0-0.05,v1+0.05,0,0.06,0.22,0.3,fr,fr);box(v0-0.05,v1+0.05,0,0.06,dh-0.05,dh+0.02,fr,fr);
+    box(v0,v1,0,0.012,0.3,dh-0.05,null,inC);
+    for(let u=v0+0.08;u<v1-0.1;u+=0.16)box(u,u+0.1,0.012,0.02,0.3,0.42+((u*5.1)%1)*0.15,null,((u*3.7)%1)<0.5?p1:p2,false);
+    glass(v0,v1,0.025,0.035,0.3,dh-0.05,null,'#8fb6cc');lit(v0,v1,0.3,dh-0.05,0.036,'#ffe2a8');}
+  const yt=Math.min(H-0.08,dh+0.55);
+  if(AWNING[k])awning(G,f,yt,AWNING[k],Math.max(f.a0+0.15,u0-1.3),Math.min(f.a1-0.15,u1+1.3));
+  // luminária em cima da porta
+  box(uc-0.1,uc+0.1,0.2,0.32,dh+0.24,dh+0.3,'#3a3a3a','#3a3a3a');lit(uc-0.08,uc+0.08,dh+0.245,dh+0.295,0.322,'#fff0c8');
 }
 // aquecedor solar de água: placa azul escura inclinada com moldura e o boiler em cima
 function solar(G,x,z,H){
@@ -186,7 +282,8 @@ export function buildCity(scene,mats){
       // platibanda/beiral: moldura clara em volta do topo dos prédios de telhado plano
       if(!pitched&&!isPOI&&!laje&&b.style!=='galpao')ring(G,x0,z0,x1,z1,H-0.1,H+0.12,0.12,C(b.wall).lerp(C('#ffffff'),0.35));
     }
-    if(isPOI&&AWNING[b.kind])awning(G,x0,x1,z1,H,AWNING[b.kind]);
+    if(b.door&&b.kind!=='estadio')doorFront(G,Gw,Gl,b,H);
+    else if(isPOI&&AWNING[b.kind]){const f=facadeOf(b);awning(G,f,Math.min(1.25,H*0.6),AWNING[b.kind],f.a0+(f.a1-f.a0)*0.1,f.a1-(f.a1-f.a0)*0.1);}
     if(pitched){const rh=Math.min(1.2,Math.min(x1-x0,z1-z0)*0.35);gable(G,x0,z0,x1,z1,H,rh,b.style==='casinha'?'#9a9a94':b.roof); // no morro, telha de amianto
       // antena de TV em algumas casas (no meio da cumeeira)
       if(r()<0.35){const ax=(x0+x1)/2+(r()-0.5)*0.6,az=(z0+z1)/2;G.box(ax-0.02,az-0.02,ax+0.02,az+0.02,H+rh*0.9,H+rh+0.8,'#555','#555',false);

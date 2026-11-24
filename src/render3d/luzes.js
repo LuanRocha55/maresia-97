@@ -85,7 +85,7 @@ export function updateLights(cx, cz, dk, dt) {
   assign(slots.neon, neonWant, dt, 2.5);
   for (const s of slots.neon) {
     if (s.id < 0) { s.l.intensity = 0; continue; }
-    const N = signs[s.id]; s.l.position.set(N.x, N.y, N.z + 0.9); s.l.color.copy(N.col);
+    const N = signs[s.id]; s.l.position.set(N.x + (N.nx ?? 0) * 0.9, N.y, N.z + (N.nz ?? 1) * 0.9); s.l.color.copy(N.col);
     s.l.intensity = 7 * night * s.f * (N.on ? N.on() : 1);
   }
   // ---- faróis: o carro do jogador primeiro, depois os carros com motorista mais perto ----

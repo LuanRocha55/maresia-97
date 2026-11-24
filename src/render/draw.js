@@ -333,6 +333,9 @@ export function drawGround2D(g,vx0,vx1,vy0,vy1,mode){
   const nearB=(!player.car&&player.state==='play')?nearestDoor(40):null;
   for(const b of enterables()){const d=doorOf(b);if(d.x<vx0||d.x>vx1||d.y<vy0||d.y>vy1)continue;
     const on=b===nearB, ic=ICONS[KIND_ICON[b.kind]];
+    // no 3D a porta é de verdade (build.js) e o ícone flutua em cima dela (r3d.js): no chão só um brilho quando chega perto
+    if(mode==='3d'){if(on){const gr=g.createRadialGradient(d.x,d.y,2,d.x,d.y,26);gr.addColorStop(0,'rgba(255,233,160,0.55)');gr.addColorStop(1,'rgba(255,233,160,0)');
+      g.fillStyle=gr;g.beginPath();g.arc(d.x,d.y,26,0,Math.PI*2);g.fill();}continue;}
     // toldo colorido na fachada + tapete na calçada: dá pra achar a entrada de longe
     if(d.out){const ox=d.out[0],oy=d.out[1],ex=d.x-ox*T*0.5,ey=d.y-oy*T*0.5,w=T*1.6,th=10;
       g.fillStyle='rgba(0,0,0,0.3)';if(ox===0)g.fillRect(ex-w/2+3,ey-th/2+3,w,th);else g.fillRect(ex-th/2+3,ey-w/2+3,th,w);

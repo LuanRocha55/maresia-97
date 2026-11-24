@@ -3,7 +3,7 @@
 //   #  parede        .  chão         E  saída (tapete)
 //   S  prateleira    F  geladeira    C  balcão        T  mesa       c  cadeira (passa por cima)
 //   B  cama          D  mesa de trabalho/computador   K  quadro-negro  P  planta    V  sofá
-//   R  arara de armas na parede      G  alvo do estande   J  grade (cela)   L  lâmpada de teto (enfeite)
+//   R  arara de armas na parede      G  alvo do estande   J  grade (cela)   X  estante com TV de tubo
 //   a  atendente     1  ponto de atendimento (balcão)  2  cama (casa/hospital)  3  computador (salvar)  4  professor
 import { rand, pick, hyp } from '../core/utils.js';
 import { openPlace, placeTitle } from './interiors.js';
@@ -84,29 +84,29 @@ const PLANS = {
     '#KKKKKKKKKK..........#',
     '#.....4.........P....#',
     '#....................#',
-    '#.DcDc.DcDc.DcDc.....#',
+    '#.D.D.D.D.D.D........#',
+    '#.c.c.c.c.c.c........#',
     '#....................#',
-    '#.DcDc.DcDc.DcDc.....#',
-    '#....................#',
-    '#.DcDc.DcDc.DcDc...SS#',
+    '#.D.D.D.D.D.D......SS#',
+    '#.c.c.c.c.c.c........#',
     '#....................#',
     '#........EEE.........#',
     '######################'],
   casa: [
     '##################',
-    '#BB2....#.....FF.#',
+    '#BB2....#..CCCFF.#',
     '#BB.....#........#',
     '#.......#...TTT..#',
-    '#P.............P.#',
+    '#P..........ccc.P#',
     '###.#####........#',
     '#.......VVV......#',
     '#D3..............#',
-    '#D...............#',
+    '#D.......X.......#',
     '#.......EEE......#',
     '##################'],
 };
 const KIND_PLAN={farmacia:'loja',mercadinho:'loja',padaria:'loja',lojaposto:'loja',lanchonete:'lanchonete',hospital:'hospital',policia:'policia',armas:'armas',escola:'escola',casa:'casa'};
-const SOLID=new Set('#SFCTBDKPVRGJ'.split(''));
+const SOLID=new Set('#SFCTBDKPVRGJX'.split(''));
 export const ITS=48; // tamanho do tile interno em px
 
 // cores de chão e prateleira por lugar
@@ -148,8 +148,8 @@ export function enterInterior(b){
   if(b.kind==='hospital')for(const p of it.points)if(p.station==='cama')p.station='balcao';
   // clientes passeando (não na casa)
   const nC=b.kind==='casa'?0:b.kind==='escola'?4:Math.floor(rand(1,4));
-  for(let k=0;k<nC;k++){const p=randomFloor(it);if(p)it.npcs.push({x:p.x,y:p.y,a:0,tx:p.x,ty:p.y,wait:rand(0,2),shirt:pick(['#e74c3c','#3498db','#f1c40f','#9b59b6','#1abc9c','#e67e22','#2ecc71']),skin:pick(['#f1c27d','#e0ac69','#c68642','#8d5524','#ffdbac']),hair:pick(['#222','#3b2314','#6b4423','#111']),anim:0,sit:b.kind==='escola'});}
-  if(b.kind==='escola')it.npcs.forEach((n,i)=>{const seats=[];for(let y=0;y<H;y++)for(let x=0;x<W;x++)if(plan[y][x]==='c'&&plan[y][x-1]==='D')seats.push({x:(x+.5)*ITS,y:(y+.5)*ITS});const s=seats[(i*3)%seats.length];if(s){n.x=s.x;n.y=s.y;n.tx=s.x;n.ty=s.y;n.a=-Math.PI/2;}});
+  for(let k=0;k<nC;k++){const p=randomFloor(it);if(p)it.npcs.push({id:1+Math.floor(Math.random()*9999),x:p.x,y:p.y,a:0,tx:p.x,ty:p.y,wait:rand(0,2),shirt:pick(['#e74c3c','#3498db','#f1c40f','#9b59b6','#1abc9c','#e67e22','#2ecc71']),skin:pick(['#f1c27d','#e0ac69','#c68642','#8d5524','#ffdbac']),hair:pick(['#222','#3b2314','#6b4423','#111']),anim:0,sit:b.kind==='escola'});}
+  if(b.kind==='escola')it.npcs.forEach((n,i)=>{const seats=[];for(let y=0;y<H;y++)for(let x=0;x<W;x++)if(plan[y][x]==='c'&&plan[y-1][x]==='D')seats.push({x:(x+.5)*ITS,y:(y+.5)*ITS});const s=seats[(i*3)%seats.length];if(s){n.x=s.x;n.y=s.y;n.tx=s.x;n.ty=s.y;n.a=-Math.PI/2;}});
   // posição do jogador: logo acima da porta
   const e=it.exit[Math.floor(it.exit.length/2)];
   it.px=e.x;it.py=e.y-ITS*1.2;it.pa=-Math.PI/2;it.anim=0;
@@ -160,7 +160,9 @@ export function enterInterior(b){
 }
 export function exitInterior(){
   const it=S.interior;if(!it)return;
-  const d=doorOf(it.b);player.x=d.x;player.y=d.y+6;
+  // sai pela porta, virado pra rua (a porta pode estar em qualquer lado do prédio)
+  const d=doorOf(it.b),o=d.out||[0,1];player.x=d.x+o[0]*8;player.y=d.y+o[1]*8;player.moveA=player.a=Math.atan2(o[1],o[0]);
+  S.camYaw=player.moveA; // a câmera 3/4 começa atrás do jogador, olhando pra rua
   S.interior=null;S.menu=null;
   sfxTone(390,0.06,0.06,'square');
 }
@@ -196,7 +198,7 @@ export function updateInterior(dt){
     const nx=it.px+mx*sp*dt,ny=it.py+my*sp*dt;
     if(!interiorSolid(it,nx+Math.sign(mx)*r,it.py)&&!interiorSolid(it,nx+Math.sign(mx)*r,it.py+r*0.6)&&!interiorSolid(it,nx+Math.sign(mx)*r,it.py-r*0.6))it.px=nx;
     if(!interiorSolid(it,it.px,ny+Math.sign(my)*r)&&!interiorSolid(it,it.px+r*0.6,ny+Math.sign(my)*r)&&!interiorSolid(it,it.px-r*0.6,ny+Math.sign(my)*r))it.py=ny;
-    it.anim+=dt*sp*0.012;it.moving=true;
+    it.anim+=dt*sp*0.012;it.moving=true;it.running=sp>150;
   } else it.moving=false;
   // pisou no tapete de saída andando pra baixo: sai
   if(my>0&&it.exit.some(e=>Math.abs(e.x-it.px)<ITS*1.5&&it.py>e.y-ITS*0.2)){exitInterior();return;}

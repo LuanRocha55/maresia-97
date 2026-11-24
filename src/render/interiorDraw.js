@@ -45,6 +45,7 @@ export function renderInterior(){
       case 'P': g.fillStyle='rgba(0,0,0,0.25)';g.beginPath();g.arc(px+T/2+3,py+T/2+4,14,0,Math.PI*2);g.fill();g.fillStyle='#8d6e63';g.fillRect(px+T/2-8,py+T/2-8,16,16);
         g.fillStyle='#2e7d32';for(let k=0;k<5;k++){const a=k*1.25;g.beginPath();g.ellipse(px+T/2+Math.cos(a)*8,py+T/2+Math.sin(a)*8,8,4,a,0,Math.PI*2);g.fill();}break;
       case 'V': box('#5c6bc0',8,2);break;
+      case 'X': box('#6b4a2c',6,3);g.fillStyle='#2a2a2c';g.fillRect(px+10,py+8,T-20,T-18);break;
       case 'R': g.fillStyle='#4e342e';g.fillRect(px,py+T*0.6,T,T*0.35);g.strokeStyle='#212121';g.lineWidth=3;g.beginPath();g.moveTo(px+6,py+T*0.72);g.lineTo(px+T-6,py+T*0.72);g.moveTo(px+6,py+T*0.86);g.lineTo(px+T-10,py+T*0.86);g.stroke();break;
       case 'G': g.fillStyle='#fafafa';g.beginPath();g.arc(px+T/2,py+T/2,T*0.4,0,Math.PI*2);g.fill();g.fillStyle='#e53935';g.beginPath();g.arc(px+T/2,py+T/2,T*0.27,0,Math.PI*2);g.fill();g.fillStyle='#fafafa';g.beginPath();g.arc(px+T/2,py+T/2,T*0.14,0,Math.PI*2);g.fill();break;
       case '-': g.fillStyle='rgba(255,255,255,0.35)';g.fillRect(px,py+T/2-1,T,2);break;
