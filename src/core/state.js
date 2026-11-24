@@ -18,12 +18,16 @@ export const player={x:0,y:0,a:0,health:100,car:null,money:0,heat:0,anim:0,punch
 export const cam={x:0,y:0,zoom:1};
 export const keys={};
 // mouse: posição na tela, botões e se o jogador está usando o mouse pra mirar
-export const mouse={x:0,y:0,down:false,active:false};
+// locked: ponteiro preso no jogo (câmera de ombro a pé: o mouse gira a câmera); dx/dy: movimento acumulado até o próximo quadro;
+// right: botão direito segurado (mirar com arma)
+export const mouse={x:0,y:0,down:false,active:false,locked:false,dx:0,dy:0,right:false};
 // projeção atual (2D ou 3D): o renderizador 3D troca essas funções
 export const view={
   project:(x,y)=>({x:(x-cam.x)*cam.zoom+window.innerWidth/2,y:(y-cam.y)*cam.zoom+window.innerHeight/2}),
   unproject:(sx,sy)=>({x:cam.x+(sx-window.innerWidth/2)/cam.zoom,y:cam.y+(sy-window.innerHeight/2)/cam.zoom}),
   r34:false,   // câmera 3/4 atrás do carro ligada neste quadro (só no 3D, fora dos interiores)
   yaw:-Math.PI/2, // pra onde a câmera 3/4 olha (ângulo do mundo; -π/2 = norte)
+  ombro:false, // câmera de ombro a pé (atrás do jogador, baixa; o mouse gira) ligada neste quadro
+  aim:null,    // ponto do mundo debaixo da mira do centro da tela (câmera de ombro)
 };
 export function mouseWorld(){return view.unproject(mouse.x,mouse.y);}

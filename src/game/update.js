@@ -45,20 +45,26 @@ export function update(dt){
     player.x=c.x;player.y=c.y;player.a=c.a;
     if(c.burnT>0&&Math.floor(S.gameTime*2)%2===0&&!c._warn){msg('O carro vai explodir! SAI (F)!',2);c._warn=true;}
   } else if(player.state==='play'){
+    // câmera de ombro com o mouse preso: botão direito segura a mira (com arma); andando mirando ele anda de lado, devagar
+    const lock=view.ombro&&mouse.locked, armed=player.weapon!=='punho';
+    player.aiming=lock&&armed&&mouse.right;
+    const facing=lock&&armed&&(mouse.right||mouse.down);
     let mx=(rt?1:0)-(lf?1:0),my=(dn?1:0)-(up?1:0);
     if(mx||my){const l=hyp(mx,my);mx/=l;my/=l;
       // câmera 3/4: W anda pra onde a câmera olha, A/D pros lados da tela
       // A direção da câmera é "travada" no instante em que a combinação de teclas muda: assim a câmera
       // pode girar pra trás do jogador enquanto ele anda sem mudar o rumo no meio do caminho (nada de andar em círculo)
-      if(view.r34&&!S.interior){const key=mx+','+my;if(player.inKey!==key){player.inKey=key;player.inYaw=view.yaw;}
+      if(view.r34&&!S.interior){const key=mx+','+my;if(player.inKey!==key||lock){player.inKey=key;player.inYaw=view.yaw;}
         const fx=Math.cos(player.inYaw),fy=Math.sin(player.inYaw),ax=mx,ay=my;mx=fx*(-ay)-fy*ax;my=fy*(-ay)+fx*ax;}
-      player.walkT=S.gameTime;player.moveA=Math.atan2(my,mx);const sp=(keys['ShiftLeft']||keys['ShiftRight'])?160:95;
-      player.a=Math.atan2(my,mx);const nx=player.x+mx*sp*dt,ny=player.y+my*sp*dt;
+      player.walkT=S.gameTime;player.moveA=Math.atan2(my,mx);const sp=player.aiming?62:(keys['ShiftLeft']||keys['ShiftRight'])?160:95;
+      if(!facing)player.a=Math.atan2(my,mx);const nx=player.x+mx*sp*dt,ny=player.y+my*sp*dt;
       if(!solidAt(nx,player.y))player.x=nx;if(!solidAt(player.x,ny))player.y=ny;player.anim+=dt*sp*0.12;}
     else player.inKey=null;
     // com mouse: o personagem olha pra mira (anda com WASD e mira com o mouse)
-    if(mouse.active){const m=mouseWorld();player.a=Math.atan2(m.y-player.y,m.x-player.x);}
+    if(facing&&view.aim)player.a=Math.atan2(view.aim.y-player.y,view.aim.x-player.x);
+    else if(mouse.active&&!lock){const m=mouseWorld();player.a=Math.atan2(m.y-player.y,m.x-player.x);}
   }
+  if(player.car||player.state!=='play')player.aiming=false;
   advanceTime(dt);
   updateWeapons(dt);
   updateJobs(dt);

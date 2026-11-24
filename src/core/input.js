@@ -4,7 +4,7 @@ import { AU, initAudio, sfxHorn } from '../audio/audio.js';
 import { msg } from '../game/world.js';
 import { enterExit, punch, nearestCar } from '../game/player.js';
 import { doorOf } from '../game/jobs.js';
-import { S, keys, player, mouse } from './state.js';
+import { S, keys, player, mouse, view } from './state.js';
 import { cycleWeapon, selectWeapon } from '../game/weapons.js';
 import { toggleJob } from '../game/jobs.js';
 import { nearestDoor, openPlace, menuKey, menuMouse, closeMenu } from '../game/interiors.js';
@@ -53,17 +53,44 @@ window.addEventListener('keydown',e=>{
 window.addEventListener('keyup',e=>{keys[e.code]=false;});
 window.addEventListener('blur',()=>{for(const k in keys)keys[k]=false;mouse.down=false;});
 cv.addEventListener('contextmenu',e=>e.preventDefault());
-cv.addEventListener('pointermove',e=>{mouse.x=e.clientX;mouse.y=e.clientY;mouse.active=true;if(S.menu)menuMouse(e.clientX,e.clientY,false);else if(!S.started||S.paused)titleMouse(e.clientX,e.clientY,false);});
+// ---- câmera de ombro: o ponteiro fica preso no jogo e o mouse gira a câmera ----
+// O primeiro clique na rua (a pé) prende o ponteiro e não atira. ESC solta (e pausa o jogo).
+// Entrar em carro, menu, mapa, interior ou pausa solta sozinho (syncPointerLock, chamado todo quadro).
+let unlocking=false;
+const canLock=()=>S.started&&!S.paused&&!S.menu&&!S.mapOpen&&view.ombro&&cv.requestPointerLock;
+export function syncPointerLock(){
+  if(mouse.locked&&!canLock()&&document.pointerLockElement===cv){unlocking=true;document.exitPointerLock();}
+}
+document.addEventListener('pointerlockchange',()=>{
+  const was=mouse.locked;mouse.locked=document.pointerLockElement===cv;mouse.dx=mouse.dy=0;
+  if(mouse.locked){mouse.active=false;}
+  else{mouse.right=false;mouse.down=false;
+    // ESC do navegador soltou o ponteiro no meio do jogo: pausa (igual jogo de PC)
+    if(was&&!unlocking&&S.started&&!S.paused&&!S.menu&&!S.mapOpen)S.paused=true;}
+  unlocking=false;
+});
+cv.addEventListener('mousemove',e=>{if(mouse.locked){mouse.dx+=e.movementX||0;mouse.dy+=e.movementY||0;}});
+// com o ponteiro preso os botões vêm por mousedown/mouseup: esses chegam pra cada botão, mesmo apertando o segundo com o
+// primeiro segurado (mirar + atirar); o pointerdown não chega nesse caso
+cv.addEventListener('mousedown',e=>{if(!mouse.locked)return;
+  if(e.button===0){mouse.down=true;if(!player.car&&player.weapon==='punho')punch();}
+  else if(e.button===2){if(!player.car&&player.weapon!=='punho')mouse.right=true;else interact();}});
+window.addEventListener('mouseup',e=>{if(!mouse.locked)return;if(e.button===0)mouse.down=false;if(e.button===2)mouse.right=false;});
+cv.addEventListener('pointermove',e=>{if(mouse.locked)return;mouse.x=e.clientX;mouse.y=e.clientY;mouse.active=true;if(S.menu)menuMouse(e.clientX,e.clientY,false);else if(!S.started||S.paused)titleMouse(e.clientX,e.clientY,false);});
 cv.addEventListener('pointerdown',e=>{
   mouse.x=e.clientX;mouse.y=e.clientY;
   if(!S.started){titleMouse(e.clientX,e.clientY,true);return;}
   if(S.menu){if(e.button===0)menuMouse(e.clientX,e.clientY,true);else closeMenu();return;}
   if(S.mapOpen){mapClick(e.clientX,e.clientY,e.button);return;}
   if(S.paused){titleMouse(e.clientX,e.clientY,true);return;}
+  if(S.interior){mouse.active=true;if(e.button===2)interactInterior();return;}
+  if(!mouse.locked&&canLock()&&(e.button===0||e.button===2)){
+    try{const r=cv.requestPointerLock({unadjustedMovement:true});if(r&&r.catch)r.catch(()=>{try{cv.requestPointerLock();}catch(err){}});}catch(err){try{cv.requestPointerLock();}catch(e2){}}
+    return;}
+  if(mouse.locked)return; // preso: mousedown cuida (botão direito segura a mira com arma; F continua entrando no carro/porta)
   mouse.active=true;
-  if(S.interior){if(e.button===2)interactInterior();return;}
   if(e.button===0){mouse.down=true;if(!player.car&&player.weapon==='punho')punch();}
   else if(e.button===2)interact();
 });
-window.addEventListener('pointerup',e=>{if(e.button===0)mouse.down=false;});
+window.addEventListener('pointerup',e=>{if(e.button===0)mouse.down=false;if(e.button===2)mouse.right=false;});
 cv.addEventListener('wheel',e=>{e.preventDefault();if(S.started&&!S.paused&&!S.menu&&!S.mapOpen)cycleWeapon(e.deltaY>0?1:-1);},{passive:false});

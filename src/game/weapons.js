@@ -113,7 +113,9 @@ function playerShoot(){
     }
   } else {
     // com mouse a mira é exata (ajuda bem pequena); no teclado, mira automática mais forte
-    const a=mouse.active?autoAim(player.x,player.y,player.a,w.range,0.08):autoAim(player.x,player.y,player.a,w.range,0.38);
+    // câmera de ombro: mira no centro da tela com uma ajuda pequena (um pouco maior sem segurar a mira)
+    const a=mouse.locked?autoAim(player.x,player.y,player.a,w.range,player.aiming?0.07:0.16):mouse.active?autoAim(player.x,player.y,player.a,w.range,0.08):autoAim(player.x,player.y,player.a,w.range,0.38);
+    player.shotT=S.gameTime;
     fire(player.x,player.y,a,w,true,null);
   }
   addHeat(3);
