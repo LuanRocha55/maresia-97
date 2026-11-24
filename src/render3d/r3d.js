@@ -166,7 +166,8 @@ function buildNeon(){
       gidx.push(gv,gv+1,gv+2,gv,gv+2,gv+3);gv+=4;}
     const gg=new THREE.BufferGeometry();gg.setAttribute('position',new THREE.Float32BufferAttribute(gpos,3));gg.setAttribute('uv',new THREE.Float32BufferAttribute(Array(bs.length).fill([0,0,1,0,1,1,0,1]).flat(),2));gg.setIndex(gidx);gg.computeBoundingSphere();
     const m1=new THREE.Mesh(geo,mat),m2=new THREE.Mesh(gg,glow);m2.renderOrder=4;group.add(m1);group.add(m2);
-    {const bg=geo.clone();bg.setIndex(idx.slice().reverse());group.add(new THREE.Mesh(bg,neonBack||(neonBack=new THREE.MeshLambertMaterial({color:'#1b1b1f'}))));}
+    {const bg=geo.clone();bg.setIndex(idx.slice().reverse());bg.computeVertexNormals(); // sem normal a luz dava NaN (retângulo preto no realista)
+      group.add(new THREE.Mesh(bg,neonBack||(neonBack=new THREE.MeshLambertMaterial({color:'#1b1b1f'}))));}
     const ent={k,mat,glow,on:0};list.push(ent);
     // posição de cada letreiro pra luz colorida que ele joga na fachada e na calçada (luzes.js)
     const lc=new THREE.Color(col);
