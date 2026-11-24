@@ -5,6 +5,15 @@ O número segue o padrão `MAIOR.MENOR.CORREÇÃO`:
 - **MENOR** — novidade (sistema, missão, veículo, reorganização)
 - **CORREÇÃO** — conserto de bug ou ajuste pequeno
 
+## 1.19.1 — 24/11/2026
+**Fim da caixa preta na tela (gráfico realista)**
+
+![antes e depois](docs/capturas/1.19.1/caixa-preta-antes-depois.jpg)
+
+- Dirigindo no gráfico realista, às vezes um retângulo preto enorme cobria parte da tela. A causa: a chapa escura atrás dos letreiros de neon (em cima dos prédios) não tinha "normal" (a direção da superfície), e a conta da luz dava um valor inválido (NaN) quando ela aparecia na tela
+- O brilho (bloom) desfoca a imagem em vários tamanhos: um único pixel inválido se espalhava em blocos pretos retangulares
+- Consertado nos dois lados: a chapa dos letreiros agora tem normal, e o filtro do brilho descarta qualquer pixel inválido antes de desfocar (se algum outro modelo soltar um, vira no máximo um pontinho)
+
 ## 1.19.0 — 24/11/2026
 **Protagonista novo e carro do agiota, feitos no Meshy**
 
