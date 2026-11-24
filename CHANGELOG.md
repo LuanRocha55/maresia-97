@@ -5,6 +5,20 @@ O número segue o padrão `MAIOR.MENOR.CORREÇÃO`:
 - **MENOR** — novidade (sistema, missão, veículo, reorganização)
 - **CORREÇÃO** — conserto de bug ou ajuste pequeno
 
+## 1.19.2 — 24/11/2026
+**Rodas girando no eixo certo e barcos no cais**
+
+![rodas: antes e depois](docs/capturas/1.19.2/1-rodas-antes-depois.jpg)
+![pracinha da Vila: antes e depois](docs/capturas/1.19.2/2-praca-antes-depois.jpg)
+![cais da Vila dos Pescadores: antes e depois](docs/capturas/1.19.2/3-cais-antes-depois.jpg)
+![trapiche](docs/capturas/1.19.2/4-trapiche.jpg)
+
+- Viatura, lotação e moto: as rodas giravam em volta do comprimento do veículo (a roda "capotava" de lado). Agora rolam no eixo da própria roda
+- SUV e Exército: o estepe pendurado atrás girava junto com as rodas. Agora fica parado
+- Barcos saíram das pracinhas e calçadas da Vila dos Pescadores e foram pro mar, no cais da Vila: 8 trapiches de madeira (tábuas, estacas e cabeços de amarração) com os barcos amarrados dos lados e mais alguns fundeados entre eles
+- Os barcos ficam com o casco afundado até a linha d'água (no modelo do Meshy e no de código). As redes de pesca continuam nas pracinhas
+- Os veículos do Meshy (Jegue, Busão, Sedã Executivo) têm a roda presa na lataria e não giram; não estavam no eixo errado
+
 ## 1.19.1 — 24/11/2026
 **Fim da caixa preta na tela (gráfico realista)**
 

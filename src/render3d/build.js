@@ -485,6 +485,8 @@ function adTexture(ad){
   g.fillStyle='#0b4f8a';for(let y=44;y<140;y+=12)for(const x of [398,404,430,438,446,464,472])if(x<418||x>424)g.fillRect(x,y,4,6);
   const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=4;return t;
 }
+// altura da base do barco no mar (o mar fica em -0,16 e ondula uns 15 cm): o casco afunda um pouco
+export const BOAT_Y=-0.3;
 function buildRio(scene,SG,mats,SGm){
   const M=new THREE.Matrix4(),Q=new THREE.Quaternion(),S3=new THREE.Vector3(),P=new THREE.Vector3(),E=new THREE.Euler();
   const ads=new Map();
@@ -509,12 +511,18 @@ function buildRio(scene,SG,mats,SGm){
       for(const ox of [-1.6,1.6])G.box(x+ox-0.08,z-0.08,x+ox+0.08,z+0.08,0,2.2,'#666','#5a5a5a');
       G.box(x-2.75,z-0.12,x+2.75,z-0.02,2.1,4.15,'#e8e8e8','#d0d0d0');
       (ads.get(d.ad)||ads.set(d.ad,[]).get(d.ad)).push(d);
-    } else if(d.type==='barco'){ // canoa de madeira virada no quintal (casco com bico)
-      const c=Math.cos(d.a),s=Math.sin(d.a),Pt=(lx,lz)=>[x+lx*c-lz*s,z+lx*s+lz*c];
-      G.prism([Pt(-1.7,0),Pt(-1.1,-0.5),Pt(1.1,-0.5),Pt(1.7,0),Pt(1.1,0.5),Pt(-1.1,0.5)],0,0.45,d.c,d.c);
-      G.prism([Pt(-1.7,0),Pt(-1.1,-0.5),Pt(1.1,-0.5),Pt(1.7,0),Pt(1.1,0.5),Pt(-1.1,0.5)],0.12,0.2,null,'#f2f2ee'); // faixa branca no casco
-      G.prism([Pt(-1.35,0),Pt(-0.9,-0.36),Pt(0.9,-0.36),Pt(1.35,0),Pt(0.9,0.36),Pt(-0.9,0.36)],0.45,0.47,'#6b4a30','#6b4a30');
-      G.obox(...Pt(0,0),d.a,0.12,0.45,0.3,0.42,'#8a6a48','#8a6a48');
+    } else if(d.type==='barco'){ // canoa de madeira (casco com bico); no mar, afundada até a linha d'água
+      const c=Math.cos(d.a),s=Math.sin(d.a),Pt=(lx,lz)=>[x+lx*c-lz*s,z+lx*s+lz*c],y=d.agua?BOAT_Y:0;
+      G.prism([Pt(-1.7,0),Pt(-1.1,-0.5),Pt(1.1,-0.5),Pt(1.7,0),Pt(1.1,0.5),Pt(-1.1,0.5)],y,y+0.45,d.c,d.c);
+      G.prism([Pt(-1.7,0),Pt(-1.1,-0.5),Pt(1.1,-0.5),Pt(1.7,0),Pt(1.1,0.5),Pt(-1.1,0.5)],y+0.12,y+0.2,null,'#f2f2ee'); // faixa branca no casco
+      G.prism([Pt(-1.35,0),Pt(-0.9,-0.36),Pt(0.9,-0.36),Pt(1.35,0),Pt(0.9,0.36),Pt(-0.9,0.36)],y+0.45,y+0.47,'#6b4a30','#6b4a30');
+      G.obox(...Pt(0,0),d.a,0.12,0.45,y+0.3,y+0.42,'#8a6a48','#8a6a48');
+    } else if(d.type==='pier'){ // trapiche de madeira: tábuas em cima de estacas, do cais até o mar
+      const G2=SG.at(x,z),hl=d.len*U/2,hw=0.75,top=0.12,W0='#8a6a48',W1='#6b4a30';
+      for(let k=0,n=Math.round(hl*2/0.32);k<n;k++){const z0=z-hl+k*hl*2/n;G2.box(x-hw,z0+0.015,x+hw,z0+hl*2/n-0.015,top-0.07,top,k%3?W0:'#97775a',W1,false);} // tábuas
+      for(const sx of [-1,1])G2.box(x+sx*hw-0.06,z-hl,x+sx*hw+0.06,z+hl,top-0.16,top-0.07,W1,W1,false);                           // vigas
+      for(let zz=z-hl+0.6;zz<=z+hl;zz+=1.4)for(const sx of [-1,1])G2.cyl(x+sx*(hw-0.05),zz,0.09,-0.8,top+0.28,'#5a3e28','#5a3e28',6); // estacas
+      for(const sx of [-1,1])G2.cyl(x+sx*(hw-0.05),z+hl-0.1,0.13,top,top+0.22,'#3a2a1c','#3a2a1c',8);                            // cabeços de amarração
     } else if(d.type==='rede'){ // rede de pesca estendida entre dois paus
       const h=d.horiz!==false,X=(t,y)=>h?[x+t,y,z]:[x,y,z+t];
       for(const t of [-1.8,1.8]){const [px,,pz]=X(t,0);G.box(px-0.05,pz-0.05,px+0.05,pz+0.05,0,1.7,'#6b4a30','#6b4a30');}

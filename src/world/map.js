@@ -491,17 +491,26 @@ function rioDecor(cells){
     if(tileOf(x,y)!==SAND||r()>0.16)continue;const px=(x+r())*T,py=(y+r())*T;
     if(buildings.some(b=>px>b.x0-24&&px<b.x1+24&&py>b.y0-24&&py<b.y1+24))continue;
     decor.push({type:'moita',x:px,y:py,s:0.5+r()*0.7,c:rp(['#5d8a3a','#6f9a45','#4f7a34','#8a9a4a'])});}
-  // Vila dos Pescadores: barcos de madeira e redes estendidas nas pracinhas e na beira das calçadas
-  {let nb=0,nr=0;const spot=(x,y,horiz,len,t)=>horiz?free(x,y,len,1,t)&&!isUsed(x-1,y-1,len+2,3):free(x,y,1,len,t)&&!isUsed(x-1,y-1,3,len+2);
+  // Vila dos Pescadores: redes de pesca estendidas nas pracinhas e na beira das calçadas
+  {let nr=0;const spot=(x,y,horiz,len,t)=>horiz?free(x,y,len,1,t)&&!isUsed(x-1,y-1,len+2,3):free(x,y,1,len,t)&&!isUsed(x-1,y-1,3,len+2);
     for(let y=224;y<354;y++)for(let x=16;x<172;x++){
       if(zt(x,y)!=='velha')continue;const t=tileOf(x,y);if(t!==GRASS&&t!==SIDE)continue;
       const lim=t===GRASS?1:0.06; // na calçada, bem de vez em quando
       for(const horiz of [true,false]){
-        if(nb<34&&spot(x,y,horiz,4,t)&&r()<0.4*lim+0.0){const px=(x+(horiz?2:.5))*T,py=(y+(horiz?.5:2))*T;if(busy(px,py,52))continue;
-          horiz?mark(x,y,4,1):mark(x,y,1,4);decor.push({type:'barco',x:px,y:py,a:(horiz?0:Math.PI/2)+(r()<0.5?0:Math.PI)+(t===GRASS?(r()-0.5)*0.4:0),c:rp(['#2f6fb3','#c0392b','#2e8b57','#e0a21b','#f2f2ee'])});nb++;break;}
         if(nr<24&&spot(x,y,horiz,4,t)&&r()<0.25*lim){const px=(x+(horiz?2:.5))*T,py=(y+(horiz?.5:2))*T;if(busy(px,py,52))continue;
           horiz?mark(x,y,4,1):mark(x,y,1,4);decor.push({type:'rede',x:px,y:py,horiz});nr++;break;}
       }}}
+  // Cais da Vila dos Pescadores: trapiches de madeira saindo do cais pro mar, com os barcos amarrados dos dois lados
+  // e mais alguns fundeados um pouco mais longe. Barco só na água (antes eles ficavam nas pracinhas e calçadas da vila).
+  {const cols=['#2f6fb3','#c0392b','#2e8b57','#e0a21b','#f2f2ee'],y0=LAND_Y1,PL=7; // trapiche: 7 tiles mar adentro
+    for(let x=24;x<=164;x+=20){
+      const px=(x+.5)*T;decor.push({type:'pier',x:px,y:(y0+PL/2)*T,len:PL*T});
+      for(const side of [-1,1])for(let k=0;k<2;k++){if(k&&r()<0.4)continue;
+        decor.push({type:'barco',x:px+side*2.1*T,y:(y0+2.2+k*3.4+(r()-0.5)*0.4)*T,a:Math.PI/2+(r()<0.5?0:Math.PI)+(r()-0.5)*0.12,c:rp(cols),agua:true});}
+      // um fundeado entre um trapiche e outro
+      if(x+20<=164&&r()<0.7)decor.push({type:'barco',x:(x+10+(r()-0.5)*4)*T,y:(y0+9+r()*4)*T,a:r()*Math.PI*2,c:rp(cols),agua:true});
+    }}
+
 }
 
 genMap();

@@ -13,7 +13,7 @@ import { drawGround2D, label } from '../render/draw.js';
 import { drawHUD, drawKeycap } from '../render/hud.js';
 import { ICONS, KIND_ICON, drawIcon } from '../render/icons.js';
 import { enterables } from '../game/interiors.js';
-import { buildCity, U, bh, facadeOf } from './build.js';
+import { buildCity, U, bh, facadeOf, BOAT_Y } from './build.js';
 import { buildings as buildingsList_, lamps as lampsList, phones as phonesList, decor as decorList, tileAt, ROAD } from '../world/map.js';
 import { loadMeshy, meshyCar, meshyProps } from './meshy.js';
 import { VEH_SCALE } from '../entities/vehicles.js';
@@ -351,7 +351,7 @@ const wreckMat=new THREE.MeshLambertMaterial({color:'#2b2724',userData:{pbr:{r:1
 // modelos 3D só nas qualidades média e alta (na leve, as peças feitas por código pesam menos)
 const useModels=()=>quality>0;
 let mapProps=null, meshyMeshes=null;
-// onde vão os objetos do Meshy: orelhão com a concha aberta pra rua, banca de frente pra calçada, barco no comprido
+// onde vão os objetos do Meshy: orelhão com a concha aberta pra rua, banca de frente pra calçada, barco na água do cais
 function meshyList(){
   const out=[];
   for(const ph of phonesList){let dir=[0,1];
@@ -359,7 +359,7 @@ function meshyList(){
     out.push({name:'orelhao',x:ph.x*U,z:ph.y*U,rot:Math.atan2(dir[0],dir[1])});}
   for(const d of decorList){
     if(d.type==='banca')out.push({name:'banca',x:d.x*U,z:d.y*U,rot:Math.atan2(d.face[0],d.face[1])});
-    else if(d.type==='barco')out.push({name:'barco',x:d.x*U,z:d.y*U,rot:-d.a});}
+    else if(d.type==='barco')out.push({name:'barco',x:d.x*U,z:d.y*U,y:d.agua?BOAT_Y:0,rot:-d.a});}
   return out;
 }
 function applyProps(){
