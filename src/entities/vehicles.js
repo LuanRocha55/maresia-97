@@ -6,26 +6,33 @@ import { addHeat, onScreen } from '../game/world.js';
 import { addSkid, crashSparks } from '../game/effects.js';
 import { S, player } from '../core/state.js';
 
+// len/wid em pixels do mapa (32 = 1 unidade 3D), no tamanho antigo (VEH_SCALE logo abaixo aumenta).
+// Jegue e Busão já no tamanho dos modelos do Meshy.
+// beco:true = cabe nos becos da Vila dos Pescadores (carros pequenos).
 export const CT={
-  jegue:{name:'Jegue 1.0',len:36,wid:18,maxSpd:260,accel:220,brake:460,grip:7,turn:2.7,hp:100,mass:1,val:200,colors:['#c0392b','#2980b9','#ecf0f1','#7f8c8d','#16a085','#d35400','#8e44ad']},
-  brisa:{name:'Brisa GT',len:40,wid:19,maxSpd:430,accel:360,brake:560,grip:8.5,turn:2.9,hp:90,mass:1,val:900,colors:['#e74c3c','#f1c40f','#2c3e50','#ecf0f1']},
-  taxi:{name:'Táxi',len:38,wid:18,maxSpd:290,accel:240,brake:480,grip:7.5,turn:2.7,hp:110,mass:1.1,val:300,colors:['#f4f4f0']},
+  jegue:{name:'Jegue 1.0',len:68,wid:33,beco:true,maxSpd:260,accel:220,brake:460,grip:7,turn:2.7,hp:100,mass:1,val:200,colors:['#c0392b','#2980b9','#ecf0f1','#7f8c8d','#16a085','#d35400','#8e44ad']},
+  brisa:{name:'Brisa GT',len:40,wid:19,beco:true,maxSpd:430,accel:360,brake:560,grip:8.5,turn:2.9,hp:90,mass:1,val:900,colors:['#e74c3c','#f1c40f','#2c3e50','#ecf0f1']},
+  taxi:{name:'Táxi',len:38,wid:18,beco:true,maxSpd:290,accel:240,brake:480,grip:7.5,turn:2.7,hp:110,mass:1.1,val:300,colors:['#f4f4f0']},
   camin:{name:'Caminhonete',len:46,wid:22,maxSpd:255,accel:210,brake:440,grip:7,turn:2.2,hp:180,mass:1.7,val:500,colors:['#5d4037','#455a64','#827717','#37474f']},
-  bugue:{name:'Bugue',len:32,wid:19,maxSpd:330,accel:340,brake:480,grip:6.2,turn:3.3,hp:80,mass:0.8,val:600,colors:['#ff7043','#26c6da','#ffca28','#9ccc65'],sand:true},
-  busao:{name:'Busão',len:84,wid:26,maxSpd:200,accel:130,brake:340,grip:7,turn:1.7,hp:320,mass:4,val:800,colors:['#1565c0','#e65100','#2e7d32']},
-  moto:{name:'Motoca',len:26,wid:10,maxSpd:340,accel:380,brake:520,grip:7.5,turn:3.6,hp:60,mass:0.5,val:250,colors:['#e53935','#1e88e5','#212121','#fdd835']},
+  bugue:{name:'Bugue',len:32,wid:19,beco:true,maxSpd:330,accel:340,brake:480,grip:6.2,turn:3.3,hp:80,mass:0.8,val:600,colors:['#ff7043','#26c6da','#ffca28','#9ccc65'],sand:true},
+  busao:{name:'Busão',len:159,wid:42,maxSpd:200,accel:130,brake:340,grip:7,turn:1.7,hp:320,mass:4,val:800,colors:['#1565c0','#e65100','#2e7d32']},
+  moto:{name:'Motoca',len:26,wid:10,beco:true,maxSpd:340,accel:380,brake:520,grip:7.5,turn:3.6,hp:60,mass:0.5,val:250,colors:['#e53935','#1e88e5','#212121','#fdd835']},
   guincho:{name:'Guincho',len:52,wid:22,maxSpd:240,accel:190,brake:420,grip:7,turn:2.1,hp:220,mass:2.2,val:700,colors:['#f9a825']},
   luxo:{name:'Sedã Executivo',len:44,wid:20,maxSpd:390,accel:310,brake:560,grip:8.4,turn:2.6,hp:120,mass:1.3,val:1100,colors:['#111111','#2c3e50','#ecf0f1','#7f8c8d','#4a0e0e']},
   suv:{name:'Utilitário',len:44,wid:22,maxSpd:320,accel:260,brake:500,grip:7.8,turn:2.4,hp:160,mass:1.6,val:800,colors:['#ffffff','#1c2833','#566573','#7b241c','#1d3557']},
   lotacao:{name:'Lotação',len:52,wid:22,maxSpd:250,accel:170,brake:400,grip:7,turn:2.0,hp:200,mass:2,val:600,colors:['#f2f0e8']},
   caminhao:{name:'Caminhão Baú',len:72,wid:24,maxSpd:210,accel:120,brake:320,grip:7,turn:1.8,hp:300,mass:3.5,val:900,colors:['#e0e0e0','#f5b041','#5dade2']},
-  viatura:{name:'Viatura',len:40,wid:19,maxSpd:390,accel:330,brake:560,grip:8.6,turn:2.9,hp:150,mass:1.3,val:1200,colors:['#20242c']},
+  viatura:{name:'Viatura',len:40,wid:19,beco:true,maxSpd:390,accel:330,brake:560,grip:8.6,turn:2.9,hp:150,mass:1.3,val:1200,colors:['#20242c']},
   // forças que entram com o procurado alto
   swat:{name:'Van da SWAT',len:54,wid:24,maxSpd:330,accel:250,brake:480,grip:8,turn:2.2,hp:340,mass:2.6,val:1800,colors:['#15171c']},
   fbi:{name:'Sedã do FBI',len:44,wid:20,maxSpd:450,accel:380,brake:600,grip:9,turn:2.8,hp:170,mass:1.4,val:2000,colors:['#0b0b0d']},
   exercito:{name:'Jipe do Exército',len:42,wid:22,maxSpd:360,accel:320,brake:520,grip:8.4,turn:2.7,hp:260,mass:2,val:1500,colors:['#4b5320'],sand:true},
   blindado:{name:'Blindado',len:66,wid:30,maxSpd:250,accel:150,brake:380,grip:8,turn:1.7,hp:1000,mass:6,val:4000,colors:['#3d4419']},
 };
+// Todos os veículos ficaram ~1,9x maiores (24/11/2026) pra combinar com as pessoas e com os modelos do Meshy.
+// Os números acima são do tamanho antigo; aqui eles crescem. Jegue e Busão já estão no tamanho do modelo.
+export const VEH_SCALE=1.9;
+for(const [k,t] of Object.entries(CT))if(k!=='jegue'&&k!=='busao'){t.len=Math.round(t.len*VEH_SCALE);t.wid=Math.round(t.wid*VEH_SCALE);}
 export const TRAFFIC_MIX=['jegue','jegue','jegue','jegue','taxi','taxi','camin','camin','brisa','bugue','busao','moto'];
 
 export class Car{

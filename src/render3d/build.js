@@ -256,7 +256,7 @@ function roofTexture(b){
 // a geometria delas fica separada pra poder esconder quando os modelos chegarem
 export const houseSwap=b=>b.kind==='b'&&(b.style==='mansao'||(b.style==='casa'&&Math.max(b.x1-b.x0,b.y1-b.y0)/Math.min(b.x1-b.x0,b.y1-b.y0)<=2.2));
 export function buildCity(scene,mats){
-  const SG=new SGeo(), SGw=new SGeo(), SGl=new SGeo();
+  const SG=new SGeo(), SGw=new SGeo(), SGl=new SGeo(), SGm=new SGeo(); // SGm: peças que os modelos do Meshy substituem
   const HG=new SGeo(), HGw=new SGeo(), HGl=new SGeo(); // casas trocáveis
   const special3d=[];
   for(const b of buildings){
@@ -308,7 +308,7 @@ export function buildCity(scene,mats){
     const w=horiz?1.4:0.4,d=horiz?0.4:1.4;G.box(x-w,z-d,x+w,z+d,1.5,1.62,'#1565c0','#1565c0');
     for(const [px,pz] of [[x-w,z-d],[x+w-0.1,z+d-0.1]])G.box(px,pz,px+0.1,pz+0.1,0,1.5,'#cfd8dc','#cfd8dc');}
   // orelhão: poste e a concha laranja (o "orelhão" de verdade)
-  for(const ph of phones){const x=ph.x*U,z=ph.y*U;G=SG.at(x,z);G.box(x-0.05,z-0.05,x+0.05,z+0.05,0,1.95,'#555','#555');orelhao(G,x,z);}
+  for(const ph of phones){const x=ph.x*U,z=ph.y*U;G=SGm.at(x,z);G.box(x-0.05,z-0.05,x+0.05,z+0.05,0,1.95,'#555','#555');orelhao(G,x,z);}
   // guindastes do porto: pórtico com duas pernas e a lança por cima do mar
   for(const d of decor)if(d.type==='guindaste'){const x=d.x*U,z=d.y*U;G=SG.at(x,z);const Y='#f2a516',Yd='#d48a0c';
     for(const lx of [-1.3,1.1])for(const lz of [-1.6,0.4])G.box(x+lx,z+lz,x+lx+0.22,z+lz+0.22,0,6.2,Yd,Y);
@@ -317,11 +317,12 @@ export function buildCity(scene,mats){
     G.box(x-0.6,z-4.4,x+0.6,z-3.2,6.75,7.6,'#4a4f55','#3a3f45');         // contrapeso
     G.box(x-0.5,z-0.9,x+0.5,z+0.1,6.75,7.5,'#e8e2d0','#c9c3b2');         // cabine
     G.box(x-0.03,z+4.6,x+0.03,z+4.66,3.2,6.2,'#222','#222');G.box(x-0.25,z+4.4,x+0.25,z+4.86,2.9,3.2,'#333','#333');}
-  buildRio(scene,SG,mats);
+  buildRio(scene,SG,mats,SGm);
 
   const city=SG.meshes(mats.city);for(const m of city){m.castShadow=true;m.receiveShadow=true;scene.add(m);}
   const win=SGw.meshes(mats.glass);for(const m of win)scene.add(m);
   const lit=SGl.meshes(mats.lit);for(const m of lit){m.renderOrder=1;scene.add(m);}
+  const meshyOld=SGm.meshes(mats.city);for(const m of meshyOld){m.castShadow=true;m.receiveShadow=true;scene.add(m);}
   const houses=[...HG.meshes(mats.city),...HGw.meshes(mats.glass),...HGl.meshes(mats.lit)];
   for(const m of houses){if(m.material===mats.city){m.castShadow=true;m.receiveShadow=true;}if(m.material===mats.lit)m.renderOrder=1;scene.add(m);}
 
@@ -395,7 +396,7 @@ export function buildCity(scene,mats){
 
   return {city,win,lit,pools,heads,heads3,bulbs,special3d,
     // o que os modelos 3D (props.js) substituem quando carregam
-    swap:{houses,trees:treeMeshes,lamps:[...poles.list,...heads.list]}};
+    swap:{houses,trees:treeMeshes,lamps:[...poles.list,...heads.list],meshy:meshyOld}};
 }
 
 // ---------- Guanabara 97: peças de cada bairro ----------
@@ -484,11 +485,11 @@ function adTexture(ad){
   g.fillStyle='#0b4f8a';for(let y=44;y<140;y+=12)for(const x of [398,404,430,438,446,464,472])if(x<418||x>424)g.fillRect(x,y,4,6);
   const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=4;return t;
 }
-function buildRio(scene,SG,mats){
+function buildRio(scene,SG,mats,SGm){
   const M=new THREE.Matrix4(),Q=new THREE.Quaternion(),S3=new THREE.Vector3(),P=new THREE.Vector3(),E=new THREE.Euler();
   const ads=new Map();
   for(const d of decor){
-    const x=d.x*U,z=d.y*U,G=SG.at(x,z);
+    const x=d.x*U,z=d.y*U,G=(d.type==='banca'||d.type==='barco'?SGm:SG).at(x,z);
     if(d.type==='camelo'){ // barraca de camelô: mesa com mercadoria e lona inclinada pra rua
       const [fx,fz]=d.face,a=Math.atan2(fx,fz),c=Math.cos(a),s=Math.sin(a),L=(lx,ly,lz)=>[x+lx*c+lz*s,ly,z-lx*s+lz*c];
       G.obox(x,z,-a,0.55,0.35,0.55,0.62,'#d9cdb0','#8a7a5a');

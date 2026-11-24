@@ -17,7 +17,7 @@ const SPEED={ave:175,rua:130,beco:70};
 const lineOf=c=>c.dir%2===0?HL[c.line]:VL[c.line];
 const nextNode=c=>c.dir%2===0?[c.next,c.line]:[c.line,c.next];
 const nodeAlong=(c,k)=>c.dir%2===0?VL[k].px:HL[k].px;
-const big=c=>c.t.len>40;
+const big=c=>!c.t.beco;
 
 // trecho todo fora da área fechada pela operação (amostra pontos ao longo da reta)
 function openPath(x0,y0,x1,y1){for(let k=0;k<=8;k++){const t=k/8;if(!isOpenAt(x0+(x1-x0)*t,y0+(y1-y0)*t))return false;}return true;}
@@ -210,7 +210,7 @@ export function spawnOnRoad(rmin,rmax,ignoreView,type,ai,pred){
     if(!ignoreView&&(d<viewR()||onScreen(x,y,160)))continue;
     if(pred&&!pred(x,y))continue;
     let ty=type||pick(MIX[zoneAt(x/T|0,y/T|0)]||MIX.centro);
-    if(s.L.type==='beco'&&CT[ty].len>40){if(type)continue;ty=pick(['jegue','moto']);} // reforço pedido não vira carro comum
+    if(s.L.type==='beco'&&!CT[ty].beco){if(type)continue;ty=pick(['jegue','moto']);} // reforço pedido não vira carro comum
     if((ty==='busao'||ty==='caminhao')&&S.cars.filter(c=>c.type===ty).length>5)ty='jegue';
     let ok=true;for(const c of S.cars)if(hyp(c.x-x,c.y-y)<(c.t.len+CT[ty].len)/2+24){ok=false;break;}
     if(!ok)continue;
