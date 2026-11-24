@@ -5,6 +5,23 @@ O número segue o padrão `MAIOR.MENOR.CORREÇÃO`:
 - **MENOR** — novidade (sistema, missão, veículo, reorganização)
 - **CORREÇÃO** — conserto de bug ou ajuste pequeno
 
+## 1.19.0 — 24/11/2026
+**Protagonista novo e carro do agiota, feitos no Meshy**
+
+![poses: antes e depois](docs/capturas/1.19.0/2-poses-antes-depois.jpg)
+![de frente: antes e depois](docs/capturas/1.19.0/1-frente-antes-depois.jpg)
+![câmera do jogo: antes e depois](docs/capturas/1.19.0/3-camera-do-jogo-antes-depois.jpg)
+
+- O jogador agora é um modelo 3D gerado no Meshy: o mesmo cara de camiseta laranja, bermuda jeans e tênis branco, com rosto, cabelo e roupa de verdade
+- Usa a mesma animação de antes (parado, andando, correndo, soco e mirando): o modelo ganhou ossos e cada junta gira com os mesmos ângulos do bonequinho de peças
+- Escala igual em todas as direções (nada esticado), mesma altura do boneco antigo. 8,5 mil triângulos, 233 KB
+- Pintura com bordas retas onde a roupa termina (barra da camiseta, manga, bermuda, tênis)
+- Na moto, de capacete, continua o boneco antigo por enquanto. Se o modelo não carregar, o jogo usa o boneco antigo
+- Sedã Executivo (o carro do agiota) também virou modelo do Meshy: sedã grande e quadradão dos anos 90, para-choque cromado, sem marca. Mesmo tamanho na escala do Jegue e do Busão (escala igual em tudo), lataria pintada na cor de cada carro
+
+![carro do agiota: antes (atrás) e depois](docs/capturas/1.19.0/5-carro-agiota-antes-depois.jpg)
+![sedã em várias cores](docs/capturas/1.19.0/7-carro-agiota-cores.jpg)
+
 ## 1.18.1 — 24/11/2026
 **Conserto: o jogador não fica mais preso ao entrar em casa**
 

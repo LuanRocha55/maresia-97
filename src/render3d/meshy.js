@@ -1,7 +1,7 @@
 // Modelos gerados no Meshy (plano grátis, licença CC BY 4.0: crédito "Meshy" na tela de créditos/README).
 // Viraram GLB leves (malha reduzida, cor por vértice, compressão meshopt) em assets/models/meshy/.
 // Já vêm no tamanho do jogo (pessoa ~1,2 de altura), com a base no chão e o centro no meio.
-//  - hatch (Jegue) e ônibus (Busão): a lataria ("body") é pintada na cor de cada carro
+//  - hatch (Jegue), ônibus (Busão) e sedã (Sedã Executivo, o carro do agiota): a lataria ("body") é pintada na cor de cada carro
 //  - orelhão, banca de jornal e barco de pesca: no mapa, no lugar das peças feitas por código
 //  - protagonista: malha única em A-pose, animada por ossos com a mesma pose do boneco de peças (gente97.js)
 // Carrega em segundo plano. Até chegar (ou se der erro), o jogo usa as peças antigas.
@@ -13,7 +13,7 @@ import { setPlayerModel } from './gente97.js';
 const DIR = 'assets/models/meshy/';
 const SEC = 24; // tamanho do setor dos lotes (unidades 3D)
 // tipo do jogo -> modelo. Os dois modelos têm a frente no -X; o jogo usa a frente no +X (gira meia volta).
-export const MESHY_CARS = { jegue: 'hatch', busao: 'onibus' };
+export const MESHY_CARS = { jegue: 'hatch', busao: 'onibus', luxo: 'sedan' };
 const PROPS = ['orelhao', 'banca', 'barco'];
 
 const loader = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
