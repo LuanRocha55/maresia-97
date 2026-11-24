@@ -53,7 +53,7 @@ A árvore de arquivos, o loop principal, o estado compartilhado (`S` em `src/cor
 
 - Modelos 3D: [Car Kit](https://kenney.nl/assets/car-kit), [City Kit Roads](https://kenney.nl/assets/city-kit-roads), [City Kit Suburban](https://kenney.nl/assets/city-kit-suburban), [Nature Kit](https://kenney.nl/assets/nature-kit) e [Mini Characters](https://kenney.nl/assets/mini-characters) do **Kenney** (www.kenney.nl), licença CC0.
 - Texturas do chão e das paredes no 3D realista: [Poly Haven](https://polyhaven.com) (asphalt_02, concrete_pavement, cobblestone_floor_05, coast_sand_04, leafy_grass, park_dirt, beige_wall_001), licença CC0.
-- Protagonista, Jegue, Busão, orelhão, banca de jornal e barco de pesca: modelos gerados no [Meshy](https://www.meshy.ai) (licença CC BY 4.0), reduzidos e pintados pro jogo.
+- Protagonista, Jegue, Busão, Sedã Executivo, orelhão, banca de jornal e barco de pesca: modelos gerados no [Meshy](https://www.meshy.ai) (licença CC BY 4.0), reduzidos e pintados pro jogo.
 - [meshoptimizer](https://github.com/zeux/meshoptimizer) (decodificador dos modelos comprimidos, licença MIT).
 - [Three.js](https://threejs.org) (licença MIT).
 
