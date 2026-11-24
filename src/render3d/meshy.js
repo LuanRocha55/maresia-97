@@ -79,7 +79,7 @@ export function meshyCar(type, color, scale = 1) {
   return { root, wheels: [], paint, top: P.top * scale, radius: 0.3 * scale, name, repaint: hex => { for (const m of paint) m.material = bodyMat(hex); } };
 }
 
-// objetos do mapa em lote (instancing). list: [{ name, x, z, rot }] em unidades 3D. Devolve as malhas novas.
+// objetos do mapa em lote (instancing). list: [{ name, x, z, y?, rot }] em unidades 3D. Devolve as malhas novas.
 export function meshyProps(scene, list) {
   const out = [], by = new Map(), M = new THREE.Matrix4(), Q = new THREE.Quaternion(), Y = new THREE.Vector3(0, 1, 0), P3 = new THREE.Vector3(), S1 = new THREE.Vector3(1, 1, 1);
   // um lote por modelo e por setor do mapa (assim o que está fora da tela nem vai pra GPU)
@@ -89,7 +89,7 @@ export function meshyProps(scene, list) {
     for (const geo of [P.detail, P.body]) {
       if (!geo) continue;
       const im = new THREE.InstancedMesh(geo, detailMat, items.length);
-      items.forEach((it, i) => { M.compose(P3.set(it.x, 0, it.z), Q.setFromAxisAngle(Y, it.rot || 0), S1); im.setMatrixAt(i, M); });
+      items.forEach((it, i) => { M.compose(P3.set(it.x, it.y || 0, it.z), Q.setFromAxisAngle(Y, it.rot || 0), S1); im.setMatrixAt(i, M); });
       im.castShadow = true; im.receiveShadow = true; im.computeBoundingSphere();
       scene.add(im); out.push(im);
     }

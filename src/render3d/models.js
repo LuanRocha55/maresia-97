@@ -114,7 +114,7 @@ export function carModel(type, color, L) {
       if (!isWheel && !KEEP_PAINT.has(type)) paint.push(o);
       o.castShadow = true;
     }
-    if (/^wheel/.test(o.name)) wheels.push(o);
+    if (/^wheel-(front|back)-/.test(o.name)) wheels.push(o); // 'wheel-back' sozinho é o estepe pendurado atrás (SUV): não gira
   });
   return { root, wheels, paint, top: P.top * s, radius: 0.3 * s, name };
 }
