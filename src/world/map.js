@@ -437,7 +437,10 @@ function placePhones(cells){
 }
 function placeLamps(){
   const add=(x,y)=>{if(tileOf(x,y)!==SIDE)return;const lx=(x+.5)*T,ly=(y+.5)*T;
-    if(phones.some(p=>Math.abs(p.x-lx)<40&&Math.abs(p.y-ly)<40))return;lamps.push({x:lx,y:ly});};
+    if(phones.some(p=>Math.abs(p.x-lx)<40&&Math.abs(p.y-ly)<40))return;
+    // poste não fica na frente da porta (nem no caminho dela até a rua)
+    if(buildings.some(b=>{const d=b.door;if(!d)return false;const o=d.out||[0,1],rx=lx-d.x,ry=ly-d.y,al=rx*o[0]+ry*o[1],lat=Math.abs(rx*o[1]-ry*o[0]);return al>-30&&al<200&&lat<56;}))return;
+    lamps.push({x:lx,y:ly});};
   for(let j=0;j<NH;j++)for(let i=0;i<NV-1;i++)if(segH[j][i]){const L=HL[j];const step=L.type==='beco'?12:8;
     for(let x=Math.ceil(VL[i].c+4);x<VL[i+1].c-4;x+=step){add(x,Math.floor(L.c-L.w/2)-1);if(L.type!=='beco')add(x,Math.ceil(L.c+L.w/2));}}
   for(let i=0;i<NV;i++)for(let j=0;j<NH-1;j++)if(segV[i][j]){const L=VL[i];const step=L.type==='beco'?12:8;
