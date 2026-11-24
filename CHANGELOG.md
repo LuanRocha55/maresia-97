@@ -5,6 +5,18 @@ O número segue o padrão `MAIOR.MENOR.CORREÇÃO`:
 - **MENOR** — novidade (sistema, missão, veículo, reorganização)
 - **CORREÇÃO** — conserto de bug ou ajuste pequeno
 
+## 1.18.0 — 24/11/2026
+**Mais quadros por segundo na qualidade alta e realista, sem mudar a imagem**
+
+![orelhão tocando: antes e depois](docs/capturas/1.18.0/1-orelhao-antes-depois.jpg)
+![noite: antes e depois](docs/capturas/1.18.0/2-noite-antes-depois.jpg)
+
+- **A camada de detalhes do chão** (marcas de pneu, zonas, brilho da porta) era redesenhada e reenviada pra placa de vídeo a cada 2 quadros, uma imagem de 1024x1024, mesmo quando nada tinha mudado. Agora o jogo anota o desenho, compara com o anterior e só reenvia quando muda. Rua sem nada pintado no chão: a placa transparente nem é desenhada
+- O anel amarelo do **orelhão tocando** virou uma peça 3D (era o que fazia essa camada mudar em quase toda a cidade). As zonas que piscam e as marcas de pneu sumindo mudam em passos curtos (15 e 8 por segundo), iguais a olho
+- **De dia** os postes, o neon e os faróis ficavam com intensidade zero mas a placa de vídeo calculava cada um em todo pixel. Agora eles saem do cálculo até escurecer (na alta, de 12 pra 2 luzes por pixel; no realista, de 22 pra 2). Os dois jeitos são preparados no começo, pra não engasgar no anoitecer
+- As zonas longe da tela não são mais desenhadas
+- **Painel F3**: mostra quanto tempo a placa de vídeo leva pra desenhar o quadro (quando o navegador deixa medir) e quanto a CPU fica à toa. O aviso de gargalo agora usa isso: antes ele dizia "processador" mesmo com a CPU parada esperando a placa de vídeo
+
 ## 1.17.0 — 24/11/2026
 **Modelos do Meshy no jogo e veículos no tamanho de verdade**
 

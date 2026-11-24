@@ -36,6 +36,7 @@ function spot() {
 export function setLightQuality(nq) {
   if (!scene || nq === q) return; q = nq;
   for (const k in slots) { for (const s of slots[k]) { scene.remove(s.l); if (s.l.target) scene.remove(s.l.target); s.l.dispose(); } slots[k] = []; }
+  nightOn = true;
   const c = COUNT[q];
   for (let i = 0; i < c.lamp; i++) slots.lamp.push({ l: point(SODIO, 11), id: -1, f: 0 });
   for (let i = 0; i < c.car; i++) slots.car.push({ l: spot(), id: null, f: 0 });
@@ -65,12 +66,26 @@ const nearest = (arr, n, cx, cz, maxD, pos) => {
   out.sort((a, b) => a[0] - b[0]); return out.slice(0, n).map(o => o[1]);
 };
 
+// De dia os postes, o neon e os faróis ficam com intensidade zero, mas a placa de vídeo calculava cada uma dessas
+// luzes em todo pixel mesmo assim. Agora elas somem da cena até escurecer (quando ainda estão em zero: nada muda
+// na imagem). Isso troca os "programas" da placa de vídeo uma vez ao anoitecer e outra ao amanhecer; os dois
+// jeitos são preparados antes (prepNightLights), pra não engasgar na hora.
+let nightOn = true;
+function setNightLights(on) {
+  if (on === nightOn) return; nightOn = on;
+  for (const k of ['lamp', 'neon', 'car']) for (const s of slots[k]) s.l.visible = on;
+}
+// liga/desliga as luzes da noite, chama f() (que desenha/compila) e volta como estava
+export function withNightLights(on, f) { const was = nightOn; setNightLights(on); try { f(); } finally { setNightLights(was); } }
+export const nightLightsOn = () => nightOn;
 let tick = 0, lampWant = [], neonWant = [];
 const _f = new THREE.Vector3();
 // cx,cz: centro da área vista. dk: escuridão (0 dia, 1 noite). Chamado todo quadro.
 export function updateLights(cx, cz, dk, dt) {
   if (!scene || q <= 0) return;
   const night = THREE.MathUtils.smoothstep(dk, 0.15, 0.7);
+  // abaixo de 0,05 de escuridão postes, neon e faróis estão em zero (o farol é o primeiro a acender, em 0,05)
+  setNightLights(nightOn ? dk > 0.04 : dk > 0.05);
   // ---- postes: luz de sódio alaranjada ----
   if (tick++ % 12 === 0) {
     lampWant = night > 0 ? nearest(lamps, slots.lamp.length, cx, cz, 34, l => ({ x: l.x * U, z: l.y * U })) : [];

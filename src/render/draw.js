@@ -266,16 +266,22 @@ function drawCheckpoint(g,cp,mode){
   g.restore();
 }
 export function drawGround2D(g,vx0,vx1,vy0,vy1,mode){
+  // no 3D isto vira textura e cada mudança é reenviada pra placa de vídeo: o pulsar anda em 15 passos por segundo
+  // (devagar do mesmo jeito; sem isso a textura mudava todo quadro)
+  const gt=mode==='3d'?Math.floor(S.gameTime*15)/15:S.gameTime;
+  // o mesmo pro sumiço das marcas de pneu, sangue e queimado: a transparência muda em 8 passos por segundo
+  const fl=mode==='3d'?(l=>Math.ceil(l*8)/8):(l=>l);
   // decalques
-  for(const d of S.decals){if(d.x<vx0||d.x>vx1||d.y<vy0||d.y>vy1)continue;const a=clamp(d.life/5,0,1);
+  for(const d of S.decals){if(d.x<vx0||d.x>vx1||d.y<vy0||d.y>vy1)continue;const a=clamp(fl(d.life)/5,0,1);
     if(d.type==='scorch'){g.fillStyle='rgba(15,10,5,'+(0.55*a)+')';g.beginPath();g.arc(d.x,d.y,d.r,0,Math.PI*2);g.fill();}
     else{g.fillStyle='rgba(120,10,10,'+(0.7*a)+')';g.beginPath();g.arc(d.x,d.y,d.r,0,Math.PI*2);g.fill();g.beginPath();g.arc(d.x+7,d.y-4,d.r*0.5,0,Math.PI*2);g.fill();}}
   // marcas de pneu
   g.lineWidth=3;
-  for(const s of S.skids){if(s.x1<vx0||s.x1>vx1||s.y1<vy0||s.y1>vy1)continue;g.strokeStyle=s.sand?'rgba(150,120,70,'+(Math.min(1,s.life/4)*0.5)+')':'rgba(15,15,15,'+(Math.min(1,s.life/4)*0.55)+')';
+  for(const s of S.skids){if(s.x1<vx0||s.x1>vx1||s.y1<vy0||s.y1>vy1)continue;g.strokeStyle=s.sand?'rgba(150,120,70,'+(Math.min(1,fl(s.life)/4)*0.5)+')':'rgba(15,15,15,'+(Math.min(1,fl(s.life)/4)*0.55)+')';
     g.beginPath();g.moveTo(s.x1,s.y1);g.lineTo(s.x2,s.y2);g.stroke();}
   // zonas
-  for(const z of zones){const pulse=0.25+0.15*Math.sin(S.gameTime*4);g.fillStyle=z.type==='ze'?'rgba(255,150,40,'+pulse+')':z.type==='posto'?'rgba(255,216,60,'+(pulse*0.5)+')':z.type==='armas'?'rgba(255,70,50,'+(pulse*0.6)+')':'rgba(40,255,150,'+pulse+')';g.fillRect(z.x0,z.y0,z.x1-z.x0,z.y1-z.y0);
+  for(const z of zones){if(z.x1<vx0-40||z.x0>vx1+40||z.y1<vy0-40||z.y0>vy1+40)continue; // fora da área: nem desenha
+    const pulse=0.25+0.15*Math.sin(gt*4);g.fillStyle=z.type==='ze'?'rgba(255,150,40,'+pulse+')':z.type==='posto'?'rgba(255,216,60,'+(pulse*0.5)+')':z.type==='armas'?'rgba(255,70,50,'+(pulse*0.6)+')':'rgba(40,255,150,'+pulse+')';g.fillRect(z.x0,z.y0,z.x1-z.x0,z.y1-z.y0);
     g.setLineDash([10,8]);g.strokeStyle=z.type==='ze'?'#ffb060':z.type==='armas'?'#ff7a60':'#60ffb0';g.lineWidth=3;g.strokeRect(z.x0,z.y0,z.x1-z.x0,z.y1-z.y0);g.setLineDash([]);
     if(z.pads){label(g,z.label,(z.x0+z.x1)/2,z.y0+22,'#fff',12);
       for(const pd of z.pads){const w=WEAPONS[pd.weapon];g.fillStyle='rgba(120,20,10,0.55)';g.fillRect(pd.x0,pd.y0,pd.x1-pd.x0,pd.y1-pd.y0);
@@ -319,7 +325,8 @@ export function drawGround2D(g,vx0,vx1,vy0,vy1,mode){
   // orelhões
   for(const ph of phones){if(ph.x<vx0||ph.x>vx1||ph.y<vy0||ph.y>vy1)continue;
     const ring=!S.mission&&S.phoneCd<=0;
-    if(ring){const r=18+Math.sin(S.gameTime*8)*4;g.strokeStyle='rgba(255,220,60,0.8)';g.lineWidth=2;g.beginPath();g.arc(ph.x,ph.y,r,0,Math.PI*2);g.stroke();}
+    // no 3D o anel que pulsa é uma peça 3D (r3d.js), pra não mudar a textura do chão todo quadro
+    if(ring&&mode!=='3d'){const r=18+Math.sin(S.gameTime*8)*4;g.strokeStyle='rgba(255,220,60,0.8)';g.lineWidth=2;g.beginPath();g.arc(ph.x,ph.y,r,0,Math.PI*2);g.stroke();}
     g.fillStyle='rgba(0,0,0,0.3)';g.beginPath();g.arc(ph.x+3,ph.y+3,10,0,Math.PI*2);g.fill();
     g.fillStyle='#f2a900';g.beginPath();g.arc(ph.x,ph.y,10,0,Math.PI*2);g.fill();g.fillStyle='#ffd04a';g.beginPath();g.arc(ph.x-2,ph.y-2,6,0,Math.PI*2);g.fill();
     g.fillStyle='#3a3a3a';g.fillRect(ph.x-2,ph.y+4,4,6);}

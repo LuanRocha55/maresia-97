@@ -17,6 +17,7 @@ import { buildCity, U, bh, facadeOf } from './build.js';
 import { buildings as buildingsList_, lamps as lampsList, phones as phonesList, decor as decorList, tileAt, ROAD } from '../world/map.js';
 import { loadMeshy, meshyCar, meshyProps } from './meshy.js';
 import { VEH_SCALE } from '../entities/vehicles.js';
+import { makeRecorder } from './gravador.js';
 const buildingsList=()=>buildingsList_;
 import { S, player, cam, keys, view } from '../core/state.js';
 import { checkpoints } from '../game/blitz.js';
@@ -26,14 +27,14 @@ import { rioModel } from './rio97.js';
 import { loadMapProps, coneMesh } from './props.js';
 import { initPeople, beginPeople, putPerson, endPeople, lookOf, withHelmet, PLAYER_LOOK } from './gente97.js';
 import { swapScene, updateEnv, renderReal, renderPlain, initTextures } from './realista.js';
-import { initLights, setLightQuality, updateLights, lightsOn } from './luzes.js';
+import { initLights, setLightQuality, updateLights, lightsOn, withNightLights, nightLightsOn } from './luzes.js';
 
 export const R={ok:false,on:false,retro:false,cam34:true};
 // Filtro 97 agora é opcional (desligado por padrão): chave nova pra quem já tinha ligado na 1.5.0
 try{R.retro=localStorage.getItem('aq_retro2')==='1';}catch(e){}
 export const DBG={};
 export const getRenderer=()=>renderer;
-let renderer,scene,camera,sun,hemi,ground={},mats,city,overlay,overlayTex,overlayMesh,water,neon;
+let renderer,scene,camera,sun,hemi,ground={},mats,city,overlay,overlayTex,overlayMesh,overlayRec,overlayHash=null,water,neon;
 const tmpV=new THREE.Vector3();
 
 // ---------- inicialização ----------
@@ -82,7 +83,7 @@ export function init3D(){
     const lg=new THREE.PlaneGeometry(W,H);lg.rotateX(-Math.PI/2);
     const low=new THREE.Mesh(lg,new THREE.MeshLambertMaterial({map:lt,alphaTest:0.5}));low.material.userData.pbr={r:0.95,tex:'chao'};low.position.set(W/2,-0.03,H/2);low.receiveShadow=true;scene.add(low);
     // camada do chão com detalhes dinâmicos (marcas de pneu, zonas, portas, alvo...)
-    overlay=document.createElement('canvas');overlay.width=1024;overlay.height=1024;
+    overlay=document.createElement('canvas');overlay.width=1024;overlay.height=1024;overlayRec=makeRecorder(overlay.getContext('2d'));
     overlayTex=new THREE.CanvasTexture(overlay);overlayTex.colorSpace=THREE.SRGBColorSpace;
     const og=new THREE.PlaneGeometry(64,64);og.rotateX(-Math.PI/2);
     overlayMesh=new THREE.Mesh(og,new THREE.MeshLambertMaterial({map:overlayTex,transparent:true,depthWrite:false}));overlayMesh.material.userData.pbr={r:0.95};overlayMesh.renderOrder=1;overlayMesh.receiveShadow=true;scene.add(overlayMesh);
@@ -607,13 +608,25 @@ function warmUp(){
     for(const m of [brakeOn,brakeOff,headMat,wreckMat,beamMat,tailMat,tailMatBrake,mats.detail,...sirR,...sirB,mat('#888')]){const x=new THREE.Mesh(boxG,m);x.castShadow=true;g.add(x);}
     g.position.set(cam.x*U,0,cam.y*U);scene.add(g);renderer.compile(scene,camera);scene.remove(g);}catch(e){}
 }
+// tempo que a placa de vídeo leva pra desenhar o quadro (só com o painel F3 aberto e se o navegador deixar medir)
+let tq=null;
+function gpuTimerBegin(){
+  if(!R.wantGpu)return;const gl=renderer.getContext();
+  if(!tq){let ext=null;try{ext=gl.getExtension('EXT_disjoint_timer_query_webgl2');}catch(e){}tq={ext,pend:[],ms:null,cur:null};}
+  if(!tq.ext)return;
+  while(tq.pend.length){const q=tq.pend[0];if(!gl.getQueryParameter(q,gl.QUERY_RESULT_AVAILABLE))break;
+    if(!gl.getParameter(tq.ext.GPU_DISJOINT_EXT)){const ms=gl.getQueryParameter(q,gl.QUERY_RESULT)/1e6;tq.ms=tq.ms===null?ms:tq.ms*0.9+ms*0.1;}
+    gl.deleteQuery(q);tq.pend.shift();}
+  if(tq.pend.length>4)return;tq.cur=gl.createQuery();gl.beginQuery(tq.ext.TIME_ELAPSED_EXT,tq.cur);
+}
+function gpuTimerEnd(){if(!tq||!tq.cur)return;const gl=renderer.getContext();gl.endQuery(tq.ext.TIME_ELAPSED_EXT);tq.pend.push(tq.cur);tq.cur=null;}
 // dados pro painel de diagnóstico (F3)
 let gpuName=null;
 export function gfxInfo(){
   if(!renderer)return null;
   if(gpuName===null){try{const gl=renderer.getContext(),e=gl.getExtension('WEBGL_debug_renderer_info');gpuName=e?gl.getParameter(e.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER);}catch(err){gpuName='?';}}
   const sz=new THREE.Vector2();renderer.getDrawingBufferSize(sz);
-  return {gpu:gpuName,calls:renderer.info.render.calls,tris:renderer.info.render.triangles,w:sz.x,h:sz.y,dpr:renderer.getPixelRatio(),shadows:renderer.shadowMap.enabled,quality,chunks:Object.keys(ground).length};
+  return {gpu:gpuName,calls:renderer.info.render.calls,tris:renderer.info.render.triangles,w:sz.x,h:sz.y,dpr:renderer.getPixelRatio(),shadows:renderer.shadowMap.enabled,quality,chunks:Object.keys(ground).length,gpuMs:tq&&tq.ext&&tq.ms!==null?tq.ms:null,gpuTimer:tq?!!tq.ext:null};
 }
 // ---------- quadro ----------
 // Qualidade: 3 = realista (realista.js), 2 = alta, 1 = média, 0 = leve.
@@ -645,6 +658,30 @@ function adapt(){
   if(slow>100&&quality>0){slow=0;applyQuality(quality-1);
     try{localStorage.setItem('aq_gfx','3d'+quality);}catch(e){}
     R.notice='Gráficos ajustados pra rodar mais leve: qualidade '+QNAMES[quality]+' (G troca).';}
+}
+// compila os programas da placa de vídeo com as luzes da noite do outro jeito (ligadas de dia, desligadas de noite),
+// no mesmo estado em que o quadro é desenhado (tone mapping na alta; alvo intermediário no realista), senão não servem
+let prepRT=null;
+function prepLights(){
+  const tm=renderer.toneMapping,rt=renderer.getRenderTarget();
+  try{
+    if(quality===2)renderer.toneMapping=THREE.ACESFilmicToneMapping;
+    if(quality===3){prepRT=prepRT||new THREE.WebGLRenderTarget(4,4,{type:THREE.HalfFloatType});renderer.setRenderTarget(prepRT);}
+    withNightLights(!nightLightsOn(),()=>{if(renderer.compileAsync)renderer.compileAsync(scene,camera).catch(()=>{});else renderer.compile(scene,camera);});
+  }catch(e){}
+  renderer.toneMapping=tm;renderer.setRenderTarget(rt);
+}
+// anéis amarelos dos orelhões tocando (antes eram pintados na textura do chão, que aí mudava todo quadro)
+let rings=null;
+function syncPhoneRings(vx0,vx1,vz0,vz1){
+  if(!rings){rings=[];const g=new THREE.RingGeometry(17*U,19*U,48);g.rotateX(-Math.PI/2);
+    const m=new THREE.MeshLambertMaterial({color:'#ffdc3c',transparent:true,opacity:0.8,depthWrite:false});m.userData.pbr={r:0.95};
+    for(let i=0;i<6;i++){const o=new THREE.Mesh(g,m);o.renderOrder=1;o.receiveShadow=true;o.visible=false;scene.add(o);rings.push(o);}}
+  let n=0;
+  if(!S.mission&&S.phoneCd<=0&&!S.interior)for(const ph of phonesList){if(n>=rings.length)break;
+    const x=ph.x*U,z=ph.y*U;if(x<vx0-2||x>vx1+2||z<vz0-2||z>vz1+2)continue;
+    const o=rings[n++];o.visible=true;o.position.set(x,0.03,z);o.scale.setScalar((18+Math.sin(S.gameTime*8)*4)/18);}
+  for(let i=n;i<rings.length;i++)rings[i].visible=false;
 }
 // altura dos prédios por tile (pra saber se um prédio fica entre a câmera 3/4 e o jogador)
 let hgrid=null;
@@ -729,20 +766,30 @@ export function render3D(signalState){
   const ocx=Math.round(tx/4)*4, ocz=Math.round((tz-6)/4)*4;
   if(frameN%2===0||!overlayMesh.userData.ok){overlayMesh.userData.ok=true;
     overlayMesh.position.set(ocx,0.025,ocz); // a placa só anda junto com o desenho novo (senão pisca)
-    const g=overlay.getContext('2d');g.setTransform(1,0,0,1,0,0);g.clearRect(0,0,1024,1024);
+    // anota o desenho e só redesenha/envia pra placa de vídeo se ficou diferente do último (gravador.js)
+    const rec=overlayRec,g=rec.ctx;rec.begin();g.setTransform(1,0,0,1,0,0);g.clearRect(0,0,1024,1024);
     const k=1024/(64*T); g.setTransform(k,0,0,k,-(ocx-32)*T*k,-(ocz-32)*T*k);
     const vx0=(ocx-32)*T,vy0=(ocz-32)*T;
     R.last=drawGround2D(g,vx0,vx0+64*T,vy0,vy0+64*T,'3d');
-    overlayTex.needsUpdate=true;
+    const h=rec.end(),painted=rec.painted;
+    // nada pintado: a placa (transparente, mas cobrindo meia tela) nem é desenhada
+    overlayMesh.visible=painted;
+    if(painted&&h!==overlayHash){rec.replay();overlayTex.needsUpdate=true;}
+    overlayHash=painted?h:null;
   }
+  syncPhoneRings(vx0,vx1,vz0,vz1);
   syncCars(night);syncCheckpoints();syncPeople();syncParticles();syncTracers();
   {const now=performance.now();updateLights(tx,(vz0+vz1)/2,night,Math.min(0.1,(now-(R.lt||now))/1000));R.lt=now;}
+  gpuTimerBegin();
   if(quality>=2){ // alta e realista: materiais com reflexo e o céu como luz ambiente (a luz de cima/baixo fica só de apoio)
     // o céu ilumina ~π vezes mais que a HemisphereLight na mesma cor: 0,32 deixa a sombra do sol com o contraste certo.
     // De noite o céu é quase preto: sobe o ambiente (luar) e as poças de luz dos postes ficam mais discretas (o bloom já realça)
     swapScene(scene,true);updateEnv(renderer,scene,skyNow,sun);
     hemi.intensity*=lerp(0.15,0.55,night);scene.environmentIntensity=lerp(0.32,1.2,night);mats.lightPool.opacity*=0.4;}
+  // prepara já os programas da placa de vídeo do outro jeito das luzes (dia/noite), uma vez por qualidade (luzes.js)
+  if(R.lightPrep!==quality&&!R.retro){R.lightPrep=quality;prepLights();}
   if(R.retro)retroPass();else if(quality===3)renderReal(renderer,scene,camera,night);else if(quality===2)renderPlain(renderer,scene,camera,night);else renderer.render(scene,camera);
+  gpuTimerEnd();
   // HUD e avisos por cima, em 2D
   const g=ctx;g.setTransform(1,0,0,1,0,0);g.clearRect(0,0,CW*DPR,CH*DPR);g.setTransform(DPR,0,0,DPR,0,0);
   drawPrompts(g);
