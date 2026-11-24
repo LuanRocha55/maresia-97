@@ -40,9 +40,9 @@ No VS Code, a extensão **Live Server** também resolve.
 | G | troca os gráficos: 3D realista → 3D alta → 3D média → 3D leve → clássico |
 | V | liga/desliga o Filtro 97 (visual de placa de vídeo de 1997, só no 3D) |
 | F3 | desempenho: contador de FPS e qualidade → painel completo (FPS, placa de vídeo usada, onde o tempo vai) → desligado |
-| Mouse | mira |
+| Mouse | a pé (câmera de ombro): um clique prende o mouse e ele gira a câmera, Esc solta. No carro e na câmera de cima: mira |
 | Clique esquerdo | atirar / soco (no carro, atira na direção da mira) |
-| Clique direito | entrar, sair ou roubar carro |
+| Clique direito | a pé com arma e mouse preso: segura pra mirar. Senão: entrar, sair ou roubar carro |
 | Roda do mouse | trocar de arma |
 
 ## Estrutura e arquitetura

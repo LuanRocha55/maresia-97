@@ -91,16 +91,18 @@ export function withHelmet(L, hex) { const c = col(hex); let H = helmets.get(L);
 
 // ---------- montagem por quadro ----------
 const B = new THREE.Matrix4(), M = new THREE.Matrix4(), R = new THREE.Matrix4(), J = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), v = new THREE.Vector3(), s3 = new THREE.Vector3(), ZERO = new THREE.Matrix4().makeScale(0, 0, 0);
-export function beginPeople() { if (IM) for (const k in IM) IM[k].n = 0; const pm = IM && playerMeshes.get(IM); if (pm) pm.mesh.visible = false; }
+export function beginPeople() { if (IM) for (const k in IM) IM[k].n = 0; const pm = IM && playerMeshes.get(IM); if (pm) pm.mesh.visible = false; const gs = IM && gunsOf.get(IM); if (gs) for (const k in gs) gs[k].visible = false; }
 function put(k, mat, c) { const P = IM[k]; if (P.n >= MAXP * PARTS[k]) return; P.im.setMatrixAt(P.n, mat); P.im.setColorAt(P.n, c || col('#fff')); P.n++; }
 const rotZ = a => R.makeRotationZ(a);
 // junta: pivô (x,y,z) no corpo, gira a em Z (pra frente/trás) e opcionalmente b em X (abre pro lado)
-function joint(out, base, x, y, z, a, b = 0) { e.set(b, 0, a, 'XYZ'); q.setFromEuler(e); J.compose(v.set(x, y, z), q, s3.set(1, 1, 1)); return out.multiplyMatrices(base, J); }
+function joint(out, base, x, y, z, a, b = 0, c = 0) { e.set(b, c, a, 'XYZ'); q.setFromEuler(e); J.compose(v.set(x, y, z), q, s3.set(1, 1, 1)); return out.multiplyMatrices(base, J); }
 const tmpA = new THREE.Matrix4(), tmpB = new THREE.Matrix4(), body = new THREE.Matrix4();
 // pose: 'walk' | 'run' | 'idle' | 'down' | 'sit' | 'punch' | 'aim'. ph = fase da passada (em radianos).
 // ângulos da pose (Z positivo = pé/mão pra frente). Os mesmos pro boneco de peças e pro protagonista Meshy.
-function poseAngles(pose, ph) {
-  let hipA = 0, hipB = 0, kneeA = 0, kneeB = 0, shA = 0, shB = 0, elA = 0, elB = 0, lean = 0, bob = 0, sideR = 0.135, shR = 0;
+// gun: arma na mão ('pistola' | 'escopeta' | 'smg' | null), aim: mirando (braços pra frente, pernas seguem a pose), kick: coice do tiro (0..1).
+// shYA/shYB giram o braço esticado pro meio do corpo (pras duas mãos se encontrarem na arma).
+function poseAngles(pose, ph, gun, aim, kick = 0) {
+  let hipA = 0, hipB = 0, kneeA = 0, kneeB = 0, shA = 0, shB = 0, elA = 0, elB = 0, lean = 0, bob = 0, sideR = 0.135, shR = 0, shYA = 0, shYB = 0, gunE = null;
   if (pose === 'walk' || pose === 'run') {
     const run = pose === 'run', amp = run ? 0.75 : 0.42, s = Math.sin(ph), c = Math.cos(ph);
     hipA = s * amp; hipB = -s * amp;
@@ -110,15 +112,32 @@ function poseAngles(pose, ph) {
   else if (pose === 'sit') { hipA = hipB = 1.45; kneeA = kneeB = -1.35; shA = shB = 0.95; elA = elB = 0.35; lean = -0.12; sideR = 0.15; }
   else if (pose === 'punch') { const k = Math.max(0, Math.sin(ph)); shB = 0.25; elB = 1.4; shA = 1.45 * k + 0.2; elA = 0.15; lean = -0.1 * k; shR = 0.1; }
   else if (pose === 'aim') { shA = 1.5; elA = 0.05; shB = 0.6; elB = 0.8; lean = -0.04; }
-  return { hipA, hipB, kneeA, kneeB, shA, shB, elA, elB, lean, bob, sideR, shR };
+  if (gun && pose !== 'down' && pose !== 'sit' && pose !== 'punch') {
+    const long = gun !== 'pistola';
+    if (aim) {
+      // mirando: pistola com as duas mãos esticadas; escopeta/submetralhadora com a coronha no ombro e a outra mão no cano
+      if (long) { shA = 0.95; elA = 0.95; shYA = 0.2; shB = 1.4; elB = 0.3; shYB = -0.7; lean = 0.02; }
+      else { shA = 1.55; elA = 0.02; shYA = 0.22; shB = 1.42; elB = 0.18; shYB = -0.62; lean = -0.03; }
+      shA += kick * 0.3; elA += kick * 0.25; shB += kick * 0.22; elB += kick * 0.2; lean += kick * 0.06;
+      shR = 0; gunE = [0, 0, kick * 0.45];   // arma reta pra frente (o coice levanta o cano)
+    } else if (long) {
+      // andando com arma comprida: atravessada na frente do peito (a mão de trás balança pouco)
+      const sw = Math.sin(ph) * (pose === 'run' ? 0.12 : 0.06);
+      shA = 0.35 + sw; elA = 1.25; shYA = 0.1; shB = 0.75 - sw; elB = 1.35; shYB = -0.55; gunE = [0.15, 0.95, 0.35];
+    } else if (pose === 'idle') { shA = 0.18; elA = 0.35; }   // pistola parada: braço solto, arma apontada pro chão
+  }
+  return { hipA, hipB, kneeA, kneeB, shA, shB, elA, elB, lean, bob, sideR, shR, shYA, shYB, gunE };
 }
+// arma do protagonista neste quadro (r3d.js põe antes de desenhar ele): tipo, mirando e coice
+export const playerGun = { kind: null, aim: false, kick: 0 };
 export function putPerson(x, y, z, a, scale, L, pose, ph) {
   if (!IM || IM.torso.n >= MAXP) return;
-  const down = pose === 'down';
+  const down = pose === 'down', me = L === PLAYER_LOOK, gun = me && pose !== 'sit' && pose !== 'down' ? playerGun.kind : null;
   e.set(0, -a, down ? Math.PI / 2 : 0, 'YXZ'); q.setFromEuler(e);
   B.compose(v.set(x, down ? z + 0.14 * scale : z, y), q, s3.set(scale, scale, scale));
-  const { hipA, hipB, kneeA, kneeB, shA, shB, elA, elB, lean, bob, sideR, shR } = poseAngles(pose, ph);
-  if (L === PLAYER_LOOK && PLAYER_MODEL && pose !== 'sit') { posePlayer(B, pose, { hipA, hipB, kneeA, kneeB, shA, shB, elA, elB, lean, bob, shR }); return; }
+  const P = poseAngles(pose, ph, gun, gun && playerGun.aim, playerGun.kick);
+  const { hipA, hipB, kneeA, kneeB, shA, shB, elA, elB, lean, bob, sideR, shR, shYA, shYB } = P;
+  if (me && PLAYER_MODEL && pose !== 'sit') { posePlayer(B, pose, P, gun); return; }
   // corpo (quadril pra cima): balanço e inclinação
   body.multiplyMatrices(B, J.makeTranslation(0, bob, 0)).multiply(R.makeTranslation(0, 0.56, 0)).multiply(rotZ(lean)).multiply(M.makeTranslation(0, -0.56, 0));
   const skin = L.skin;
@@ -135,9 +154,10 @@ export function putPerson(x, y, z, a, scale, L, pose, ph) {
     joint(tmpA, M, 0, -0.25, 0, pose === 'sit' ? 0.1 : -ka * 0.4 - ha * 0.3); put('foot', tmpA, L.feet);
   }
   // braços: do ombro, abertos um pouco pro lado
-  for (const [zz, sa, ea, open] of [[0.2, shA, elA, -0.08 - shR], [-0.2, shB, elB, 0.08]]) {
-    joint(tmpA, body, 0, 0.94, zz, sa, open); put('upper', tmpA, L.arms);
+  for (const [zz, sa, ea, open, yw] of [[0.2, shA, elA, -0.08 - shR, shYA], [-0.2, shB, elB, 0.08, shYB]]) {
+    joint(tmpA, body, 0, 0.94, zz, sa, open, yw); put('upper', tmpA, L.arms);
     joint(M, tmpA, 0, -0.22, 0, ea); put('fore', M, skin);
+    if (gun && zz > 0) placeGun(gun, gm.multiplyMatrices(M, J.makeTranslation(0, -0.21, 0)).multiply(gunInArm(GM2, open, yw, sa, ea, 0, P.gunE)));
   }
 }
 export function endPeople() {
@@ -203,10 +223,10 @@ function makePlayerMesh(scene) {
 }
 const qa = new THREE.Quaternion(), qb = new THREE.Quaternion(), XA = new THREE.Vector3(1, 0, 0), m4 = new THREE.Matrix4();
 // rotação de junta "desabrindo" a A-pose: Euler(b, 0, a) depois de Rx(-abre)
-function limbRot(out, a, b, open) { e.set(b, 0, a, 'XYZ'); out.setFromEuler(e); return out.multiply(qb.setFromAxisAngle(XA, -open)); }
+function limbRot(out, a, b, open, c = 0) { e.set(b, c, a, 'XYZ'); out.setFromEuler(e); return out.multiply(qb.setFromAxisAngle(XA, -open)); }
 // junta filha no mesmo membro: Rx(abre)·Rz(a)·Rx(-abre)
 function childRot(out, a, open) { out.setFromAxisAngle(XA, open); e.set(0, 0, a); out.multiply(qa.setFromEuler(e)); return out.multiply(qb.setFromAxisAngle(XA, -open)); }
-function posePlayer(Bm, pose, g) {
+function posePlayer(Bm, pose, g, gun) {
   let pm = playerMeshes.get(IM);
   if (!pm) { const sc = sceneOf.get(IM); if (!sc) return; pm = makePlayerMesh(sc); playerMeshes.set(IM, pm); }
   const bn = pm.bones; pm.mesh.visible = true;
@@ -219,6 +239,56 @@ function posePlayer(Bm, pose, g) {
     limbRot(bn[L].quaternion, ha, 0, lo); childRot(bn[L + 1].quaternion, ka, lo);
     childRot(bn[L + 2].quaternion, pose === 'sit' ? 0.1 : -ka * 0.4 - ha * 0.3, lo);
     const sa = s ? g.shB : g.shA, ea = s ? g.elB : g.elA, op = s ? 0.08 : -0.08 - g.shR;
-    limbRot(bn[A].quaternion, sa, op, ao); childRot(bn[A + 1].quaternion, ea, ao);
+    limbRot(bn[A].quaternion, sa, op, ao, s ? g.shYB : g.shYA); childRot(bn[A + 1].quaternion, ea, ao);
   }
+  if (gun) {
+    // arma na mão direita (+Z): presa no antebraço, na altura do pulso, alinhada com o braço "desaberto"
+    bn[0].updateMatrixWorld(true);
+    placeGun(gun, gm.multiplyMatrices(bn[9].matrixWorld, WRIST).multiply(gunInArm(GM2, -0.08 - g.shR, g.shYA, g.shA, g.elA, -ARM_OPEN, g.gunE)));
+  }
+}
+
+// ---------- armas na mão (feitas por código, poucas caixas) ----------
+// Origem = mão (cabo), cano pra +X, em cima +Y. Tamanho em unidades do boneco (escala 1 ≈ 1,1 de altura ≈ 1,8 m).
+const gunsOf = new WeakMap();
+const gm = new THREE.Matrix4();
+const GM2 = new THREE.Matrix4(), GA = new THREE.Matrix4(), GB = new THREE.Matrix4();
+// pulso do protagonista no osso do antebraço (um pouco além, na palma)
+const WRIST = new THREE.Matrix4().makeTranslation(0.032 * 1.12, -0.114 * 1.12, 0.063 * 1.12);
+// rotação da arma no antebraço. O braço todo gira E = Euler(b, c, ombro) e depois Rz(cotovelo) (no protagonista ainda
+// tem a A-pose desfeita: Rx(-abre) no fim). gunE = rotação desejada da arma no corpo (null: segue a mão, cano ao longo do
+// braço e cabo pra trás). Com gunE a arma fica reta pro alvo não importa como o braço dobrou.
+function gunInArm(out, b, c, sa, ea, ao, gunE) {
+  out.makeRotationX(ao);
+  if (!gunE) return out.multiply(GA.makeRotationZ(-Math.PI / 2));
+  e.set(b, c, sa, 'XYZ'); GA.makeRotationFromEuler(e).multiply(GB.makeRotationZ(ea)).invert();
+  e.set(gunE[0], gunE[1], gunE[2], 'XYZ'); GB.makeRotationFromEuler(e);
+  return out.multiply(GA).multiply(GB);
+}
+// Lambert no básico; na alta/realista vira PBR com esses valores (realista.js)
+const gunMats = {};
+function gunMat(hex, r, m) { let k = gunMats[hex]; if (!k) { k = gunMats[hex] = new THREE.MeshLambertMaterial({ color: hex }); k.userData.pbr = { r, m }; } return k; }
+function gunGroup(kind) {
+  const g = new THREE.Group(), box = (sx, sy, sz, x, y, z, c, rz = 0) => {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(sx, sy, sz), c); m.position.set(x, y, z); m.rotation.z = rz; m.castShadow = true; g.add(m); };
+  const metal = gunMat('#34353a', 0.4, 0.6), dark = gunMat('#18191c', 0.7, 0.2), wood = gunMat('#6b4426', 0.8, 0);
+  if (kind === 'pistola') {           // revólver/pistola ~20 cm
+    box(0.15, 0.045, 0.03, 0.045, 0.045, 0, metal); box(0.035, 0.085, 0.028, -0.005, -0.005, 0, dark, 0.25);
+  } else if (kind === 'escopeta') {   // escopeta ~1 m: cano comprido, telha de madeira e coronha
+    box(0.4, 0.035, 0.03, 0.2, 0.05, 0, metal); box(0.14, 0.04, 0.04, 0.24, 0.02, 0, wood);
+    box(0.13, 0.05, 0.035, 0.0, 0.03, 0, metal); box(0.035, 0.07, 0.028, -0.01, -0.01, 0, wood, 0.3);
+    box(0.2, 0.06, 0.035, -0.15, 0.015, 0, wood, 0.12);
+  } else {                            // submetralhadora ~60 cm: corpo, cano curto, carregador e coronha de arame
+    box(0.2, 0.06, 0.035, 0.05, 0.04, 0, metal); box(0.09, 0.022, 0.022, 0.19, 0.05, 0, dark);
+    box(0.03, 0.08, 0.026, 0.0, -0.01, 0, dark, 0.2); box(0.028, 0.1, 0.024, 0.08, -0.03, 0, dark, -0.1);
+    box(0.14, 0.018, 0.02, -0.11, 0.045, 0, dark);
+  }
+  g.matrixAutoUpdate = false; g.visible = false;
+  return g;
+}
+function placeGun(kind, mat) {
+  let gs = gunsOf.get(IM); if (!gs) { gs = {}; gunsOf.set(IM, gs); }
+  let g = gs[kind];
+  if (!g) { const sc = sceneOf.get(IM); if (!sc) return; g = gs[kind] = gunGroup(kind); sc.add(g); }
+  g.matrix.copy(mat); g.matrixWorldNeedsUpdate = true; g.visible = true;
 }
