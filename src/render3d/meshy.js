@@ -3,10 +3,12 @@
 // Já vêm no tamanho do jogo (pessoa ~1,2 de altura), com a base no chão e o centro no meio.
 //  - hatch (Jegue) e ônibus (Busão): a lataria ("body") é pintada na cor de cada carro
 //  - orelhão, banca de jornal e barco de pesca: no mapa, no lugar das peças feitas por código
+//  - protagonista: malha única em A-pose, animada por ossos com a mesma pose do boneco de peças (gente97.js)
 // Carrega em segundo plano. Até chegar (ou se der erro), o jogo usa as peças antigas.
 import * as THREE from '../../vendor/three/three.module.min.js';
 import { GLTFLoader } from '../../vendor/three/addons/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from '../../vendor/meshopt/meshopt_decoder.module.js';
+import { setPlayerModel } from './gente97.js';
 
 const DIR = 'assets/models/meshy/';
 const SEC = 24; // tamanho do setor dos lotes (unidades 3D)
@@ -27,8 +29,23 @@ function bodyMat(hex) {
   return m;
 }
 
+// GLB quantizado -> geometria em float, já na posição do nó
+function plainGeo(o) {
+  const geo = o.geometry.clone();
+  for (const k of ['position', 'normal']) { const a = geo.attributes[k]; if (a && !(a.array instanceof Float32Array)) { const f = new Float32Array(a.count * 3); for (let i = 0; i < a.count; i++) { f[i * 3] = a.getX(i); f[i * 3 + 1] = a.getY(i); f[i * 3 + 2] = a.getZ(i); } geo.setAttribute(k, new THREE.BufferAttribute(f, 3)); } }
+  geo.applyMatrix4(o.matrixWorld); geo.computeBoundingBox(); geo.computeBoundingSphere(); return geo;
+}
+async function loadPlayer() {
+  try {
+    const g = await loader.loadAsync(DIR + 'protagonista.glb'); g.scene.updateMatrixWorld(true);
+    let geo = null; g.scene.traverse(o => { if (o.isMesh && !geo) geo = plainGeo(o); });
+    if (geo) setPlayerModel(geo);
+  } catch (e) { console.warn('Protagonista Meshy não carregou:', e); }
+}
+
 export async function loadMeshy() {
   const names = [...Object.values(MESHY_CARS), ...PROPS];
+  loadPlayer();
   await Promise.all(names.map(async name => {
     try {
       const g = await loader.loadAsync(DIR + name + '.glb');
