@@ -26,7 +26,7 @@ import { pf } from '../render/style97.js';
 import { loadCarModels, carModel, repaint } from './models.js';
 import { rioModel } from './rio97.js';
 import { loadMapProps, coneMesh } from './props.js';
-import { initPeople, beginPeople, putPerson, endPeople, lookOf, withHelmet, PLAYER_LOOK, playerGun } from './gente97.js';
+import { initPeople, beginPeople, putPerson, endPeople, lookOf, withHelmet, PLAYER_LOOK, playerGun, peopleTime } from './gente97.js';
 import { swapScene, updateEnv, renderReal, renderPlain, initTextures } from './realista.js';
 import { initLights, setLightQuality, updateLights, lightsOn, withNightLights, nightLightsOn } from './luzes.js';
 
@@ -450,7 +450,7 @@ const PED_SCALE=0.6, PLAYER_SCALE=0.75;
 const riders=new WeakMap(); // quem pilota cada moto (um pedestre inventado, com roupa fixa)
 function riderOf(c){let r=riders.get(c);if(!r){const id=Math.floor(Math.random()*1e6);r={id,shirt:['#e74c3c','#f4f4f0','#3498db','#f1c40f','#2c3e50','#e67e22'][id%6],skin:['#f1c27d','#e0ac69','#c68642','#8d5524'][id%4],hair:'#222'};riders.set(c,r);}return r;}
 function syncPeople(){
-  beginPeople();
+  peopleTime(S.gameTime);beginPeople();
   const vis=!player.car&&player.state==='play'&&!(player.inv>0&&Math.floor(S.gameTime*10)%2);
   const mv=keys['KeyW']||keys['KeyS']||keys['KeyA']||keys['KeyD']||keys['ArrowUp']||keys['ArrowDown']||keys['ArrowLeft']||keys['ArrowRight'];
   if(vis||player.state==='wasted'&&!player.car){
@@ -464,7 +464,7 @@ function syncPeople(){
     const armed=player.weapon&&player.weapon!=='punho'&&(player.ammo[player.weapon]||0)>0, since=S.gameTime-(player.shotT??-9);
     playerGun.kind=armed?player.weapon:null;playerGun.aim=armed&&(player.aiming||since<0.7);
     playerGun.kick=armed&&since<0.14?1-since/0.14:0;
-    putPerson(player.x*U,player.y*U,0,player.a,PLAYER_SCALE,PLAYER_LOOK,pose,ph);
+    putPerson(player.x*U,player.y*U,0,player.a,PLAYER_SCALE,PLAYER_LOOK,pose,ph,player);
     playerGun.kind=null;
   }
   // quem está pilotando moto: sentado, de capacete
@@ -482,7 +482,7 @@ function syncPeople(){
     const dx=p.x-cam.x,dy=p.y-cam.y;if(dx*dx+dy*dy>r2)continue;
     const run=p.state==='flee'||p.state==='robber'||p.state==='cop'||p.fan&&matchOn();
     const pose=p.state==='down'?'down':p.state==='wait'||p.state==='story'?'idle':run?'run':'walk';
-    putPerson(p.x*U,p.y*U,0,p.a,PED_SCALE,lookOf(p),pose,pose==='idle'?S.gameTime*3+p.id:p.anim*(run?13:9));
+    putPerson(p.x*U,p.y*U,0,p.a,PED_SCALE,lookOf(p),pose,pose==='idle'?S.gameTime*3+p.id:p.anim*(run?13:9),p);
   }
   endPeople();
 }
