@@ -537,7 +537,8 @@ export function storyLabels(){
 // ---------- começo e migração ----------
 export function startStory(){
   S.story=newStory();S.day=0;S.tod=16.5;S.lastTod=S.tod;
-  const p=spot('inicio');player.x=p.x;player.y=p.y;player.a=0;player.moveA=0;cam.x=p.x;cam.y=p.y;
+  const p=spot('inicio');player.x=p.x;player.y=p.y;cam.x=p.x;cam.y=p.y;
+  {const d=casaDoor();player.a=player.moveA=S.camYaw=Math.atan2(d.y-p.y,d.x-p.x);} // começa olhando pra casa
   const c=S.cars.find(c=>c.type==='jegue'&&!c.driver);if(c){c.x=p.x-170;c.y=p.y+30;c.a=0;c.vx=c.vy=0;}
 }
 // save antigo (sem história): acorda em casa no domingo da Semana 1, com o dinheiro e os níveis de emprego

@@ -8,6 +8,12 @@ O número segue o padrão `MAIOR.MENOR.CORREÇÃO`:
 ## 1.21.0 — 25/11/2026
 **Semana 1: prólogo, capítulo 1, caderneta e o agiota**
 
+![o bip mostra o objetivo](docs/capturas/1.21.0/1-bip-inicio.jpg)
+![a mãe e a caderneta](docs/capturas/1.21.0/2-casa-mae.jpg)
+![o pai na Carceragem](docs/capturas/1.21.0/3-pai-carceragem.jpg)
+![caderneta: pistas](docs/capturas/1.21.0/4-caderneta-pistas.jpg)
+![a oferta do Neném](docs/capturas/1.21.0/5-escolha-nenem.jpg)
+
 - O jogo agora tem história. Começa num domingo, 16h30, na porta de casa no Jacarandá. O bip mostra o objetivo e a seta aponta o caminho
 - Prólogo: a mãe (feijão e a caderneta do pai), visita ao pai na Carceragem Central, a repórter Mariana na porta, o primeiro bico, o Cabralzinho no câmbio do Centro, o Neném no Bar do Galo e a ligação do Seu Zeca no orelhão
 - Capítulo 1, "Quem plantou o flagrante?": a pé até o Zeca no Morro do Cajueiro (scanner e gravador K7), quatro pistas (testemunha no camelódromo, viatura no scanner, seguir a 2-14 de longe, arquivo da Carceragem de madrugada), a oferta do Neném com três saídas e a confissão do Cabo Peixoto com três saídas. No fim a blitz do Morro do Cajueiro cai (o morro deixa de abrir por dinheiro)
