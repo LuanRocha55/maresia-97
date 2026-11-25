@@ -10,6 +10,7 @@ import { nearestCar } from '../game/player.js';
 import { doorOf } from '../game/jobs.js';
 import { matchOn, match, opponent, HOME } from '../game/stadium.js';
 import { drawGround2D, label } from '../render/draw.js';
+import { storyLabels, storyNear } from '../game/story.js';
 import { drawHUD, drawKeycap } from '../render/hud.js';
 import { ICONS, KIND_ICON, drawIcon } from '../render/icons.js';
 import { enterables } from '../game/interiors.js';
@@ -480,7 +481,7 @@ function syncPeople(){
     if(p.state==='dead'||p.state==='gone'||p.state==='dead2')continue;
     const dx=p.x-cam.x,dy=p.y-cam.y;if(dx*dx+dy*dy>r2)continue;
     const run=p.state==='flee'||p.state==='robber'||p.state==='cop'||p.fan&&matchOn();
-    const pose=p.state==='down'?'down':p.state==='wait'?'idle':run?'run':'walk';
+    const pose=p.state==='down'?'down':p.state==='wait'||p.state==='story'?'idle':run?'run':'walk';
     putPerson(p.x*U,p.y*U,0,p.a,PED_SCALE,lookOf(p),pose,pose==='idle'?S.gameTime*3+p.id:p.anim*(run?13:9));
   }
   endPeople();
@@ -872,6 +873,11 @@ function drawPrompts(g){
   for(const p of S.peds)if(p.state==='wait'){const q=P(p.x,p.y,1.05+Math.sin(S.gameTime*6)*0.1);arrowDown(g,q.x,q.y);}
   if(S.mission)for(const c of S.cars)if(c.mission===S.mission&&!c.wreck){const q=P(c.x,c.y,1.8+Math.sin(S.gameTime*6)*0.1);arrowDown(g,q.x,q.y);
     if(c.maxHp){const f=clamp(c.health/c.maxHp,0,1);g.fillStyle='rgba(0,0,0,0.6)';g.fillRect(q.x-21,q.y-24,42,7);g.fillStyle=f>0.4?'#4cff6a':'#ff5030';g.fillRect(q.x-20,q.y-23,40*f,5);}}
+  // gente da história: nome em cima e F pra falar; a viatura seguida ganha a setinha
+  {const near=storyNear();for(const l of storyLabels()){const dd=hyp(l.x-player.x,l.y-player.y);if(dd>700)continue;const q=P(l.x,l.y,1.25);if(q.behind)continue;
+    g.globalAlpha=clamp((700-dd)/150,0,1);label(g,l.t,q.x,q.y,l.col,14);g.globalAlpha=1;
+    if(l.p===near){g.font=pf(12);drawKeycap(g,'F',q.x-(g.measureText('Falar').width+28)/2,q.y+14,'Falar',12);}}}
+  {const t=R.last&&R.last.tgt;if(t&&t.story&&t.t&&!t.wreck){const q=P(t.x,t.y,1.8+Math.sin(S.gameTime*6)*0.1);if(!q.behind){arrowDown(g,q.x,q.y);if(t.label)label(g,t.label,q.x,q.y-14,'#ffe14a',13);}}}
   for(const f of S.floaters){const q=P(f.x,f.y,1.5);g.globalAlpha=clamp(f.life,0,1);label(g,f.t,q.x,q.y,f.col,15);}g.globalAlpha=1;
   // placar do estádio
   if(matchOn()){const st=city.special3d[0];if(st){const b=st.b,q=P((b.x0+b.x1)/2,b.y0,bh(b)*1.4+1.5);const m=match();if(!q.behind)label(g,HOME.name+' '+m.hs+' x '+m.as+' '+opponent().name,q.x,q.y,'#ffe14a',14);}}

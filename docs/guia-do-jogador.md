@@ -60,9 +60,11 @@ Depois do tutorial aparecem dicas só na primeira vez que algo acontece (primeir
 |---|---|
 | M ou Tab | mapa em tela cheia (clique marca destino, clique direito apaga) |
 | P ou Esc | pausa com menu (Esc ou P volta) |
-| C | câmera: 3/4 atrás do carro (padrão) ou de cima, como antes (só no 3D, fica salvo) |
+| C | caderneta: perto de alguém mostra nome, ofício e às vezes um segredo; longe de todo mundo abre as páginas (Pistas, Pessoas, Carnê, O que eu fiz) |
+| R | scanner da polícia (o Seu Zeca te dá no capítulo 1) |
+| V | câmera: 3/4 atrás do carro (padrão) ou de cima, como antes (só no 3D, fica salvo) |
 | G | gráficos: 3D realista → 3D alta → 3D média → 3D leve → clássico (2D) |
-| V | liga/desliga o Filtro 97 (só no 3D) |
+| Menu (P) | liga/desliga o Filtro 97 (só no 3D) |
 | F3 | contador de FPS → painel de desempenho completo → desligado |
 | N | liga/desliga o som |
 | T | pula o tutorial |
@@ -74,6 +76,29 @@ Depois do tutorial aparecem dicas só na primeira vez que algo acontece (primeir
 - Nos menus: setas ou W/S escolhem, **Enter/Espaço/F** compra, **1-9** escolhe direto, **Esc/Backspace** fecha. Com o mouse, clique escolhe e clique direito fecha.
 
 > No teclado, o tiro a pé tem mira automática forte. Com o mouse, a mira é exata e a ajuda é bem pequena.
+
+## A história: Semana 1
+
+Desde a 1.21.0 o jogo começa num **domingo, 16h30**, na porta da tua casa no Jacarandá. Teu pai, quiosqueiro na Praia do Recanto, foi preso com um flagrante plantado, e a família ficou devendo **$5.000** ao agiota Cabralzinho. O **bip** lá em cima mostra o que fazer agora, e a seta amarela aponta pra onde ir.
+
+- **Prólogo:** a mãe e a caderneta do pai, a visita na Carceragem Central (8h às 18h), a repórter Mariana, o primeiro bico, o Cabralzinho no câmbio do Centro, o Neném no Bar do Galo (de noite) e a ligação do Seu Zeca num orelhão.
+- **Capítulo 1, "Quem plantou o flagrante?":** sobe a pé até a casa do Zeca no Morro do Cajueiro (a pé a grade deixa passar; de carro, não). São quatro pistas: a testemunha do camelódromo (C nas pessoas de lá), o número da viatura no scanner (R), seguir a viatura 2-14 de longe por 40 segundos e o arquivo da Carceragem de madrugada (22h às 5h).
+- **A oferta do Neném** (depois da primeira pista, na boca do Cajueiro): aceitar a mochila (pula duas pistas e paga a sexta, mas a mochila fica em casa e a família pode achar), recusar, ou pedir só o nome do PM (pula uma pista).
+- **O Cabo Peixoto** (Bar do Galo, de noite): ele confessa no gravador. Você escolhe: levar a fita pra Mariana (vira matéria no sábado), guardar a fita e ter o Peixoto na mão, ou entregar ele pro Neném. Qualquer saída derruba a blitz do Morro do Cajueiro e fecha o capítulo.
+
+### O Cabralzinho e a sexta-feira
+
+- Parcela de **$500** por semana, paga na casa de câmbio do Centro (8h às 20h), até **sexta às 20h**. O relógio mostra o dia da semana (DOM 16:30) e, embaixo, quanto falta pagar.
+- O bip lembra na quinta e na sexta de manhã.
+- Atrasou: a parcela sobe 20% e no sábado dois capangas aparecem perto de casa.
+- Sem dinheiro, ele oferece um favor: entregar um envelope. Paga a semana e vira uma pista.
+
+### A caderneta (C)
+
+- **Perto de alguém:** a ficha da pessoa (nome e ofício). Mais ou menos uma em cada dez tem um segredo carimbado.
+- **Longe de todo mundo:** as páginas **Pistas**, **Pessoas** (vínculo de 0 a 5 com cada um), **Carnê** e **O que eu fiz** (as decisões). Setas trocam a página, C fecha.
+
+Saves de antes da 1.21.0 acordam em casa no domingo da Semana 1, com o dinheiro; os bairros voltam a fechar, porque o Morro do Cajueiro agora abre pela história.
 
 ## A tela
 
@@ -228,7 +253,7 @@ O estádio fica no Centro. Todo dia de jogo, das **15h30 às 18h**, o **Jacarand
 
 ## Comércios e interiores
 
-Todo lugar que dá pra entrar tem uma porta de verdade virada pra rua, com o ícone do lugar flutuando em cima (no 2D clássico, ícone no chão e toldo colorido). Chega na porta e aperta **F** (ou clique direito). Lá dentro você anda numa sala em 3D, com a câmera 3/4 seguindo atrás (C troca pra de cima, com a sala inteira), e fala com o atendente no balcão. O tempo continua passando lá fora. Ao sair você fica na calçada, virado pra rua.
+Todo lugar que dá pra entrar tem uma porta de verdade virada pra rua, com o ícone do lugar flutuando em cima (no 2D clássico, ícone no chão e toldo colorido). Chega na porta e aperta **F** (ou clique direito). Lá dentro você anda numa sala em 3D, com a câmera 3/4 seguindo atrás (V troca pra de cima, com a sala inteira), e fala com o atendente no balcão. O tempo continua passando lá fora. Ao sair você fica na calçada, virado pra rua.
 
 - **Procurado não entra**, a não ser na Carceragem Central.
 - Quando o menu está aberto, o mundo pausa.

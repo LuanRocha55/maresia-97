@@ -5,6 +5,21 @@ O número segue o padrão `MAIOR.MENOR.CORREÇÃO`:
 - **MENOR** — novidade (sistema, missão, veículo, reorganização)
 - **CORREÇÃO** — conserto de bug ou ajuste pequeno
 
+## 1.21.0 — 25/11/2026
+**Semana 1: prólogo, capítulo 1, caderneta e o agiota**
+
+- O jogo agora tem história. Começa num domingo, 16h30, na porta de casa no Jacarandá. O bip mostra o objetivo e a seta aponta o caminho
+- Prólogo: a mãe (feijão e a caderneta do pai), visita ao pai na Carceragem Central, a repórter Mariana na porta, o primeiro bico, o Cabralzinho no câmbio do Centro, o Neném no Bar do Galo e a ligação do Seu Zeca no orelhão
+- Capítulo 1, "Quem plantou o flagrante?": a pé até o Zeca no Morro do Cajueiro (scanner e gravador K7), quatro pistas (testemunha no camelódromo, viatura no scanner, seguir a 2-14 de longe, arquivo da Carceragem de madrugada), a oferta do Neném com três saídas e a confissão do Cabo Peixoto com três saídas. No fim a blitz do Morro do Cajueiro cai (o morro deixa de abrir por dinheiro)
+- Conversas no estilo do HUD 97, com escolhas (1-3)
+- Dívida de $5.000 com o Cabralzinho: $500 toda sexta até as 20h. Atrasar sobe a parcela 20% e manda capangas no sábado; sem dinheiro dá pra fazer o favor do envelope
+- Relógio com dia da semana (DOM 16:30) e a parcela da semana embaixo
+- Caderneta na tecla C: ficha de quem está perto (às vezes com segredo) ou as páginas Pistas, Pessoas (vínculos), Carnê e O que eu fiz. Mochila do Neném em casa pode ser achada pela mãe (quarta e sábado) ou pelo Juninho, com cena de descoberta
+- Scanner da polícia na tecla R
+- A câmera (atrás / de cima) passou do C pro **V**; o Filtro 97 fica só no menu de pausa
+- Tutorial: anda, entra em casa, pega o carro, dirige e abre o mapa
+- Saves antigos acordam em casa no domingo da Semana 1, com o dinheiro
+
 ## 1.20.0 — 24/11/2026
 **Câmera de ombro a pé e pose de tiro com arma na mão**
 

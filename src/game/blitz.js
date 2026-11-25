@@ -12,10 +12,11 @@ import { Ped } from '../entities/peds.js';
 import { addHeat, msg, big, heatStars } from './world.js';
 import { sfxTone, sfxNoise } from '../audio/audio.js';
 import { S, player } from '../core/state.js';
+import { footOpen } from './story.js';
 
 export const START_OPEN=['centro','jardim'];
 export const DISTRICT_ORDER=[
-  {z:'cajueiro',meta:2000, name:'Morro do Cajueiro'},
+  {z:'cajueiro',meta:2000, name:'Morro do Cajueiro', story:'capítulo 1'}, // abre pela história (story.js)
   {z:'rico',    meta:5000, name:'Barra Sul'},
   {z:'orla',    meta:10000,name:'Praia do Recanto'},
   {z:'velha',   meta:16000,name:'Vila dos Pescadores'},
@@ -25,6 +26,8 @@ export const ZONE_NAME={centro:'Centro',jardim:'Jacarandá',...Object.fromEntrie
 
 export const isOpenZone=z=>!S.unlocked||S.unlocked.includes(z);
 export function nextDistrict(){return DISTRICT_ORDER.find(d=>!isOpenZone(d.z))||null;}
+// bairro que só abre pela história (com a história ligada a meta de dinheiro não vale)
+export const storyLock=d=>!!(d&&d.story&&S.story);
 export function metaOf(z){const d=DISTRICT_ORDER.find(d=>d.z===z);return d?d.meta:0;}
 
 // ---- área restrita: o bairro fechado encolhido 4 tiles (as avenidas da divisa continuam livres) ----
@@ -123,21 +126,26 @@ function alarm(cp){
   for(const g of cp.props.guards)if(g.state==='guard'){g.cop=true;g.state='cop';g.unit='policia';g.shootCd=rand(0.6,1.2);}
 }
 
+// desmonta a blitz de um bairro (meta de dinheiro ou fim de capítulo)
+export function unlockZone(z){
+  if(!S.unlocked)initDistricts();if(S.unlocked.includes(z))return;
+  S.unlocked.push(z);
+  for(const cp of checkpoints)if(cp.zone===z)despawn(cp);
+  computeRestricted();buildCheckpoints();
+  sfxTone(660,0.12,0.1);sfxTone(880,0.16,0.1,'square',0.12);sfxTone(1100,0.22,0.08,'square',0.26);
+}
 let introShown=false, msgCd=0, prevX=0, prevY=0, restrictT=0, warned=false;
 export function updateDistricts(dt){
   if(!S.unlocked)initDistricts();
   msgCd-=dt;
   if(!introShown&&S.started&&player.state==='play'){introShown=true;const nd=nextDistrict();
     if(S.migratedDistricts){S.migratedDistricts=false;big('OPERAÇÃO MARÉ ALTA','Os bairros foram fechados e teu dinheiro foi zerado','#ffb36b',4);}
-    if(nd)msg('Bairros fechados por blitz (hachurados no mapa). Junta $'+nd.meta.toLocaleString('pt-BR')+' pra liberar '+nd.name+'.',7);}
+    if(nd&&!storyLock(nd))msg('Bairros fechados por blitz (hachurados no mapa). Junta $'+nd.meta.toLocaleString('pt-BR')+' pra liberar '+nd.name+'.',7);}
   // meta batida: desmonta a blitz do próximo bairro
   const nx=nextDistrict();
-  if(nx&&player.money>=nx.meta){
-    S.unlocked.push(nx.z);
-    for(const cp of checkpoints)if(cp.zone===nx.z)despawn(cp);
-    computeRestricted();buildCheckpoints();
+  if(nx&&!storyLock(nx)&&player.money>=nx.meta){
+    unlockZone(nx.z);
     big(nx.name.toUpperCase()+' LIBERADO','O contato desenrolou: a blitz foi desmontada','#7dff6b',3.2);
-    sfxTone(660,0.12,0.1);sfxTone(880,0.16,0.1,'square',0.12);sfxTone(1100,0.22,0.08,'square',0.26);
     const n2=nextDistrict();if(n2)msg('Próximo: '+n2.name+' ao juntar $'+n2.meta.toLocaleString('pt-BR'),5);
   }
   const t=player.car||player, px0=prevX, py0=prevY;prevX=t.x;prevY=t.y;
@@ -153,6 +161,7 @@ export function updateDistricts(dt){
     if(!(s0<0&&s1>=0&&lat<cp.half))continue;
     const c=player.car;
     if(cp.broken>0&&c){continue;} // cancela já quebrada: passa (com a polícia na cola)
+    if(!c&&footOpen(cp.zone)){if(msgCd<=0){msgCd=4;msg('O PM da grade olha teu documento: "Morador? Passa."',3);}continue;} // caminho do capítulo, a pé
     if(!c||c.speed<110){
       // barrado: volta pra fora
       const back=c?c.t.len/2+8:10;
@@ -162,7 +171,8 @@ export function updateDistricts(dt){
       if(msgCd<=0){msgCd=3;const n=ZONE_NAME[cp.zone]||'bairro';const m=metaOf(cp.zone);
         msg(c?'Blitz: "Área sob operação, só morador. Volta!"':'Grade: "Área sob operação, só morador."',3);
         const nd=nextDistrict();
-        if(nd&&nd.z===cp.zone)msg(n+' libera quando tu juntar $'+m.toLocaleString('pt-BR')+' (faltam $'+Math.max(0,m-Math.floor(player.money)).toLocaleString('pt-BR')+')',4);
+        if(nd&&nd.z===cp.zone&&storyLock(nd))msg(n+' abre com a história ('+nd.story+')',4);
+        else if(nd&&nd.z===cp.zone)msg(n+' libera quando tu juntar $'+m.toLocaleString('pt-BR')+' (faltam $'+Math.max(0,m-Math.floor(player.money)).toLocaleString('pt-BR')+')',4);
         else msg(n+' só libera depois de '+(nd?nd.name:'outros bairros')+' (meta $'+m.toLocaleString('pt-BR')+')',4);}
     } else {
       // furou a blitz
@@ -175,7 +185,7 @@ export function updateDistricts(dt){
     }
   }
   // dentro de área fechada: a polícia não larga
-  if(player.state==='play'&&restrictedAt(t.x,t.y)){
+  if(player.state==='play'&&restrictedAt(t.x,t.y)&&!(!player.car&&footOpen(zoneAt(t.x/T|0,t.y/T|0)))){
     restrictT+=dt;
     if(!warned){warned=true;msg('Área sob operação policial! Sai daqui antes que te vejam.',3);}
     if(restrictT>3&&player.heat<250){addHeat(300-player.heat);big('INVASÃO DE ÁREA','A operação te viu dentro do bairro fechado','#ff5050',2.2);}

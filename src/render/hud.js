@@ -8,7 +8,9 @@ import { mini } from '../world/chunks.js';
 import { heatStars } from '../game/world.js';
 import { S, player, mouse, view } from '../core/state.js';
 import { VERSION } from '../core/version.js';
-import { clockText, darkness } from '../world/time.js';
+import { clockText, darkness, weekdayShort } from '../world/time.js';
+import { storyObjective, debtLine, storyOn, hasTool } from '../game/story.js';
+import { storyLock } from '../game/blitz.js';
 import { WEAPONS } from '../game/weapons.js';
 import { districtAt, streetAt } from '../world/districts.js';
 import { tut, currentStep, tutorialSteps } from '../game/tutorial.js';
@@ -135,11 +137,14 @@ export function drawHUD(g,tgt){
       const wanted=on&&st>0&&Math.floor(S.gameTime*4)%2===0&&player.heat>0;
       pixelStar(g,x,y,px,fresh?2:on?(wanted&&st>=4?2:1):0);}
     y+=9*px+20;
-    ptxt(g,(darkness()>0.5?'☾ ':'☀ ')+clockText(),CW-16,y,15,'#ffe9a0','right');y+=18;
+    ptxt(g,(darkness()>0.5?'☾ ':'☀ ')+weekdayShort()+' '+clockText(),CW-16,y,15,'#ffe9a0','right');y+=18;
+    {const dl=debtLine();if(dl){ptxt(g,dl,CW-16,y,12,dl.includes('✔')?C97.grana:C97.sodio,'right');y+=16;}}
+    if(storyOn()&&S.story.scanner){ptxt(g,'📻 SCANNER',CW-16,y,12,Math.floor(S.gameTime*2)%2?'#7dff6b':'#3f8f36','right');y+=16;}
     const D=districtAt(player.x,player.y);const sn=streetAt(player.x,player.y);
     ptxt(g,D.name.toUpperCase(),CW-16,y,14,'#ffffff','right');y+=16;
     if(sn){ptxt(g,sn,CW-16,y,12,C97.cinza,'right');y+=16;}
-    const nd=nextDistrict();if(nd){const f=Math.max(0,nd.meta-Math.floor(player.money));y+=4;ptxt(g,f<=0?'Libera '+nd.name+': já dá!':'Libera '+nd.name+': faltam '+fmtMoney(f),CW-16,y,12,f<=0?C97.grana:C97.sodio,'right');}
+    const nd=nextDistrict();if(nd&&storyLock(nd)){y+=4;ptxt(g,nd.name+': abre no '+nd.story,CW-16,y,12,C97.sodio,'right');}
+    else if(nd){const f=Math.max(0,nd.meta-Math.floor(player.money));y+=4;ptxt(g,f<=0?'Libera '+nd.name+': já dá!':'Libera '+nd.name+': faltam '+fmtMoney(f),CW-16,y,12,f<=0?C97.grana:C97.sodio,'right');}
     if(D.name!==lastDistrict){if(lastDistrict)districtFlash=2.6;lastDistrict=D.name;}}
 
   // ---------- canto esquerdo: vida, colete, carro, arma ----------
@@ -175,8 +180,11 @@ export function drawHUD(g,tgt){
       if(timer!==null){const urgent=timer<(S.mission?15:10);const tt=timerText(timer);const H=22;const tw=lcdWidth(tt,H)+14;
         lcdPanel(g,tt,CW/2-tw/2,yy,H,urgent?(Math.floor(now/250)%2?'#ff5040':'#ffb0a0'):C97.lcd);yy+=H+18;}
       if(foot)ptxt(g,foot,CW/2,yy+10,11,'rgba(236,232,223,0.6)','center');}
-    else if(S.phoneCd<=0&&player.state==='play'&&!tut.active&&!S.interior)
-      ptxt(g,'Orelhão tocando = missão  ·  J = empregos',CW/2,30,13,'#ffe9a0','center');}
+    else{const o=player.state==='play'&&!tut.active&&!S.interior?storyObjective():null;
+      if(o){key='s'+o.title+o.text;if(key!==pagerKey){pagerShake=0.5;if(S.started)[990,1320].forEach((f,i)=>sfxTone(f,0.07,0.05,'square',i*0.12));}
+        box=['MARESIA·BIP',o.title,[(S.story.ch===0?'SEMANA 1':'QUEM PLANTOU O FLAGRANTE?'),hasTool('caderneta')?'C CADERNETA':''],o.text];}
+      else if(S.phoneCd<=0&&player.state==='play'&&!tut.active&&!S.interior)
+        ptxt(g,'Orelhão tocando = missão  ·  J = empregos',CW/2,30,13,'#ffe9a0','center');}}
   {const h=jobHint();if(h){g.font=pf(14);const w=g.measureText(h).width+36;drawKeycap(g,'J',CW/2-w/2,CH-90,h,14);}}
   if(player.bustT>0.15)impact(g,'PARADO AÍ!',CW/2,CH*0.3,Math.round(clamp(CW/40,22,34)),'#5aa0ff');
 
@@ -244,9 +252,10 @@ const CONTROLS=[
   ['WASD / setas','dirigir ou andar'],['ESPAÇO','freio de mão (carro) / soco (a pé)'],['F ou ENTER','entrar, sair, roubar carro'],
   ['SHIFT','correr a pé'],['H','buzina'],['Q / E ou 1-4','trocar arma'],['X','atirar do carro pra frente'],
   ['MOUSE','a pé: clique prende o mouse e ele gira a câmera · direito segura a mira · esquerdo atira · roda troca arma'],['M ou TAB','mapa (guia de ruas)'],['J','empregos: táxi, motoboy, busão, guincho, vigilante'],
-  ['C','câmera: atrás do carro e no ombro a pé, ou de cima'],['G','gráficos (3D alta, média, leve, clássico)'],['V','liga/desliga o Filtro 97'],['N','som'],['P ou ESC','pausa'],['F3','desempenho'],
+  ['C','caderneta: perto de alguém mostra quem é; longe, abre as páginas'],['R','scanner da polícia (depois que o Zeca te der)'],
+  ['V','câmera: atrás do carro e no ombro a pé, ou de cima'],['G','gráficos (3D alta, média, leve, clássico) · Filtro 97 fica no menu'],['N','som'],['P ou ESC','pausa'],['F3','desempenho'],
 ];
-const TIPS=['Orelhão amarelo tocando = missão no bip.','PINTURA EXPRESS ($500 por estrela) apaga a polícia.','OFICINA DO ZÉ compra carro roubado.','ARMAS DO TONHÃO vende arma · POSTO conserta o carro ($150).'];
+const TIPS=['Toda sexta até as 20h: parcela do Cabralzinho.','Orelhão amarelo tocando = missão no bip.','PINTURA EXPRESS ($500 por estrela) apaga a polícia.','OFICINA DO ZÉ compra carro roubado.','ARMAS DO TONHÃO vende arma · POSTO conserta o carro ($150).'];
 export function drawTitle(){
   const g=ctx;g.setTransform(DPR,0,0,DPR,0,0);
   const now=performance.now();

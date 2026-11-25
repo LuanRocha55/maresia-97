@@ -12,10 +12,31 @@ import { enterInterior, interactInterior } from '../game/interior.js';
 import { skipTutorial } from '../game/tutorial.js';
 import { titleKey, titleMouse, startGame } from '../game/titlemenu.js';
 import { mapClick } from '../render/overlays.js';
+import { dialogKey, dialogAdvance, storyInteract, toggleScanner, fichaNear, fichaOf, isWitness, identifyWitness, storyOn, hasTool } from '../game/story.js';
+
+// C: caderneta. Perto de alguém mostra a ficha da pessoa; longe de todo mundo abre as páginas (Pistas, Pessoas, Carnê, O que eu fiz)
+export const CAD_PAGES=4;
+function caderneta(){
+  if(!storyOn())return;
+  if(!hasTool('caderneta')){msg('A caderneta do teu pai tá com a tua mãe. Vai pra casa.',2.5);return;}
+  const p=S.interior?null:fichaNear();
+  if(p){const f=fichaOf(p);S.ficha={p,f,life:7};
+    if(isWitness(p)){identifyWitness();msg('É ele! Aperta F pra falar com o Seu Bira.',4);}
+    return;}
+  S.cad={page:S.cad?S.cad.page:0};
+}
+function cadKey(code){
+  const c=S.cad;
+  if(code==='KeyC'||code==='Escape'||code==='Backspace'){S.cad=null;return;}
+  if(code==='ArrowRight'||code==='KeyD'||code==='Tab'||code==='KeyE')c.page=(c.page+1)%CAD_PAGES;
+  else if(code==='ArrowLeft'||code==='KeyA'||code==='KeyQ')c.page=(c.page+CAD_PAGES-1)%CAD_PAGES;
+  else if(/^Digit[1-4]$/.test(code))c.page=+code.slice(5)-1;
+}
 
 // F / Enter / clique direito: porta do prédio tem prioridade sobre carro quando está mais perto
 function interact(){
   if(S.interior){interactInterior();return;}
+  if(!player.car&&player.state==='play'&&storyInteract())return; // gente da história tem prioridade quando está do lado
   if(!player.car&&player.state==='play'){
     const b=nearestDoor(40);
     if(b){ // porta só ganha se estiver mais perto que o carro
@@ -33,12 +54,16 @@ window.addEventListener('keydown',e=>{
   if(e.repeat){keys[e.code]=true;return;}
   keys[e.code]=true;
   if(!S.started){titleKey(e.code);return;}
+  if(S.dialog){if(!S.paused){dialogKey(e.code);return;}}
+  if(S.cad&&!S.paused){cadKey(e.code);return;}
   if(S.menu){menuKey(e.code);return;}
   if(S.mapOpen){if(e.code==='KeyM'||e.code==='Tab'||e.code==='Escape')S.mapOpen=false;return;}
   if(S.paused){titleKey(e.code);return;}
   if(e.code==='KeyP'||e.code==='Escape'){e.preventDefault();S.paused=true;return;}
   if(e.code==='KeyT')skipTutorial();
+  if(e.code==='KeyC'){caderneta();return;}
   if(S.interior){if(e.code==='KeyF'||e.code==='Enter'||e.code==='KeyE')interactInterior();return;}
+  if(e.code==='KeyR'&&!toggleScanner()&&storyOn())msg('Scanner? Só o Seu Zeca tem um.',2);
   if(e.code==='KeyM'||e.code==='Tab'){toggleMap();return;}
   if(e.code==='KeyF'||e.code==='Enter')interact();
   if(e.code==='Space'&&!player.car&&player.weapon==='punho')punch();
@@ -57,7 +82,7 @@ cv.addEventListener('contextmenu',e=>e.preventDefault());
 // O primeiro clique na rua (a pé) prende o ponteiro e não atira. ESC solta (e pausa o jogo).
 // Entrar em carro, menu, mapa, interior ou pausa solta sozinho (syncPointerLock, chamado todo quadro).
 let unlocking=false;
-const canLock=()=>S.started&&!S.paused&&!S.menu&&!S.mapOpen&&view.ombro&&cv.requestPointerLock;
+const canLock=()=>S.started&&!S.paused&&!S.menu&&!S.mapOpen&&!S.dialog&&!S.cad&&view.ombro&&cv.requestPointerLock;
 export function syncPointerLock(){
   if(mouse.locked&&!canLock()&&document.pointerLockElement===cv){unlocking=true;document.exitPointerLock();}
 }
@@ -80,6 +105,8 @@ cv.addEventListener('pointermove',e=>{if(mouse.locked)return;mouse.x=e.clientX;m
 cv.addEventListener('pointerdown',e=>{
   mouse.x=e.clientX;mouse.y=e.clientY;
   if(!S.started){titleMouse(e.clientX,e.clientY,true);return;}
+  if(S.dialog&&!S.paused){if(e.button===0)dialogAdvance();return;}
+  if(S.cad&&!S.paused){if(e.button===0)S.cad.page=(S.cad.page+1)%CAD_PAGES;else S.cad=null;return;}
   if(S.menu){if(e.button===0)menuMouse(e.clientX,e.clientY,true);else closeMenu();return;}
   if(S.mapOpen){mapClick(e.clientX,e.clientY,e.button);return;}
   if(S.paused){titleMouse(e.clientX,e.clientY,true);return;}

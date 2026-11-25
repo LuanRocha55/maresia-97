@@ -11,6 +11,7 @@ import { doorOf } from './jobs.js';
 import { heatStars, msg } from './world.js';
 import { sfxTone } from '../audio/audio.js';
 import { S, player, keys } from '../core/state.js';
+import { storyInterior, storyExit, storyStation } from './story.js';
 
 const PLANS = {
   loja: [
@@ -156,6 +157,7 @@ export function enterInterior(b){
   if(blockedAt(it,it.px,it.py)){const f=nearestFree(it,it.px,it.py);if(f){it.px=f.x;it.py=f.y;}} // nunca nascer dentro de um móvel
   it.outside={x:player.x,y:player.y};
   S.interior=it;
+  storyInterior(it); // gente da história (mãe, Juninho, o pai na cela) e as cenas de quando entra
   sfxTone(520,0.06,0.06,'square');sfxTone(390,0.08,0.05,'square',0.06);
   return true;
 }
@@ -166,6 +168,7 @@ export function exitInterior(){
   S.camYaw=player.moveA; // a câmera 3/4 começa atrás do jogador, olhando pra rua
   S.interior=null;S.menu=null;
   sfxTone(390,0.06,0.06,'square');
+  storyExit(it);
 }
 export function interiorSolid(it,px,py){
   const x=Math.floor(px/ITS),y=Math.floor(py/ITS);
@@ -201,6 +204,7 @@ export function interactInterior(){
   const it=S.interior;if(!it)return;
   const p=nearestPoint(it);if(!p)return;
   if(p.exit){exitInterior();return;}
+  if(storyStation(p))return;
   openPlace(it.b,p.station);
 }
 export function updateInterior(dt){
@@ -221,7 +225,7 @@ export function updateInterior(dt){
   if(my>0&&it.exit.some(e=>Math.abs(e.x-it.px)<ITS*1.5&&it.py>e.y-ITS*0.2)){exitInterior();return;}
   // clientes passeiam
   for(const n of it.npcs){
-    if(n.sit)continue;
+    if(n.sit||n.still)continue;
     n.wait-=dt;
     const dx=n.tx-n.x,dy=n.ty-n.y,l=Math.hypot(dx,dy);
     if(l<4){if(n.wait<=0){const p=randomFloor(it);if(p){n.tx=p.x;n.ty=p.y;}n.wait=rand(1.5,4);}n.moving=false;continue;}

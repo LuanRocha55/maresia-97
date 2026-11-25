@@ -5,6 +5,7 @@ import { T, special, tileAt, PARK } from '../world/map.js';
 import { Ped } from '../entities/peds.js';
 import { sfxNoise, sfxTone } from '../audio/audio.js';
 import { msg, big } from './world.js';
+import { syncDay } from '../world/time.js';
 import { S, player } from '../core/state.js';
 
 export const HOME={name:'Jacarandá FC',colors:['#1565c0','#ffffff']};
@@ -17,11 +18,7 @@ const AWAY=[
 export const MATCH_START=15.5, MATCH_END=18;
 // dia do calendário do jogo: avança quando o relógio passa da meia-noite, seja andando, dormindo
 // ou dentro de um interior (S.tod menor que no último passo). Muda o adversário e zera a partida.
-function day(){
-  if(typeof S.lastTod==='number'&&S.tod<S.lastTod)S.day=(S.day||0)+1;
-  S.lastTod=S.tod;
-  return S.day||0;
-}
+const day=()=>syncDay();
 export function matchOn(){return S.tod>=MATCH_START&&S.tod<MATCH_END;}
 export function opponent(){return AWAY[day()%AWAY.length];}
 export function match(){
