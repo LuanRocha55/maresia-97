@@ -93,6 +93,19 @@ Desde a 1.21.0 o jogo começa num **domingo, 16h30**, na porta da tua casa no Ja
 - Atrasou: a parcela sobe 20% e no sábado dois capangas aparecem perto de casa.
 - Sem dinheiro, ele oferece um favor: entregar um envelope. Paga a semana e vira uma pista.
 
+### Fome e sono
+
+- Duas barrinhas embaixo da vida: **FOME** (laranja) e **SONO** (roxa). Abaixo de 30 elas piscam.
+- **Fome** baixa: mira mais tremida e corrida mais curta. Zerada, a vida cai devagar até sobrar 10.
+- **Sono** baixo: as bordas escurecem e o carro fica arisco. Zerado, você desmaia e acorda em casa às 7h, com $50 a menos.
+- Come em padaria, lanchonete e mercadinho, ou no **feijão da mãe** (em casa, de graça, uma vez por dia). Dorme na cama de casa.
+
+### Bicos e minigames
+
+- **Barraca do camelódromo** (Centro, 8h às 18h, uma vez por dia): F perto da barraca. ESPAÇO (ou clique) com o ponteiro no verde fecha o preço cheio; no amarelo vende barato. Se gritarem "OLHA O RAPA!", aperta F rápido ou perde $40 de mercadoria. ESC larga a barraca.
+- **Máquina de costura da mãe** (em casa): setas ou WASD na ordem mostrada, antes do tempo acabar. Errou, volta do começo e perde 1,5 s.
+- **Bicos da caderneta:** quando a ficha (C) de alguém mostra "F: pergunta se tem um serviço", F aceita. Cada pessoa paga uma vez; um bico de cada vez.
+
 ### A caderneta (C)
 
 - **Perto de alguém:** a ficha da pessoa (nome e ofício). Mais ou menos uma em cada dez tem um segredo carimbado.

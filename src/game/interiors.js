@@ -9,6 +9,7 @@ import { saveGame } from './save.js';
 import { sfxTone } from '../audio/audio.js';
 import { S, player } from '../core/state.js';
 import { stadiumItems, stadiumSub } from './stadium.js';
+import { needsOn, eat, rest, fomeFull } from './needs.js';
 
 const ENTERABLE = ['estadio','hospital','policia','armas','farmacia','mercadinho','padaria','lanchonete','escola','casa','lojaposto'];
 export const enterables = () => buildings.filter(b=>ENTERABLE.includes(b.kind));
@@ -21,10 +22,12 @@ export function nearestDoor(r=40){
 
 // ---- ações reutilizáveis ----
 const heal=(v,price,label)=>({label,price,disabled:()=>player.health>=100,why:'Vida cheia',run:()=>{player.health=Math.min(100,player.health+v);}});
-const food=(label,v,price)=>heal(v,price,label+'  (+'+v+' vida)');
+// comida: enche a vida e a fome (fome ganha um pouco mais que a vida)
+const food=(label,v,price)=>({label:label+'  (+'+v+' vida'+(needsOn()?', mata a fome':'')+')',price,disabled:()=>player.health>=100&&fomeFull(),why:'Tá de barriga cheia',
+  run:()=>{player.health=Math.min(100,player.health+v);eat(Math.round(v*1.3));}});
 const ammo=(w)=>({label:WEAPONS[w].name+'  (+'+WEAPONS[w].pack+' balas)',price:WEAPONS[w].price,run:()=>{player.ammo[w]=(player.ammo[w]||0)+WEAPONS[w].pack;player.weapon=w;}});
 const colete={label:'Colete à prova de balas (absorve tiros)',price:350,disabled:()=>player.armor>=100,why:'Colete novo',run:()=>{player.armor=100;}};
-function sleepTo(h){return ()=>{S.tod=h;player.health=100;S.cars=S.cars.filter(c=>c===player.car||c.keep||c.mission);msg('Tu dormiu e acordou às '+String(h).padStart(2,'0')+'h, novinho.',3);saveGame();};}
+function sleepTo(h){return ()=>{rest(h===8?100:50);S.tod=h;player.health=100;S.cars=S.cars.filter(c=>c===player.car||c.keep||c.mission);msg('Tu dormiu e acordou às '+String(h).padStart(2,'0')+'h, novinho.',3);saveGame();};}
 
 // ---- cardápio de cada lugar ----
 const PLACES = {

@@ -10,6 +10,7 @@ import { S, player, mouse, view } from '../core/state.js';
 import { VERSION } from '../core/version.js';
 import { clockText, darkness, weekdayShort } from '../world/time.js';
 import { storyObjective, debtLine, storyOn, hasTool } from '../game/story.js';
+import { needsOn, sleepFrac } from '../game/needs.js';
 import { storyLock } from '../game/blitz.js';
 import { WEAPONS } from '../game/weapons.js';
 import { districtAt, streetAt } from '../world/districts.js';
@@ -89,7 +90,12 @@ function drawGuide(g){
 }
 // borda vermelha pontilhada quando leva dano / vida baixa
 let dmgPat=null;
+function drawSleep(g){const f=sleepFrac();if(f<=0||!S.started)return;
+  const a=f*(0.55+0.25*Math.sin(S.gameTime*1.3)),R=Math.max(CW,CH);
+  const gr=g.createRadialGradient(CW/2,CH/2,R*0.25,CW/2,CH/2,R*0.62);gr.addColorStop(0,'rgba(0,0,0,0)');gr.addColorStop(1,'rgba(4,4,12,'+a.toFixed(3)+')');
+  g.fillStyle=gr;g.fillRect(0,0,CW,CH);}
 function drawDamage(g){
+  drawSleep(g);
   if(S.hurtT>0)S.hurtT-=fdt;
   const low=player.health<30&&player.state==='play'&&S.started;
   const a=Math.max(clamp(S.hurtT*1.6,0,0.8),low?0.25+0.2*Math.sin(S.gameTime*6):0);
@@ -152,6 +158,11 @@ export function drawHUD(g,tgt){
     const blinkV=player.health<30&&Math.floor(now/250)%2===0;
     blocks(g,16,y,10,clamp(player.health/100,0,1),bw,bh,'#e8352b','#ff8a70','#8f160f','#3a1010',blinkV);y+=bh+8;
     if(player.armor>0){blocks(g,16,y,10,clamp(player.armor/100,0,1),bw,Math.round(bh*0.5),'#8fb6d6','#d0e6f5','#4e6f8a','#1b2630');y+=Math.round(bh*0.5)+8;}
+    // fome e sono (história): duas barrinhas com rótulo; piscam abaixo de 30
+    if(needsOn()){const s=S.story,sh=Math.round(bh*0.42);
+      [['FOME',s.fome,'#ffb02e','#ffe0a0','#8a5a00','#2a2010'],['SONO',s.sono,'#9a7dff','#d6cbff','#4a3a8a','#1c1830']].forEach(([n,v,a,b,c,d])=>{
+        const low=v<30,bwid=blocks(g,16,y,10,clamp(v/100,0,1),bw,sh,a,b,c,d,low&&Math.floor(now/300)%2===0);
+        ptxt(g,n,16+bwid+6,y+sh+5,11,low?C97.sodio:'rgba(236,232,223,0.7)');y+=sh+10;});}
     if(player.car){const c=player.car,f=clamp(c.health/c.t.hp,0,1);
       blocks(g,16,y,10,f,bw,Math.round(bh*0.5),f>0.35?'#3d9bff':'#ff9100',f>0.35?'#9fd0ff':'#ffd08a',f>0.35?'#1f4f8a':'#8a4a00','#141c2a',f<=0.35&&Math.floor(now/250)%2===0);y+=Math.round(bh*0.5)+8;
       ptxt(g,c.t.name.toUpperCase()+'  '+Math.round(Math.max(0,c.fwdSpeed())*0.36)+' KM/H',18,y+12,14,'#ffffff');y+=22;}

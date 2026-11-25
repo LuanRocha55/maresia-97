@@ -4,6 +4,7 @@ import { solidAt, special } from '../world/map.js';
 import { sfxNoise, sfxTone } from '../audio/audio.js';
 import { heatStars, addHeat, msg, big, onScreen } from './world.js';
 import { killPed, hurtPlayer } from './effects.js';
+import { hungry } from './needs.js';
 import { inZone } from './missions.js';
 import { S, player, keys, mouse, mouseWorld } from '../core/state.js';
 
@@ -97,7 +98,8 @@ function autoAim(x,y,a,range,cone=0.38){
 
 function playerShoot(){
   const w0=WEAPONS[player.weapon];
-  const w=player.skills.pontaria?{...w0,spread:w0.spread*0.55}:w0;
+  let w=player.skills.pontaria?{...w0,spread:w0.spread*0.55}:w0;
+  if(hungry())w={...w,spread:w.spread*1.6}; // com fome a mão treme
   if((player.ammo[player.weapon]||0)<=0){ msg('Sem munição!',1.2); player.fireCd=0.4; cycleWeapon(-1); return; }
   player.ammo[player.weapon]--;
   player.fireCd=w.rate;

@@ -21,6 +21,7 @@ import { updateTutorial } from './tutorial.js';
 import { updateStadium } from './stadium.js';
 import { updateDistricts, updateGuard, isOpenAt } from './blitz.js';
 import { updateStory, storyWantsPhone, storyPhoneCall } from './story.js';
+import { needsTick, hungry, sleepFrac } from './needs.js';
 
 // tropas a pé: arma, alcance e ritmo de tiro
 const COP_UNITS={policia:{gun:'pistola',range:280,spread:0.12,cd:[1.2,2.2]},swat:{gun:'smg',range:320,spread:0.1,cd:[0.5,0.9]},
@@ -42,7 +43,9 @@ export function update(dt){
   const up=keys['KeyW']||keys['ArrowUp'],dn=keys['KeyS']||keys['ArrowDown'],lf=keys['KeyA']||keys['ArrowLeft'],rt=keys['KeyD']||keys['ArrowRight'];
   if(player.car){
     const c=player.car;
-    if(player.state==='play')c.physics(up?1:dn?-1:0,(rt?1:0)-(lf?1:0),!!keys['Space'],dt);
+    // com sono o volante fica arisco (puxa sozinho de leve)
+    const wob=sleepFrac()*0.35*Math.sin(S.gameTime*1.7)*Math.sin(S.gameTime*0.63);
+    if(player.state==='play')c.physics(up?1:dn?-1:0,(rt?1:0)-(lf?1:0)+wob,!!keys['Space'],dt);
     player.x=c.x;player.y=c.y;player.a=c.a;
     if(c.burnT>0&&Math.floor(S.gameTime*2)%2===0&&!c._warn){msg('O carro vai explodir! SAI (F)!',2);c._warn=true;}
   } else if(player.state==='play'){
@@ -57,7 +60,7 @@ export function update(dt){
       // pode girar pra trás do jogador enquanto ele anda sem mudar o rumo no meio do caminho (nada de andar em círculo)
       if(view.r34&&!S.interior){const key=mx+','+my;if(player.inKey!==key||lock){player.inKey=key;player.inYaw=view.yaw;}
         const fx=Math.cos(player.inYaw),fy=Math.sin(player.inYaw),ax=mx,ay=my;mx=fx*(-ay)-fy*ax;my=fy*(-ay)+fx*ax;}
-      player.walkT=S.gameTime;player.moveA=Math.atan2(my,mx);const sp=player.aiming?62:(keys['ShiftLeft']||keys['ShiftRight'])?160:95;
+      player.walkT=S.gameTime;player.moveA=Math.atan2(my,mx);const sp=player.aiming?62:(keys['ShiftLeft']||keys['ShiftRight'])?(hungry()?125:160):95;
       if(!facing)player.a=Math.atan2(my,mx);const nx=player.x+mx*sp*dt,ny=player.y+my*sp*dt;
       if(!solidAt(nx,player.y))player.x=nx;if(!solidAt(player.x,ny))player.y=ny;player.anim+=dt*sp*0.12;}
     else player.inKey=null;
@@ -74,6 +77,7 @@ export function update(dt){
   updateStadium(dt);
   updateDistricts(dt);
   updateStory(dt);
+  needsTick(dt);
   if(S.waypoint&&hyp(player.x-S.waypoint.x,player.y-S.waypoint.y)<90){S.waypoint=null;msg('Chegou no marcador.',2);}
   // IA dos carros
   for(const c of S.cars){

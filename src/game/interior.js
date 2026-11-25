@@ -12,6 +12,7 @@ import { heatStars, msg } from './world.js';
 import { sfxTone } from '../audio/audio.js';
 import { S, player, keys } from '../core/state.js';
 import { storyInterior, storyExit, storyStation } from './story.js';
+import { needsTick } from './needs.js';
 
 const PLANS = {
   loja: [
@@ -234,6 +235,7 @@ export function updateInterior(dt){
   }
   // o tempo continua passando lá fora
   S.tod=(S.tod+dt*24/720)%24;S.gameTime+=dt;
+  needsTick(dt);
   if(player.health<100&&it.kind==='hospital')player.health=Math.min(100,player.health+dt*0.5);
 }
 export const interiorTitle=()=>S.interior?placeTitle(S.interior.kind):'';

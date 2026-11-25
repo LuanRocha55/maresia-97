@@ -11,6 +11,7 @@ import { nearestDoor, openPlace, menuKey, menuMouse, closeMenu } from '../game/i
 import { enterInterior, interactInterior } from '../game/interior.js';
 import { skipTutorial } from '../game/tutorial.js';
 import { titleKey, titleMouse, startGame } from '../game/titlemenu.js';
+import { miniKey } from '../game/minigames.js';
 import { mapClick } from '../render/overlays.js';
 import { dialogKey, dialogAdvance, storyInteract, toggleScanner, fichaNear, fichaOf, isWitness, identifyWitness, storyOn, hasTool } from '../game/story.js';
 
@@ -54,6 +55,7 @@ window.addEventListener('keydown',e=>{
   if(e.repeat){keys[e.code]=true;return;}
   keys[e.code]=true;
   if(!S.started){titleKey(e.code);return;}
+  if(S.mini&&!S.paused){miniKey(e.code);return;}
   if(S.dialog){if(!S.paused){dialogKey(e.code);return;}}
   if(S.cad&&!S.paused){cadKey(e.code);return;}
   if(S.menu){menuKey(e.code);return;}
@@ -82,7 +84,7 @@ cv.addEventListener('contextmenu',e=>e.preventDefault());
 // O primeiro clique na rua (a pé) prende o ponteiro e não atira. ESC solta (e pausa o jogo).
 // Entrar em carro, menu, mapa, interior ou pausa solta sozinho (syncPointerLock, chamado todo quadro).
 let unlocking=false;
-const canLock=()=>S.started&&!S.paused&&!S.menu&&!S.mapOpen&&!S.dialog&&!S.cad&&view.ombro&&cv.requestPointerLock;
+const canLock=()=>S.started&&!S.paused&&!S.menu&&!S.mapOpen&&!S.dialog&&!S.cad&&!S.mini&&view.ombro&&cv.requestPointerLock;
 export function syncPointerLock(){
   if(mouse.locked&&!canLock()&&document.pointerLockElement===cv){unlocking=true;document.exitPointerLock();}
 }
@@ -105,6 +107,7 @@ cv.addEventListener('pointermove',e=>{if(mouse.locked)return;mouse.x=e.clientX;m
 cv.addEventListener('pointerdown',e=>{
   mouse.x=e.clientX;mouse.y=e.clientY;
   if(!S.started){titleMouse(e.clientX,e.clientY,true);return;}
+  if(S.mini&&!S.paused){if(e.button===0)miniKey('Space');return;}
   if(S.dialog&&!S.paused){if(e.button===0)dialogAdvance();return;}
   if(S.cad&&!S.paused){if(e.button===0)S.cad.page=(S.cad.page+1)%CAD_PAGES;else S.cad=null;return;}
   if(S.menu){if(e.button===0)menuMouse(e.clientX,e.clientY,true);else closeMenu();return;}

@@ -5,6 +5,7 @@ import { clamp, fmtMoney } from '../core/utils.js';
 import { S } from '../core/state.js';
 import { C97, pf, lf, ptxt, bevel, wrap, impact } from './style97.js';
 import { CHARS, PEOPLE, CLUES, storyOn } from '../game/story.js';
+import { BICOS } from '../game/minigames.js';
 
 let lastT=performance.now();
 export function drawStoryUI(){
@@ -13,11 +14,12 @@ export function drawStoryUI(){
   if(S.ficha){S.ficha.life-=dt;if(S.ficha.life<=0||S.ficha.p.state==='dead')S.ficha=null;else drawFicha(g,S.ficha);}
   if(S.cad&&storyOn())drawCaderneta(g,S.cad.page);
   if(S.dialog)drawDialog(g,S.dialog);
+  if(S.mini){if(S.mini.type==='pechincha')drawPechincha(g,S.mini);else if(S.mini.type==='conserto')drawConserto(g,S.mini);}
 }
 
 // ---------- conversa ----------
 function drawDialog(g,d){
-  const line=d.lines[Math.min(d.i,d.lines.length-1)],c=CHARS[line.who]||CHARS.nota;
+  const line=d.lines[Math.min(d.i,d.lines.length-1)],c=line.name?{name:line.name,col:line.col||'#ffcc80'}:(CHARS[line.who]||CHARS.nota);
   const w=Math.min(780,CW-32),x=(CW-w)/2;
   const choosing=d.choices&&d.i>=d.lines.length-1;
   g.font=pf(17);const lines=wrap(g,line.text,w-150);
@@ -48,13 +50,14 @@ function drawDialog(g,d){
 // ---------- ficha de alguém (C perto da pessoa) ----------
 function drawFicha(g,F){
   const f=F.f,a=clamp(F.life*2,0,1);g.globalAlpha=a;
-  const w=300,h=f.secret?118:92,x=CW-w-16,y=Math.round(CH*0.45);
+  const bico=f.secret&&BICOS[f.secret]&&!F.p.bicoDone,w=300,h=f.secret?(bico?140:118):92,x=CW-w-16,y=Math.round(CH*0.45);
   paper(g,x,y,w,h);
   ptxt(g,'CADERNETA',x+14,y+20,11,'#8a7a5a','left',false);
   ptxt(g,f.name,x+14,y+44,18,f.col&&f.fixed?'#3a2a10':C97.tinta,'left',false);
   ptxt(g,f.job,x+14,y+66,13,'#5a4a30','left',false);
   if(f.secret){g.save();g.translate(x+w/2,y+96);g.rotate(-0.03);g.strokeStyle=C97.carimbo;g.lineWidth=2;g.font=pf(13);const tw=g.measureText(f.secret).width+20;
     g.strokeRect(-tw/2,-14,tw,22);ptxt(g,f.secret.toUpperCase(),0,2,12,C97.carimbo,'center',false);g.restore();}
+  if(bico)ptxt(g,'F: pergunta se tem um serviço',x+14,y+130,12,'#2e6b1f','left',false);
   g.globalAlpha=1;
 }
 function paper(g,x,y,w,h){
@@ -110,4 +113,45 @@ function drawCaderneta(g,page){
     for(const t of s.did.slice(-12))line('· '+t,'#4a3a20',14);
   }
   ptxt(g,'← → troca a página  ·  C fecha',x+w/2,y+h-12,11,'#8a7a5a','center',false);
+}
+
+// ---------- minigames ----------
+function miniBox(g,w,h,title,col){
+  g.fillStyle='rgba(0,0,0,0.5)';g.fillRect(0,0,CW,CH);
+  w=Math.min(w,CW-32);const x=(CW-w)/2,y=Math.max(20,(CH-h)/2);
+  bevel(g,x,y,w,h,'rgba(14,14,18,0.97)',true,3);g.fillStyle=col;g.fillRect(x+3,y+3,w-6,4);
+  impact(g,title,x+w/2,y+44,28,col,'center');return {x,y,w,h};
+}
+function drawPechincha(g,m){
+  const b=miniBox(g,640,330,'BARRACA DO CAMELÓDROMO',C97.orelhao),{x,y,w,h}=b;
+  ptxt(g,'Freguês '+Math.min(m.round+1,6)+' de 6  ·  no bolso: '+fmtMoney(Math.max(0,m.earned-m.lost)),x+w/2,y+70,14,C97.cinza,'center',false);
+  if(m.rapa){const bl=Math.floor(performance.now()/120)%2;
+    impact(g,'OLHA O RAPA!',x+w/2,y+160,46,bl?'#ff3b2b':'#ffd21f','center');
+    ptxt(g,'Aperta F pra recolher a mercadoria!',x+w/2,y+200,18,C97.cal,'center');
+    g.fillStyle='#3a1010';g.fillRect(x+80,y+222,w-160,10);g.fillStyle='#e8352b';g.fillRect(x+80,y+222,(w-160)*clamp(m.rapaT/1.3,0,1),10);return;}
+  ptxt(g,'Vendendo: '+m.item+'  (pede '+fmtMoney(m.price)+')',x+w/2,y+104,17,C97.cal,'center');
+  // barra com a zona verde
+  const bx=x+50,bw=w-100,by=y+130,bh=34;
+  g.fillStyle='#2a0f0f';g.fillRect(bx,by,bw,bh);
+  const zc=bx+m.zone*bw;g.fillStyle='rgba(255,210,31,0.45)';g.fillRect(zc-m.w*1.3*bw,by,m.w*2.6*bw,bh);
+  g.fillStyle='#4fd23a';g.fillRect(zc-m.w*0.5*bw,by,m.w*bw,bh);
+  g.strokeStyle='#000';g.lineWidth=2;g.strokeRect(bx,by,bw,bh);
+  const nx=bx+m.pos*bw;g.fillStyle='#fff';g.fillRect(nx-2,by-8,4,bh+16);
+  // paciência
+  g.fillStyle='#1d1d22';g.fillRect(bx,by+bh+14,bw,8);g.fillStyle=m.patience<1.5?'#e8352b':'#7fd8ff';g.fillRect(bx,by+bh+14,bw*clamp(m.patience/4.5,0,1),8);
+  ptxt(g,'paciência do freguês',bx,by+bh+40,11,C97.cinza,'left',false);
+  if(m.result)ptxt(g,m.result,x+w/2,y+250,20,m.result.startsWith('fechou')?'#7dff6b':m.result.startsWith('vendeu')?C97.orelhao:C97.sodio,'center');
+  ptxt(g,'ESPAÇO (ou clique) no verde fecha o preço  ·  ESC larga a barraca',x+w/2,y+h-14,11,C97.cinza,'center',false);
+}
+const ARROW_CH={ArrowUp:'↑',ArrowRight:'→',ArrowDown:'↓',ArrowLeft:'←'};
+function drawConserto(g,m){
+  const b=miniBox(g,560,280,'MÁQUINA DE COSTURA DA MÃE','#7fd8ff'),{x,y,w,h}=b;
+  ptxt(g,'Repete a sequência pra destravar a engrenagem',x+w/2,y+74,15,C97.cinza,'center',false);
+  const n=m.seq.length,s=62,gx=x+(w-n*s)/2;
+  m.seq.forEach((a,i)=>{const done=i<m.i,cur=i===m.i&&!m.done;
+    bevel(g,gx+i*s+4,y+100,s-8,s-8,done?'#1f4a1a':cur?'#3a3216':'#1d1d22',!done,2);
+    impact(g,ARROW_CH[a],gx+i*s+s/2,y+100+(s-8)/2+12,32,done?'#7dff6b':cur?C97.orelhao:C97.cal,'center');});
+  g.fillStyle='#1d1d22';g.fillRect(x+60,y+182,w-120,10);g.fillStyle=m.time<4?'#e8352b':'#7fd8ff';g.fillRect(x+60,y+182,(w-120)*clamp(m.time/12,0,1),10);
+  if(m.fails)ptxt(g,'errou '+m.fails+'x (volta do começo)',x+w/2,y+216,13,C97.sodio,'center',false);
+  ptxt(g,'SETAS ou WASD  ·  ESC desiste',x+w/2,y+h-14,11,C97.cinza,'center',false);
 }

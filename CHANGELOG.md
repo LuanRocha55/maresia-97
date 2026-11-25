@@ -5,6 +5,22 @@ O número segue o padrão `MAIOR.MENOR.CORREÇÃO`:
 - **MENOR** — novidade (sistema, missão, veículo, reorganização)
 - **CORREÇÃO** — conserto de bug ou ajuste pequeno
 
+## 1.22.0 — 25/11/2026
+**Fome, sono, bicos e minigames**
+
+![barraca do camelódromo](docs/capturas/1.22.0/1-barraca.jpg)
+![bico de quem tem segredo](docs/capturas/1.22.0/2-bico.jpg)
+![a máquina de costura da mãe](docs/capturas/1.22.0/3-maquina.jpg)
+
+- **Fome e sono** (só no modo história): duas barrinhas embaixo da vida. A fome zera em um dia e meio do jogo, o sono em dois
+- Fome baixa (menos de 30): a mira treme mais e a corrida fica mais curta. Zerada, tira vida devagar (até sobrar 10)
+- Sono baixo: as bordas da tela escurecem e o carro fica arisco. Zerado, você desmaia e acorda na porta de casa às 7h, com $50 a menos
+- Comida dos comércios agora enche a fome também. **Feijão da mãe** em casa: de graça, uma vez por dia. Cama: 8h de sono enche tudo, cochilo enche metade
+- **Barraca do camelódromo** (Centro, 8h às 18h, uma vez por dia): seis fregueses, aperta ESPAÇO com o ponteiro no verde pra fechar o preço. De vez em quando grita "OLHA O RAPA!" e você tem pouco mais de um segundo pra apertar F
+- **Máquina de costura da mãe**: repete a sequência de setas antes do tempo acabar. Consertou, a mãe paga $30 e o vínculo sobe
+- **Bicos da caderneta**: abrindo a ficha (C) de quem tem certos segredos, F pergunta se tem serviço. Leva envelope pro câmbio, caixa pra Oficina do Zé (paga mais, mas um PM pode ver), jogo do bicho no camelódromo ou marmita na Carceragem. O bip e a seta mostram o destino
+- Conversas aceitam nome de quem fala (os bicos mostram o nome da pessoa)
+
 ## 1.21.0 — 25/11/2026
 **Semana 1: prólogo, capítulo 1, caderneta e o agiota**
 

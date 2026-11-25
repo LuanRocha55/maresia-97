@@ -13,6 +13,8 @@ import { hurtPlayer } from './effects.js';
 import { syncDay, weekday } from '../world/time.js';
 import { sfxTone, sfxWin } from '../audio/audio.js';
 import { Ped } from '../entities/peds.js';
+import { initNeeds, eat } from './needs.js';
+import { startBarraca, startConserto, offerBico, updateBico } from './minigames.js';
 import { S, player, cam } from '../core/state.js';
 
 // ---------- quem fala ----------
@@ -50,7 +52,8 @@ export function newStory(){
     tools:{},clues:{},skipped:{},notes:[],did:[],
     debt:5000,due:500,paidWeek:-1,checkedWeek:-1,late:0,lateWeek:-2,capWeek:-1,remind:{},
     earn:0,nenem:null,fita:null,mochila:null,mochilaDay:0,lied:false,promessa:false,
-    materia:0,jornalDay:-1,jornalShown:false,envelope:null,favor:0,scanT:0,radioT:8};
+    materia:0,jornalDay:-1,jornalShown:false,envelope:null,favor:0,scanT:0,radioT:8,
+    fome:85,sono:80,bico:null,bicos:0,barracaDay:-1,feijaoDay:-1,maquina:0};
 }
 const st=()=>S.story;
 export const storyOn=()=>!!S.story;
@@ -364,6 +367,8 @@ function discovery(who){
 export function storyInterior(it){
   if(!storyOn())return;const s=st();
   if(it.kind==='casa'){
+    it.points.push({x:12.5*48,y:4.5*48,station:'feijao',label:s.feijaoDay===S.day?'Panela vazia (amanhã tem mais)':'Comer o feijão da mãe'});
+    if(s.step!=='casa'&&s.maquina<1)it.points.push({x:2.5*48,y:8.5*48,station:'maquina',label:'Consertar a máquina de costura da mãe'});
     it.npcs.push(mkInNpc(it,13.5,2.5,'#c2185b','#3b2314','#c68642',true,Math.PI/2));
     it.npcs.push(mkInNpc(it,4.5,7.5,'#1e88e5','#111','#c68642',false,0));
     if(s.step==='casa'){s.step='carceragem';s.tools.caderneta=1;meet('mae');meet('juninho');player.health=100;
@@ -400,7 +405,21 @@ export function storyInterior(it){
 function mkInNpc(it,tx,ty,shirt,hair,skin,fem,a){return {id:9000+Math.floor(tx*31+ty*7),x:tx*48,y:ty*48,a:a||0,tx:tx*48,ty:ty*48,wait:0,shirt,skin,hair,anim:0,still:true,fem};}
 // ponto especial dentro de um interior (true se a história cuidou)
 export function storyStation(p){
-  if(p.station!=='arquivo')return false;const s=st();
+  const s=st();
+  if(p.station==='feijao'){
+    if(s.feijaoDay===S.day){msg('A panela tá vazia. Amanhã a mãe faz mais.',2.5);return true;}
+    s.feijaoDay=S.day;eat(70);player.health=Math.min(100,player.health+25);p.label='Panela vazia (amanhã tem mais)';
+    sfxTone(660,0.06,0.05,'square');msg('Feijão com arroz e farofa. Barriga cheia.',3);return true;}
+  if(p.station==='maquina'){
+    if(s.maquina>=1){msg('A máquina tá costurando de novo.',2);return true;}
+    talk([['mae','Essa máquina travou de novo. É dela que sai a costura pra fora que paga a luz.'],['eu','Deixa comigo, mãe.']],
+      {onEnd:()=>startConserto(m=>{
+        if(m.ok){s.maquina=1;vinc('mae',1);did('Consertei a máquina de costura da mãe.');const it=S.interior;if(it)it.points=it.points.filter(q=>q!==p);
+          player.money+=30;talk([['mae','Tá rodando! Toma, trinta da costura de hoje. Teu pai ia ter orgulho.']]);}
+        else talk([['mae','Deixa, meu filho. Depois tu tenta de novo.']]);
+      })});
+    return true;}
+  if(p.station!=='arquivo')return false;
   if(!(S.tod>=22||S.tod<5)){msg('O plantonista tá bem ali. Volta de madrugada (22h às 5h).',3);return true;}
   s.clues.ordem=1;note('No arquivo: "Apreensão no quiosque autorizada pelo Inspetor Lobo". Nenhuma testemunha.');
   const it=S.interior;if(it)it.points=it.points.filter(q=>q!==p);
@@ -433,8 +452,15 @@ export function storyNear(r){
   if(witness&&witness.identified&&witness.state==='story'){const d=hyp(witness.x-player.x,witness.y-player.y);if(d<(r||46)&&d<=bd)best=witness;}
   return best;
 }
+const barracaOpen=()=>S.tod>=8&&S.tod<18;
+function nearBarraca(){const c=spot('camelodromo');return c&&hyp(c.x-player.x,c.y-player.y)<70;}
 export function storyInteract(){
-  const p=storyNear();if(!p)return false;
+  const p=storyNear();
+  if(!p){
+    // F com a ficha aberta numa pessoa que tem segredo: talvez ela tenha um bico
+    const F=S.ficha;if(F&&F.f.secret&&!F.p.story&&!F.p.cop&&F.p.state!=='dead'&&hyp(F.p.x-player.x,F.p.y-player.y)<90){S.ficha=null;offerBico(F.p,F.f,spot,talk);return true;}
+    if(nearBarraca()){startBarraca();return true;}
+    return false;}
   if(p===witness){talkWitness();return true;}
   ({cabral:talkCabral,nenem:p.story==='nenem'&&live.nenem_bar===p?talkNenemBar:talkNenem,zeca:talkZeca,peixoto:talkPeixoto,mariana:talkMariana,terno:talkTerno}[p.story]||(()=>{}))();
   return true;
@@ -493,6 +519,7 @@ const hh=h=>String(h).padStart(2,'0')+'h';
 export function storyObjective(){
   if(!storyOn())return null;const s=st();
   const O=(title,text,target)=>({title,text,target});
+  if(s.bico)return O('BICO DE '+s.bico.by.toUpperCase(),s.bico.text+' ('+fmtMoney(s.bico.reward)+')',{x:s.bico.x,y:s.bico.y});
   switch(s.step){
     case 'casa':return O('PRÓLOGO','Vai pra casa. Tua mãe tá esperando.',casaDoor());
     case 'carceragem':{const b=carceragem();return O('PRÓLOGO','Visita teu pai na Carceragem Central, no Centro (8h às 18h).',b?doorOf(b):null);}
@@ -519,6 +546,7 @@ export function storyObjective(){
 export function storyTarget(){
   if(!storyOn())return null;const s=st();
   if(s.envelope)return spot('envelope');
+  if(s.bico)return {x:s.bico.x,y:s.bico.y};
   if(capangas.length)return null;
   const o=storyObjective();return o?o.target:null;
 }
@@ -531,6 +559,7 @@ export function debtLine(){
 export function storyLabels(){
   if(!storyOn())return [];const out=[];
   for(const p of S.peds){if(p.state!=='story'||!p.story)continue;const c=CHARS[p.story];if(c&&c.name)out.push({x:p.x,y:p.y,t:c.name,col:c.col,p});}
+  const b=spot('camelodromo');if(b)out.push({x:b.x,y:b.y,t:barracaOpen()?(st().barracaDay===S.day?'Barraca (volta amanhã)':'Barraca: F trabalha'):'Barraca (8h às 18h)',col:'#ffd21f'});
   return out;
 }
 
@@ -555,8 +584,10 @@ export function updateStory(dt){
   if(S.migratedStory&&player.state==='play'){S.migratedStory=false;big('MARESIA 97: A HISTÓRIA','Teu save antigo começa na Semana 1, com o teu dinheiro','#ffb36b',5);}
   if(s.jornalDay>=0&&!s.jornalShown&&S.day>=s.jornalDay&&S.tod>=6){s.jornalShown=true;
     big('JORNAL DA GUANABARA','"Policial admite flagrante plantado na orla"','#ffe9a0',5);vinc('pai',1);}
+  initNeeds(s);
   updateDebt();
   if(S.interior)return;
+  updateBico();
   for(const id in NPCS)placeNpc(id,NPCS[id]);
   placeCamelodromo();
   updateTail(dt);

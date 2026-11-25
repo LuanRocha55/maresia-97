@@ -19,6 +19,7 @@ import { resetWorld } from './game/world.js';
 import { syncPointerLock } from './core/input.js';
 import { loadFonts, pf } from './render/style97.js';
 import { drawStoryUI } from './render/storyui.js';
+import { updateMini } from './game/minigames.js';
 
 // as fontes entram nas texturas do chão e dos telhados: espera carregar (no máximo 2,5 s)
 await loadFonts();
@@ -32,7 +33,7 @@ applyQuality(prefQ);set3D(pref.startsWith('3d'));
 // câmera: 3/4 atrás do carro por padrão; V volta pra de cima (fica salvo). O C agora é a caderneta (1.21.0)
 // e o Filtro 97 fica só no menu (P).
 try{R.cam34=localStorage.getItem('aq_cam')!=='cima';}catch(e){}
-window.addEventListener('keydown',e=>{if(!S.started||S.menu||S.paused||S.dialog||S.cad)return;
+window.addEventListener('keydown',e=>{if(!S.started||S.menu||S.paused||S.dialog||S.cad||S.mini)return;
   if(e.code==='KeyV'){if(!R.on){msg('A câmera 3/4 só funciona no 3D (G troca).',2.5);return;}
     R.cam34=!R.cam34;R.yaw=undefined;try{localStorage.setItem('aq_cam',R.cam34?'34':'cima');}catch(err){}
     msg('Câmera '+(R.cam34?'atrás (carro) e no ombro (a pé)':'de cima')+'  (V troca)',2.5);}
@@ -89,6 +90,7 @@ function frame(now){
   try{
     let _t=performance.now();
     if(S.hitStop>0){S.hitStop-=dt;}
+    else if(S.started&&!S.paused&&S.mini)updateMini(dt);
     else if(S.started&&!S.paused&&!S.menu&&!S.mapOpen&&!S.dialog&&!S.cad){let rem=dt;while(rem>0){const s=Math.min(1/60,rem);if(S.interior)updateInterior(s);else update(s);rem-=s;}}
 
     else if(!S.started){S.gameTime+=dt;cam.x+=Math.cos(S.gameTime*0.1)*40*dt;cam.y+=Math.sin(S.gameTime*0.13)*40*dt;}
