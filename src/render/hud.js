@@ -173,6 +173,9 @@ export function drawHUD(g,tgt){
       if(key!==pagerKey){pagerShake=0.4;if(S.started)sfxTone(1180,0.06,0.04,'square');}
       box=['MARESIA·BIP',JOBS[j.type].title.toUpperCase(),['NÍVEL '+levelOf(j.type)+' · SEQ '+j.streak,'TURNO '+fmtMoney(j.earned)],j.text];
       if(j.time!==undefined)timer=j.time;foot='J encerra o turno';}
+    else{const o=player.state==='play'&&!tut.active&&!S.interior?storyObjective():null;
+      if(o){key='s'+o.title+o.text;if(key!==pagerKey){pagerShake=0.5;if(S.started)[990,1320].forEach((f,i)=>sfxTone(f,0.07,0.05,'square',i*0.12));}
+        box=['MARESIA·BIP',o.title,[(S.story.ch===0?'SEMANA 1':'QUEM PLANTOU O FLAGRANTE?'),hasTool('caderneta')?'C CADERNETA':''],o.text];}}
     pagerKey=key;
     if(box){if(pagerShake>0)pagerShake-=fdt;const sx=pagerShake>0?Math.round(Math.sin(now/18)*3*pagerShake/0.6):0;
       const r=pager(g,px+sx,12,pw,box[0],box[1],box[2],box[3],{fs:15,blink:pagerShake>0});
@@ -180,11 +183,8 @@ export function drawHUD(g,tgt){
       if(timer!==null){const urgent=timer<(S.mission?15:10);const tt=timerText(timer);const H=22;const tw=lcdWidth(tt,H)+14;
         lcdPanel(g,tt,CW/2-tw/2,yy,H,urgent?(Math.floor(now/250)%2?'#ff5040':'#ffb0a0'):C97.lcd);yy+=H+18;}
       if(foot)ptxt(g,foot,CW/2,yy+10,11,'rgba(236,232,223,0.6)','center');}
-    else{const o=player.state==='play'&&!tut.active&&!S.interior?storyObjective():null;
-      if(o){key='s'+o.title+o.text;if(key!==pagerKey){pagerShake=0.5;if(S.started)[990,1320].forEach((f,i)=>sfxTone(f,0.07,0.05,'square',i*0.12));}
-        box=['MARESIA·BIP',o.title,[(S.story.ch===0?'SEMANA 1':'QUEM PLANTOU O FLAGRANTE?'),hasTool('caderneta')?'C CADERNETA':''],o.text];}
-      else if(S.phoneCd<=0&&player.state==='play'&&!tut.active&&!S.interior)
-        ptxt(g,'Orelhão tocando = missão  ·  J = empregos',CW/2,30,13,'#ffe9a0','center');}}
+    else if(S.phoneCd<=0&&player.state==='play'&&!tut.active&&!S.interior)
+      ptxt(g,'Orelhão tocando = missão  ·  J = empregos',CW/2,30,13,'#ffe9a0','center');}
   {const h=jobHint();if(h){g.font=pf(14);const w=g.measureText(h).width+36;drawKeycap(g,'J',CW/2-w/2,CH-90,h,14);}}
   if(player.bustT>0.15)impact(g,'PARADO AÍ!',CW/2,CH*0.3,Math.round(clamp(CW/40,22,34)),'#5aa0ff');
 
