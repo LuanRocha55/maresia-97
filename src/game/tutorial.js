@@ -1,6 +1,7 @@
 // Começo guiado (ensina jogando) e dicas de primeira vez
 import { hyp } from '../core/utils.js';
-import { phones } from '../world/map.js';
+import { phones, special } from '../world/map.js';
+import { doorOf } from './jobs.js';
 import { isOpenAt } from './blitz.js';
 import { heatStars, big } from './world.js';
 import { nearestDoor } from './interiors.js';
@@ -14,17 +15,18 @@ const store={get(k){try{return localStorage.getItem(k);}catch(e){return null;}},
 
 export const tut={active:false,step:0,acc:0,last:null,car:null,flash:0};
 const nearestPhone=()=>{let b=null,bd=1e9;for(const p of phones){if(!isOpenAt(p.x,p.y))continue;const d=hyp(p.x-player.x,p.y-player.y);if(d<bd){bd=d;b=p;}}return b;};
+const casaTarget=()=>special.casa?doorOf(special.casa):null;
 const STEPS=[
   {title:'Anda pela calçada',keys:['W','A','S','D'],text:'Usa WASD (ou as setas) pra andar. SHIFT corre.',
     done:()=>tut.acc>160},
+  {title:'Entra em casa',keys:['F'],text:'Segue a seta até a porta da tua casa e aperta F. Tua mãe tá esperando.',
+    target:()=>S.story&&S.story.step==='casa'?casaTarget():null, done:()=>!S.story||S.story.step!=='casa'},
   {title:'Pega aquele carro',keys:['F'],text:'Chega perto do carro marcado e aperta F pra entrar.',
     target:()=>tut.car&&!tut.car.wreck?tut.car:null, done:()=>!!player.car},
   {title:'Dá uma volta',keys:['W','A','D','ESPAÇO'],text:'W acelera, S freia/ré, A e D viram, ESPAÇO é o freio de mão.',
     done:()=>tut.acc>700},
   {title:'Abre o mapa',keys:['M'],text:'Aperta M pra ver a cidade inteira (e M de novo pra fechar).',
     done:()=>S.mapOpenedOnce},
-  {title:'Atende o orelhão',keys:[],text:'Segue a seta amarela até o orelhão tocando: é lá que tem missão.',
-    target:()=>nearestPhone(), done:()=>!!S.mission},
 ];
 export const tutorialSteps=STEPS;
 
@@ -58,8 +60,9 @@ export function updateTutorial(dt){
     if(st.done()){
       tut.step++;tut.acc=0;tut.flash=1;sfxTone(660,0.08,0.08,'square');sfxTone(990,0.12,0.08,'square',0.08);
       if(tut.step>=STEPS.length){tut.active=false;store.set(DONE_KEY,'1');
-        big('A CIDADE É TUA','Atende o orelhão pra começar a missão','#7dff6b',3);
-        setTimeout(()=>hintOnce('lojas','Dá pra entrar nos comércios','Nas portas com ícone no chão, aperta F. Comida recupera vida.',['F']),4000);
+        big('A CIDADE É TUA','O bip lá em cima mostra o que fazer agora','#7dff6b',3);
+        setTimeout(()=>hintOnce('caderneta','A caderneta do teu pai','C perto de alguém mostra nome, ofício e às vezes um segredo. Longe de todo mundo, abre as páginas.',['C']),4000);
+        setTimeout(()=>hintOnce('lojas','Dá pra entrar nos comércios','Nas portas com ícone no chão, aperta F. Comida recupera vida.',['F']),14000);
         setTimeout(()=>hintOnce('empregos','Quer grana sem missão?','Aperta J pra ver os empregos. Eu marco no mapa onde começar.',['J']),16000);}
     }
     return;

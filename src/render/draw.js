@@ -9,6 +9,7 @@ import { heatStars } from '../game/world.js';
 import { nearestCar } from '../game/player.js';
 import { drawHUD, drawKeycap } from './hud.js';
 import { tutorialTarget } from '../game/tutorial.js';
+import { storyTarget, storyLabels, storyNear } from '../game/story.js';
 import { checkpoints } from '../game/blitz.js';
 import { S, player, cam, keys } from '../core/state.js';
 import { lamps, special, pumps, decor, VL, HL, NV, NH, isJunction } from '../world/map.js';
@@ -352,7 +353,7 @@ export function drawGround2D(g,vx0,vx1,vy0,vy1,mode){
     drawIcon(g,KIND_ICON[b.kind],d.x,d.y,on?22:18);}
   if(nearB&&mode==='2d'){const d=doorOf(nearB);const name=ICONS[KIND_ICON[nearB.kind]].name.split(' (')[0].split(' ·')[0];g.font=pf(13);drawKeycap(g,'F',d.x-(g.measureText('Entrar: '+name).width+30)/2,d.y-30,'Entrar: '+name,13);}
   // marcador do alvo
-  const tgt=S.mission?S.mission.def.target(S.mission):(S.job?S.job.target:(tutorialTarget()||S.waypoint));
+  const tgt=S.mission?S.mission.def.target(S.mission):(S.job?S.job.target:(tutorialTarget()||storyTarget()||S.waypoint));
   if(tgt&&!(tgt instanceof Car)&&!(tgt instanceof Ped)){const r=26+Math.sin(S.gameTime*5)*5;g.strokeStyle='#ffe14a';g.lineWidth=4;g.beginPath();g.arc(tgt.x,tgt.y,r,0,Math.PI*2);g.stroke();g.fillStyle='rgba(255,225,74,0.25)';g.fill();}
   return {tgt,nearB};
 }
@@ -376,11 +377,15 @@ export function render(){
   // pedestres
   for(const p of S.peds){if(p.state==='dead'||p.state==='gone'||p.state==='dead2')continue;if(p.x<vx0||p.x>vx1||p.y<vy0||p.y>vy1)continue;
     if(p.state==='down'){g.save();g.translate(p.x,p.y);g.fillStyle=p.shirt;g.fillRect(-7,-4,14,8);g.fillStyle=p.skin;g.beginPath();g.arc(8,0,3.5,0,Math.PI*2);g.fill();g.restore();continue;}
-    drawPerson(g,p.x,p.y,p.a,p.shirt,p.skin,p.hair,p.anim,p.state!=='wait',1);
+    drawPerson(g,p.x,p.y,p.a,p.shirt,p.skin,p.hair,p.anim,p.state!=='wait'&&p.state!=='story',1);
     if(p.state==='wait'){const yy=p.y-16+Math.sin(S.gameTime*6)*2;g.fillStyle='#ffe14a';g.beginPath();g.moveTo(p.x,yy+6);g.lineTo(p.x-5,yy-2);g.lineTo(p.x+5,yy-2);g.fill();}}
   // jogador a pé
   if(!player.car&&player.state==='play'){if(!(player.inv>0&&Math.floor(S.gameTime*10)%2))drawPerson(g,player.x,player.y,player.a,'#ff7a1a','#c68642','#111',player.anim/10,(keys['KeyW']||keys['KeyS']||keys['KeyA']||keys['KeyD']||keys['ArrowUp']||keys['ArrowDown']||keys['ArrowLeft']||keys['ArrowRight']),1.15);
     const nc=nearestCar(26);if(nc&&(!nearB||Math.hypot(nc.x-player.x,nc.y-player.y)-nc.t.wid/2<Math.hypot(doorOf(nearB).x-player.x,doorOf(nearB).y-player.y))){g.font=pf(12);const t=(nc.driver==='ai'?'Roubar ':'Entrar: ')+nc.t.name;drawKeycap(g,'F',nc.x-(g.measureText(t).width+28)/2,nc.y-nc.t.wid-14,t,12);}}
+  // gente da história: nome em cima e F pra falar
+  {const near=storyNear();for(const l of storyLabels()){if(l.x<vx0||l.x>vx1||l.y<vy0||l.y>vy1)continue;label(g,l.t,l.x,l.y-24,l.col,13);
+    if(l.p===near){g.font=pf(12);drawKeycap(g,'F',l.x-(g.measureText('Falar').width+28)/2,l.y+26,'Falar',12);}}}
+  if(tgt instanceof Car&&tgt.story){const yy=tgt.y-28+Math.sin(S.gameTime*6)*3;g.fillStyle='#ffe14a';g.beginPath();g.moveTo(tgt.x,yy+8);g.lineTo(tgt.x-7,yy-3);g.lineTo(tgt.x+7,yy-3);g.fill();}
   // carros
   for(const c of S.cars){if(c.x<vx0-60||c.x>vx1+60||c.y<vy0-60||c.y>vy1+60)continue;drawCar(g,c);
     if(S.mission&&c.mission===S.mission&&!c.wreck&&c.maxHp){const f=clamp(c.health/c.maxHp,0,1);g.fillStyle='rgba(0,0,0,0.6)';g.fillRect(c.x-21,c.y-44,42,7);g.fillStyle=f>0.4?'#4cff6a':'#ff5030';g.fillRect(c.x-20,c.y-43,40*f,5);}

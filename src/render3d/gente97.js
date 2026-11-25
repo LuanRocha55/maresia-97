@@ -66,7 +66,7 @@ const looks = new WeakMap();
 export function lookOf(p) {
   let L = looks.get(p); if (L && L.shirt === p.shirt && L.cop === !!p.cop) return L;
   const r = k => rnd((p.id || 7) * 13.37 + k);
-  const fem = r(1) < 0.45, beach = r(2) < 0.45;
+  const fem = p.fem !== undefined ? !!p.fem : r(1) < 0.45, beach = r(2) < 0.45;
   L = { shirt: p.shirt, cop: !!p.cop, skin: col(p.skin || '#c68642'), hair: col(p.hair || '#222') };
   if (p.cop) { // farda: camisa da unidade, calça escura, coturno, quepe/boné
     const u = col(p.shirt || '#1f3a6b'); Object.assign(L, { top: u, arms: u, pants: col('#1c2233'), shins: col('#1c2233'), feet: col('#111'), cap: col(p.shirt === '#4b5320' ? '#3d4419' : '#15171c'), long: false, stripe: null, fem: false });

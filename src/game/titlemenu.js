@@ -3,6 +3,7 @@ import { S } from '../core/state.js';
 import { AU, initAudio, sfxTone } from '../audio/audio.js';
 import { hasSave, loadGame, deleteSave } from './save.js';
 import { startTutorial } from './tutorial.js';
+import { startStory } from './story.js';
 import { cycleGfx, gfxLabel, toggleRetro, R } from '../render3d/r3d.js';
 import { msg } from './world.js';
 
@@ -10,7 +11,7 @@ export const TM={sel:0,sub:null,confirmNew:false,rects:[]};
 
 export function startGame(fresh){
   if(fresh) deleteSave();
-  if(!fresh&&hasSave()) loadGame(); else startTutorial();
+  if(!fresh&&hasSave()) loadGame(); else { startStory(); startTutorial(); }
   S.started=true; initAudio(); if(AU.ctx&&AU.ctx.state==='suspended')AU.ctx.resume();
   TM.sel=0;TM.sub=null;TM.confirmNew=false;
 }

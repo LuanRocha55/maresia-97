@@ -20,6 +20,8 @@ import { autosave } from './save.js';
 import { updateTutorial } from './tutorial.js';
 import { updateStadium } from './stadium.js';
 import { updateDistricts, updateGuard, isOpenAt } from './blitz.js';
+import { updateStory, storyWantsPhone, storyPhoneCall } from './story.js';
+import { needsTick, hungry, sleepFrac } from './needs.js';
 
 // tropas a pé: arma, alcance e ritmo de tiro
 const COP_UNITS={policia:{gun:'pistola',range:280,spread:0.12,cd:[1.2,2.2]},swat:{gun:'smg',range:320,spread:0.1,cd:[0.5,0.9]},
@@ -41,7 +43,9 @@ export function update(dt){
   const up=keys['KeyW']||keys['ArrowUp'],dn=keys['KeyS']||keys['ArrowDown'],lf=keys['KeyA']||keys['ArrowLeft'],rt=keys['KeyD']||keys['ArrowRight'];
   if(player.car){
     const c=player.car;
-    if(player.state==='play')c.physics(up?1:dn?-1:0,(rt?1:0)-(lf?1:0),!!keys['Space'],dt);
+    // com sono o volante fica arisco (puxa sozinho de leve)
+    const wob=sleepFrac()*0.35*Math.sin(S.gameTime*1.7)*Math.sin(S.gameTime*0.63);
+    if(player.state==='play')c.physics(up?1:dn?-1:0,(rt?1:0)-(lf?1:0)+wob,!!keys['Space'],dt);
     player.x=c.x;player.y=c.y;player.a=c.a;
     if(c.burnT>0&&Math.floor(S.gameTime*2)%2===0&&!c._warn){msg('O carro vai explodir! SAI (F)!',2);c._warn=true;}
   } else if(player.state==='play'){
@@ -56,7 +60,7 @@ export function update(dt){
       // pode girar pra trás do jogador enquanto ele anda sem mudar o rumo no meio do caminho (nada de andar em círculo)
       if(view.r34&&!S.interior){const key=mx+','+my;if(player.inKey!==key||lock){player.inKey=key;player.inYaw=view.yaw;}
         const fx=Math.cos(player.inYaw),fy=Math.sin(player.inYaw),ax=mx,ay=my;mx=fx*(-ay)-fy*ax;my=fy*(-ay)+fx*ax;}
-      player.walkT=S.gameTime;player.moveA=Math.atan2(my,mx);const sp=player.aiming?62:(keys['ShiftLeft']||keys['ShiftRight'])?160:95;
+      player.walkT=S.gameTime;player.moveA=Math.atan2(my,mx);const sp=player.aiming?62:(keys['ShiftLeft']||keys['ShiftRight'])?(hungry()?125:160):95;
       if(!facing)player.a=Math.atan2(my,mx);const nx=player.x+mx*sp*dt,ny=player.y+my*sp*dt;
       if(!solidAt(nx,player.y))player.x=nx;if(!solidAt(player.x,ny))player.y=ny;player.anim+=dt*sp*0.12;}
     else player.inKey=null;
@@ -72,6 +76,8 @@ export function update(dt){
   updateTutorial(dt);
   updateStadium(dt);
   updateDistricts(dt);
+  updateStory(dt);
+  needsTick(dt);
   if(S.waypoint&&hyp(player.x-S.waypoint.x,player.y-S.waypoint.y)<90){S.waypoint=null;msg('Chegou no marcador.',2);}
   // IA dos carros
   for(const c of S.cars){
@@ -124,7 +130,7 @@ export function update(dt){
     S.cars=S.cars.filter(c=>{if(c===player.car||c.mission||c.keep||c.towed)return true;const d=hyp(c.x-pr.x,c.y-pr.y);
       if(c.ai==='police'&&stars===0&&d>900)return false;
       if(d>2300&&!(c.driver===null&&!c.wreck&&d<3200))return false;return true;});
-    S.peds=S.peds.filter(p=>(p.mission||p.job||p.robber||(p.state==='guard'&&p.guard&&p.guard.props)||(p.cop&&stars>0)||hyp(p.x-pr.x,p.y-pr.y)<1500)&&p.state!=='dead'&&p.state!=='dead2');
+    S.peds=S.peds.filter(p=>(p.mission||p.job||p.robber||p.state==='story'||p.capanga&&p.state==='capanga'||(p.state==='guard'&&p.guard&&p.guard.props)||(p.cop&&stars>0)||hyp(p.x-pr.x,p.y-pr.y)<1500)&&p.state!=='dead'&&p.state!=='dead2');
     const traffic=S.cars.filter(c=>c.ai==='traffic').length;
     for(let i=0;i<4&&traffic+i<60;i++)spawnTraffic(800,1700,false);
     const np=S.peds.length;for(let i=0;i<3&&np+i<60;i++)spawnPed(500,1100,false);
@@ -164,7 +170,7 @@ export function update(dt){
   // missões
   if(S.mission&&player.state==='play'){const r=S.mission.def.update(S.mission,dt);if(r==='done')finishMission();else if(r==='fail')failMission('Missão falhou!');}
   else if(!S.mission&&!S.job&&S.phoneCd<=0&&player.state==='play'){
-    for(const ph of phones){if(hyp(player.x-ph.x,player.y-ph.y)<46&&isOpenAt(ph.x,ph.y)){startMission();break;}}
+    for(const ph of phones){if(hyp(player.x-ph.x,player.y-ph.y)<46&&isOpenAt(ph.x,ph.y)){if(storyWantsPhone())storyPhoneCall();else startMission();break;}}
   }
   // partículas
   for(const p of S.parts){p.x+=p.vx*dt;p.y+=p.vy*dt;p.vx*=0.95;p.vy*=0.95;p.life-=dt;if(p.smoke)p.size+=dt*8;}
@@ -239,7 +245,8 @@ export function updatePeds(dt){
     // fugir de carro rápido perto
     if(p.state==='walk'){const pc=player.car;if(pc&&pc.speed>150&&hyp(pc.x-p.x,pc.y-p.y)<90&&Math.random()<0.1){p.state='flee';p.flee={x:pc.x,y:pc.y};p.t=2.5;}}
     if(p.state==='guard'){updateGuard(p,dt);continue;}
-    if(p.state==='wait'){p.a=Math.atan2(player.y-p.y,player.x-p.x);continue;}
+    if(p.state==='wait'||p.state==='story'){if(hyp(player.x-p.x,player.y-p.y)<260)p.a=Math.atan2(player.y-p.y,player.x-p.x);continue;}
+    if(p.state==='capanga')continue; // story.js cuida
     if(p.state==='down'){p.t-=dt;if(p.t<=0){if(p.robber)p.state='robber';else{p.state='flee';p.flee={x:player.x,y:player.y};p.t=3;}}continue;}
     if(p.state==='robber')continue;
     if(p.state==='flee'){p.t-=dt;const dx=p.x-p.flee.x,dy=p.y-p.flee.y,l=hyp(dx,dy)||1;let mx=dx/l,my=dy/l;

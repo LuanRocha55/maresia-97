@@ -25,3 +25,14 @@ export function clockText(){
   const h=Math.floor(S.tod), m=Math.floor((S.tod-h)*60);
   return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0');
 }
+
+// dia do calendário do jogo: avança quando o relógio passa da meia-noite, seja andando, dormindo
+// ou dentro de um interior (S.tod menor que no último passo). O dia 0 é um domingo.
+export function syncDay(){
+  if(typeof S.lastTod==='number'&&S.tod<S.lastTod)S.day=(S.day||0)+1;
+  S.lastTod=S.tod;
+  return S.day||0;
+}
+export const weekday=()=>((S.day||0)%7+7)%7; // 0 domingo ... 5 sexta, 6 sábado
+const WD=['DOM','SEG','TER','QUA','QUI','SEX','SÁB'];
+export const weekdayShort=()=>WD[weekday()];

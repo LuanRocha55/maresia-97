@@ -5,6 +5,43 @@ O número segue o padrão `MAIOR.MENOR.CORREÇÃO`:
 - **MENOR** — novidade (sistema, missão, veículo, reorganização)
 - **CORREÇÃO** — conserto de bug ou ajuste pequeno
 
+## 1.22.0 — 25/11/2026
+**Fome, sono, bicos e minigames**
+
+![barraca do camelódromo](docs/capturas/1.22.0/1-barraca.jpg)
+![bico de quem tem segredo](docs/capturas/1.22.0/2-bico.jpg)
+![a máquina de costura da mãe](docs/capturas/1.22.0/3-maquina.jpg)
+
+- **Fome e sono** (só no modo história): duas barrinhas embaixo da vida. A fome zera em um dia e meio do jogo, o sono em dois
+- Fome baixa (menos de 30): a mira treme mais e a corrida fica mais curta. Zerada, tira vida devagar (até sobrar 10)
+- Sono baixo: as bordas da tela escurecem e o carro fica arisco. Zerado, você desmaia e acorda na porta de casa às 7h, com $50 a menos
+- Comida dos comércios agora enche a fome também. **Feijão da mãe** em casa: de graça, uma vez por dia. Cama: 8h de sono enche tudo, cochilo enche metade
+- **Barraca do camelódromo** (Centro, 8h às 18h, uma vez por dia): seis fregueses, aperta ESPAÇO com o ponteiro no verde pra fechar o preço. De vez em quando grita "OLHA O RAPA!" e você tem pouco mais de um segundo pra apertar F
+- **Máquina de costura da mãe**: repete a sequência de setas antes do tempo acabar. Consertou, a mãe paga $30 e o vínculo sobe
+- **Bicos da caderneta**: abrindo a ficha (C) de quem tem certos segredos, F pergunta se tem serviço. Leva envelope pro câmbio, caixa pra Oficina do Zé (paga mais, mas um PM pode ver), jogo do bicho no camelódromo ou marmita na Carceragem. O bip e a seta mostram o destino
+- Conversas aceitam nome de quem fala (os bicos mostram o nome da pessoa)
+
+## 1.21.0 — 25/11/2026
+**Semana 1: prólogo, capítulo 1, caderneta e o agiota**
+
+![o bip mostra o objetivo](docs/capturas/1.21.0/1-bip-inicio.jpg)
+![a mãe e a caderneta](docs/capturas/1.21.0/2-casa-mae.jpg)
+![o pai na Carceragem](docs/capturas/1.21.0/3-pai-carceragem.jpg)
+![caderneta: pistas](docs/capturas/1.21.0/4-caderneta-pistas.jpg)
+![a oferta do Neném](docs/capturas/1.21.0/5-escolha-nenem.jpg)
+
+- O jogo agora tem história. Começa num domingo, 16h30, na porta de casa no Jacarandá. O bip mostra o objetivo e a seta aponta o caminho
+- Prólogo: a mãe (feijão e a caderneta do pai), visita ao pai na Carceragem Central, a repórter Mariana na porta, o primeiro bico, o Cabralzinho no câmbio do Centro, o Neném no Bar do Galo e a ligação do Seu Zeca no orelhão
+- Capítulo 1, "Quem plantou o flagrante?": a pé até o Zeca no Morro do Cajueiro (scanner e gravador K7), quatro pistas (testemunha no camelódromo, viatura no scanner, seguir a 2-14 de longe, arquivo da Carceragem de madrugada), a oferta do Neném com três saídas e a confissão do Cabo Peixoto com três saídas. No fim a blitz do Morro do Cajueiro cai (o morro deixa de abrir por dinheiro)
+- Conversas no estilo do HUD 97, com escolhas (1-3)
+- Dívida de $5.000 com o Cabralzinho: $500 toda sexta até as 20h. Atrasar sobe a parcela 20% e manda capangas no sábado; sem dinheiro dá pra fazer o favor do envelope
+- Relógio com dia da semana (DOM 16:30) e a parcela da semana embaixo
+- Caderneta na tecla C: ficha de quem está perto (às vezes com segredo) ou as páginas Pistas, Pessoas (vínculos), Carnê e O que eu fiz. Mochila do Neném em casa pode ser achada pela mãe (quarta e sábado) ou pelo Juninho, com cena de descoberta
+- Scanner da polícia na tecla R
+- A câmera (atrás / de cima) passou do C pro **V**; o Filtro 97 fica só no menu de pausa
+- Tutorial: anda, entra em casa, pega o carro, dirige e abre o mapa
+- Saves antigos acordam em casa no domingo da Semana 1, com o dinheiro
+
 ## 1.20.0 — 24/11/2026
 **Câmera de ombro a pé e pose de tiro com arma na mão**
 

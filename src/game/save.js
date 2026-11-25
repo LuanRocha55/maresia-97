@@ -5,6 +5,7 @@ import { heatStars, msg } from './world.js';
 import { solidAt } from '../world/map.js';
 import { S, player, cam } from '../core/state.js';
 import { START_OPEN, initDistricts, restrictedAt } from './blitz.js';
+import { migrateOldSave, newStory } from './story.js';
 
 const KEY='aq_save';
 
@@ -18,7 +19,7 @@ export function saveGame(silent){
   const d={ v:VERSION, t:Date.now(),
     money:player.money, health:player.health, armor:player.armor,
     ammo:player.ammo, weapon:player.weapon, skills:player.skills,
-    missionIdx:S.missionIdx, tod:S.tod, day:S.day||0, playTime:S.playTime||0, unlocked:S.unlocked,
+    missionIdx:S.missionIdx, tod:S.tod, day:S.day||0, playTime:S.playTime||0, unlocked:S.unlocked, story:S.story||null,
     x:player.x, y:player.y,
     car: c&&!c.wreck&&c.burnT<=0 ? {type:c.type,color:c.color,a:c.a,health:c.health} : null };
   try{ localStorage.setItem(KEY,JSON.stringify(d)); S.saveFlash=2.5; if(!silent)msg('Jogo salvo.',2); return true; }
@@ -49,6 +50,13 @@ export function loadGame(){
     if(c.hits(c.x,c.y,c.a)) c.unstick();
   }
   cam.x=player.x; cam.y=player.y;
+  // história (1.21.0): save sem história acorda em casa no domingo da Semana 1, com o dinheiro e os níveis de emprego.
+  // Os bairros voltam a fechar, porque agora abrem pela história.
+  if(d.story){ S.story=Object.assign(newStory(),d.story); }
+  else {
+    if(player.car){ const i=S.cars.indexOf(player.car); if(i>=0)S.cars.splice(i,1); player.car=null; }
+    S.unlocked=[...START_OPEN]; initDistricts(); migrateOldSave();
+  }
   return true;
 }
 
