@@ -15,7 +15,7 @@ import { S, player } from '../core/state.js';
 import { darkness } from '../world/time.js';
 import { Geo } from './build.js';
 import { getRenderer, getQuality, R } from './r3d.js';
-import { makePeopleSet, usePeopleSet, beginPeople, putPerson, endPeople, lookOf, PLAYER_LOOK } from './gente97.js';
+import { makePeopleSet, usePeopleSet, beginPeople, putPerson, endPeople, lookOf, PLAYER_LOOK, peopleTime } from './gente97.js';
 
 const WH = 2.5;              // altura das paredes
 const PS = 1.42;             // escala das pessoas (1 tile daqui = 48 px, menor que o da rua)
@@ -396,12 +396,12 @@ export function renderInterior3D() {
   const k = 1 - Math.exp(-dt * 5); for (const key in want) built.cam[key] = lerp(built.cam[key], want[key], k);
   const c = built.cam; camera.position.set(c.px, c.py, c.pz); camera.lookAt(c.lx, 0, c.lz);
   // pessoas
-  const prev = usePeopleSet(people); beginPeople();
+  const prev = usePeopleSet(people); peopleTime(S.gameTime); beginPeople();
   const run = it.moving && it.running;
-  putPerson(it.px / ITS, it.py / ITS, 0, it.pa, PS, PLAYER_LOOK, it.moving ? (run ? 'run' : 'walk') : 'idle', it.moving ? it.anim * (run ? 11 : 8) : S.gameTime * 3);
+  putPerson(it.px / ITS, it.py / ITS, 0, it.pa, PS, PLAYER_LOOK, it.moving ? (run ? 'run' : 'walk') : 'idle', it.moving ? it.anim * (run ? 11 : 8) : S.gameTime * 3, it);
   if (built.att) putPerson(it.att.x / ITS, it.att.y / ITS, 0, Math.PI / 2, PS, built.att, 'idle', S.gameTime * 3 + 1);
   if (built.teacher) putPerson(it.teacher.x / ITS, it.teacher.y / ITS, 0, Math.PI / 2, PS, built.teacher, 'idle', S.gameTime * 3 + 2);
-  for (const n of it.npcs) putPerson(n.x / ITS, n.y / ITS, n.sit ? 0.45 - 0.56 * PS : 0, n.a, PS, lookOf(n), n.sit ? 'sit' : n.moving ? 'walk' : 'idle', n.moving ? n.anim * 8 : S.gameTime * 3 + n.id);
+  for (const n of it.npcs) putPerson(n.x / ITS, n.y / ITS, n.sit ? 0.45 - 0.56 * PS : 0, n.a, PS, lookOf(n), n.sit ? 'sit' : n.moving ? 'walk' : 'idle', n.moving ? n.anim * 8 : S.gameTime * 3 + n.id, n);
   endPeople(); usePeopleSet(prev);
   // lá fora: a calçada e as janelas seguem a hora do dia
   const dk = darkness();

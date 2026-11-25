@@ -5,6 +5,20 @@ O número segue o padrão `MAIOR.MENOR.CORREÇÃO`:
 - **MENOR** — novidade (sistema, missão, veículo, reorganização)
 - **CORREÇÃO** — conserto de bug ou ajuste pequeno
 
+## 1.23.0 — 25/11/2026
+**Andar natural: o pé não escorrega mais**
+
+![andando, antes e depois](docs/capturas/1.23.0/1-andando.jpg)
+![correndo, antes e depois](docs/capturas/1.23.0/2-correndo.jpg)
+
+- **O pé fica plantado no chão.** Antes a perna balançava num ritmo fixo e o passo era bem mais curto que o quanto o corpo andava: o pé "de apoio" andava junto com o corpo (escorregava na mesma velocidade dele). Agora cada pé tem um ponto no chão que fica parado enquanto apoia, e o quadril, o joelho e o tornozelo saem de cálculo de perna (IK)
+- O joelho dobra na hora certa (com o pé no ar, não com o pé no chão), o pé rola do calcanhar pra ponta e sai empurrando
+- O passo é medido pelo quanto a pessoa andou de verdade: encostado na parede ele não fica "andando no lugar", e o ritmo acompanha a velocidade (fome, mira, correr)
+- Andar e correr mudam aos poucos: no normal o protagonista corre leve como no GTA (a velocidade do jogo é de corrida pro tamanho dele), com SHIFT dispara com o pé no ar entre um passo e outro; mirando, anda
+- Quadril gira com a passada, o peito torce pro outro lado, o corpo sobe e desce a cada passo, braço balança contra a perna (correndo, cotovelo dobrado)
+- O corpo vira rápido mas não num estalo, e começar/parar de andar é suave
+- Vale pro protagonista do Meshy, pros pedestres (na rua e dentro dos lugares) e pra pose de soco andando
+
 ## 1.22.0 — 25/11/2026
 **Fome, sono, bicos e minigames**
 

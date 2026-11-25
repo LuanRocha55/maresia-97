@@ -101,9 +101,15 @@ const tmpA = new THREE.Matrix4(), tmpB = new THREE.Matrix4(), body = new THREE.M
 // ângulos da pose (Z positivo = pé/mão pra frente). Os mesmos pro boneco de peças e pro protagonista Meshy.
 // gun: arma na mão ('pistola' | 'escopeta' | 'smg' | null), aim: mirando (braços pra frente, pernas seguem a pose), kick: coice do tiro (0..1).
 // shYA/shYB giram o braço esticado pro meio do corpo (pras duas mãos se encontrarem na arma).
-function poseAngles(pose, ph, gun, aim, kick = 0) {
+function poseAngles(pose, ph, gun, aim, kick = 0, gt = null) {
   let hipA = 0, hipB = 0, kneeA = 0, kneeB = 0, shA = 0, shB = 0, elA = 0, elB = 0, lean = 0, bob = 0, sideR = 0.135, shR = 0, shYA = 0, shYB = 0, gunE = null;
-  if (pose === 'walk' || pose === 'run') {
+  let footA = null, footB = null, hbA = 0, hbB = 0, twP = 0, twT = 0, moving = false;
+  if (gt && (pose === 'walk' || pose === 'run' || pose === 'idle' || pose === 'punch')) {
+    // passada de verdade (pé plantado no chão): pernas, quadril e braços saem da velocidade medida (gaitPose)
+    ({ hipA, hipB, kneeA, kneeB, footA, footB, hbA, hbB, shA, shB, elA, elB, shYA, shYB, lean, bob, twP, twT } = gt.o);
+    moving = gt.w > 0.5; ph = gt.ph * Math.PI * 2;
+    if (pose === 'punch') { const k = Math.max(0, Math.sin(gt.punch)); shB = 0.25; elB = 1.4; shA = 1.45 * k + 0.2; elA = 0.15; shYA = shYB = 0; lean += -0.1 * k; shR = 0.1; }
+  } else if (pose === 'walk' || pose === 'run') {
     const run = pose === 'run', amp = run ? 0.75 : 0.42, s = Math.sin(ph), c = Math.cos(ph);
     hipA = s * amp; hipB = -s * amp;
     kneeA = -Math.max(0, -c) * (run ? 1.3 : 0.7) - 0.05; kneeB = -Math.max(0, c) * (run ? 1.3 : 0.7) - 0.05;
@@ -122,36 +128,159 @@ function poseAngles(pose, ph, gun, aim, kick = 0) {
       shR = 0; gunE = [0, 0, kick * 0.45];   // arma reta pra frente (o coice levanta o cano)
     } else if (long) {
       // andando com arma comprida: atravessada na frente do peito (a mão de trás balança pouco)
-      const sw = Math.sin(ph) * (pose === 'run' ? 0.12 : 0.06);
+      const sw = Math.sin(ph) * (pose === 'run' || gt && gt.r > 0.5 ? 0.12 : 0.06) * (gt ? gt.w : 1);
       shA = 0.35 + sw; elA = 1.25; shYA = 0.1; shB = 0.75 - sw; elB = 1.35; shYB = -0.55; gunE = [0.15, 0.95, 0.35];
-    } else if (pose === 'idle') { shA = 0.18; elA = 0.35; }   // pistola parada: braço solto, arma apontada pro chão
+    } else if (pose === 'idle' && !moving) { shA = 0.18; elA = 0.35; shYA = 0; }   // pistola parada: braço solto, arma apontada pro chão
   }
-  return { hipA, hipB, kneeA, kneeB, shA, shB, elA, elB, lean, bob, sideR, shR, shYA, shYB, gunE };
+  if (footA === null) { footA = pose === 'sit' ? 0.1 : -kneeA * 0.4 - hipA * 0.3; footB = pose === 'sit' ? 0.1 : -kneeB * 0.4 - hipB * 0.3; }
+  return { hipA, hipB, kneeA, kneeB, footA, footB, hbA, hbB, twP, twT, shA, shB, elA, elB, lean, bob, sideR, shR, shYA, shYB, gunE };
+}
+// ---------- passada (andar/correr com o pé plantado no chão) ----------
+// Antes a perna balançava num seno com passo fixo: o passo era bem mais curto que o quanto o corpo andava (o pé
+// escorregava) e o joelho dobrava com o pé no chão. Agora cada pé tem um ponto no chão que fica parado enquanto
+// apoia, e o ângulo de quadril/joelho/tornozelo sai de IK de dois ossos. A velocidade é medida pelo quanto a pessoa
+// andou de verdade (nada de andar no lugar encostado na parede), e o ritmo (passos por segundo), o tamanho do passo,
+// o tempo no chão, o balanço do quadril, a torção do peito e o braço mudam juntos do andar pro correr.
+// Medidas da perna em unidades do boneco (escala 1): altura do quadril, coxa, canela, ângulo de repouso da coxa e da
+// canela (t0/t1, + = pra frente), altura do tornozelo, ponta do pé e calcanhar.
+const LEG_PIECE = { hipY: 0.56, l1: 0.26, l2: 0.25, t0: 0, t1: 0, ankH: 0.05, toe: 0.1, heel: 0.045 };
+const LEG_MESHY = (() => {
+  const [h, k, a] = [[0.005, 0.538, 0.063], [-0.02, 0.297, 0.092], [-0.006, 0.076, 0.104]];
+  return { hipY: h[1], l1: Math.hypot(k[0] - h[0], k[1] - h[1], k[2] - h[2]), l2: Math.hypot(a[0] - k[0], a[1] - k[1], a[2] - k[2]),
+    t0: Math.atan2(k[0] - h[0], h[1] - k[1]), t1: Math.atan2(a[0] - k[0], k[1] - a[1]), ankH: a[1], toe: 0.1, heel: 0.045 };
+})();
+let clock = 0;   // relógio do jogo (para quando pausa: a pessoa congela em vez de parar de andar)
+export function peopleTime(t) { clock = t; }
+const gaits = new WeakMap();
+const clamp = (x, a, b) => x < a ? a : x > b ? b : x, mix = (a, b, t) => a + (b - a) * t, TAU = Math.PI * 2;
+function wrapA(d) { d %= TAU; return d > Math.PI ? d - TAU : d < -Math.PI ? d + TAU : d; }
+function newGaitOut() { return { hipA: 0, hipB: 0, kneeA: 0, kneeB: 0, footA: 0, footB: 0, hbA: 0, hbB: 0, shA: 0, shB: 0, elA: 0, elB: 0, shYA: 0, shYB: 0, lean: 0, bob: 0, twP: 0, twT: 0 }; }
+// x,y = posição no chão (unidades do mundo), a = pra onde a pessoa olha
+function gaitOf(who, x, y, a, scale, G, aim) {
+  let g = gaits.get(who);
+  if (!g || g.G !== G) { g = { t: clock, x, y, yaw: a, ph: 0, v: 0, dx: 1, dz: 0, w: 0, r: 0, G, o: newGaitOut(), punch: 0 }; gaits.set(who, g); gaitPose(g, 0); return g; }
+  let dt = clock - g.t; g.t = clock;
+  if (dt <= 0) return g;                                   // mesmo quadro (ou jogo pausado): fica como está
+  const mx = (x - g.x) / scale, my = (y - g.y) / scale; g.x = x; g.y = y;
+  let dist = Math.hypot(mx, my);
+  if (dt > 0.3 || dist > 2.5) { dist = 0; g.v = 0; dt = Math.min(dt, 0.05); }   // pulou (teleporte, voltou de outro lugar)
+  // vira o corpo rápido, mas não num estalo
+  g.yaw += wrapA(a - g.yaw) * Math.min(1, dt * (aim ? 30 : 13));
+  // velocidade e direção do movimento em relação a pra onde o corpo olha (x = frente, z = lado do corpo)
+  g.v += (dist / dt - g.v) * Math.min(1, dt * 14);
+  if (dist > 1e-5) {
+    const c = Math.cos(g.yaw), s = Math.sin(g.yaw), f = (mx * c + my * s) / dist, l = (-mx * s + my * c) / dist, k = Math.min(1, dt * 12);
+    g.dx += (f - g.dx) * k; g.dz += (l - g.dz) * k; const n = Math.hypot(g.dx, g.dz) || 1; g.dx /= n; g.dz /= n;
+  }
+  g.w += ((g.v > 0.22 ? 1 : 0) - g.w) * Math.min(1, dt * 9);
+  gaitPose(g, dt);
+  return g;
+}
+const AK = { x: 0, y: 0 }, AK0 = { x: 0, y: 0 }, AK1 = { x: 0, y: 0 };
+// tornozelo quando o pé está no chão em s (ao longo do passo), inclinado p (+ = ponta pra cima: gira no calcanhar;
+// - = ponta pra baixo: gira na ponta do pé)
+function ankleAt(s, p, G, o) {
+  const c = Math.cos(p), sn = Math.sin(p);
+  if (p >= 0) { o.x = s - G.heel + G.heel * c - G.ankH * sn; o.y = G.heel * sn + G.ankH * c; }
+  else { o.x = s + G.toe - G.toe * c - G.ankH * sn; o.y = -G.toe * sn + G.ankH * c; }
+  return o;
+}
+// IK de dois ossos: tornozelo em (dx frente, dy vertical, dz lado) a partir do quadril -> ângulos da perna
+function legIK(G, dx, dy, dz, pitch, o, side) {
+  const dv = Math.hypot(dy, dz), hb = -Math.atan2(dz, -dy);
+  const d = clamp(Math.hypot(dx, dv), Math.abs(G.l1 - G.l2) + 0.02, (G.l1 + G.l2) * 0.9995);
+  const th = Math.atan2(dx, dv);
+  const al = Math.acos(clamp((G.l1 * G.l1 + d * d - G.l2 * G.l2) / (2 * G.l1 * d), -1, 1));
+  const kb = Math.acos(clamp((G.l1 * G.l1 + G.l2 * G.l2 - d * d) / (2 * G.l1 * G.l2), -1, 1));
+  const p1 = th + al, p2 = p1 - (Math.PI - kb), hip = p1 - G.t0, knee = p2 - G.t1 - hip, foot = pitch - (p2 - G.t1);
+  if (side) { o.hipB = hip; o.kneeB = knee; o.footB = foot; o.hbB = hb; } else { o.hipA = hip; o.kneeA = knee; o.footA = foot; o.hbA = hb; }
+}
+function gaitPose(g, dt) {
+  const G = g.G, L = G.l1 + G.l2, o = g.o, vL = g.v / L;
+  // andar x correr: pela velocidade em "pernas por segundo" (as pessoas do jogo andam mais rápido que gente de verdade,
+  // então o limite é mais alto que o real: pedestre passeando anda, o protagonista no normal corre como no GTA)
+  g.r += (sstep(5, 6.5, vL) - g.r) * Math.min(1, dt * 5);
+  const r = g.r, sprint = clamp((vL - 9) / 5, 0, 1);
+  // quadril: andando desce um pouco (o passo cabe sem esticar a perna toda) e sobe no meio do apoio;
+  // correndo fica mais alto e afunda no apoio (o joelho amortece)
+  const drop = mix(0.022, 0.012, r) * g.w, bobAmp = mix(0.012, -0.016, r) * g.w;
+  const hipMin = G.hipY - drop - Math.abs(bobAmp);
+  const reach = Math.sqrt(Math.max(0, (L * 0.985) ** 2 - (hipMin - G.ankH) ** 2)) + 0.02;
+  // ritmo (ciclos de 2 passos por segundo). Andando: passo no máximo do que a perna alcança com os dois pés no chão
+  // um instante (se não, acelera o passo, até 2 Hz); correndo: 1,6 a 2,3 Hz com o pé no ar entre um passo e outro
+  const fWalk = Math.min(2, Math.max(0.55 + 0.27 * vL, g.v / (4 * reach))), f = mix(fWalk, 1.2 + 0.075 * vL, r), S = g.v / f;
+  g.ph = (g.ph + f * dt * g.w) % 1;
+  const w = g.w, fx = g.dx, fz = g.dz;
+  const betaD = mix(0.6, 0.36, r);
+  const sh = S > 1e-3 ? Math.min(betaD * S / 2, reach) : 0;
+  const beta = S > 1e-3 ? clamp(2 * sh / S, 0.08, 0.7) : betaD;
+  const sp = ((2 * (g.ph - beta / 2)) % 1 + 1) % 1;
+  const bob = -drop + bobAmp * Math.min(1, 2 * S / L) * Math.cos(TAU * sp), hipY = G.hipY + bob;
+  const lift = (mix(0.05, 0.15, r) + 0.06 * sprint) * sstep(0.05, 0.6, S / L), skew = mix(1, 0.6, r);
+  const strike = mix(0.3, 0.12, r) * fx, toeOff = mix(0.5, 0.55, r) * fx;
+  for (let side = 0; side < 2; side++) {
+    const u = (g.ph + side * 0.5) % 1;
+    let s, ax, ay, p;
+    if (u < beta) {   // apoio: o pé fica parado no chão enquanto o corpo passa por cima
+      const t = u / beta; s = sh * (1 - 2 * t);
+      p = strike * (1 - sstep(0, 0.3, t)) - toeOff * sstep(0.55, 1, t);
+      ankleAt(s, p, G, AK); ax = AK.x - s; ay = AK.y;
+    } else {          // no ar: o pé sai de trás e vai pra frente (no correr, o calcanhar sobe atrás e o joelho vem à frente)
+      const t = (u - beta) / (1 - beta);
+      ankleAt(-sh, -toeOff, G, AK0); ankleAt(sh, strike, G, AK1);
+      const m = -Math.min(2 * sh * (1 - beta) / beta, 3 * sh) * 0.35, t2 = t * t, t3 = t2 * t;
+      s = (2 * t3 - 3 * t2 + 1) * -sh + (t3 - 2 * t2 + t) * m + (-2 * t3 + 3 * t2) * sh + (t3 - t2) * m;
+      ax = mix(AK0.x + sh, AK1.x - sh, t); ay = mix(AK0.y, AK1.y, t) + lift * Math.sin(Math.PI * Math.pow(t, skew));
+      p = mix(-toeOff, strike, sstep(0.2, 0.85, t)) * (1 - 0.5 * Math.sin(Math.PI * t));
+    }
+    const sg = side ? -1 : 1;
+    legIK(G, fx * s + ax, ay - hipY, fz * s + sg * 0.03 * Math.abs(fz) * w, p, o, side);
+  }
+  // braços: balançam ao contrário da perna do mesmo lado; correndo, cotovelo dobrado e braço mais forte
+  const amp = (mix(0.3, 0.55, r) + 0.22 * sprint) * sstep(0, 0.8, S / L) * (0.4 + 0.6 * Math.abs(fx)) * w;
+  const sA = Math.sin(TAU * (g.ph - beta / 2 - 0.03)) * (fx < -0.2 ? -1 : 1);
+  const br = Math.sin(clock * 1.05) * 0.02 * (1 - w);   // parado: respira
+  o.shA = amp * sA + br; o.shB = -amp * sA - br;
+  const el = mix(0.12, mix(0.3, 1.45, r), w);
+  o.elA = el + Math.max(0, o.shA) * 0.45; o.elB = el + Math.max(0, o.shB) * 0.45;
+  o.shYA = 0.16 * r * w; o.shYB = -0.16 * r * w;
+  o.lean = -(mix(0.03, 0.13, r) + 0.08 * sprint) * fx * w;
+  o.bob = bob;
+  o.twP = -mix(0.08, 0.1, r) * sA * Math.abs(fx) * w;
+  o.twT = mix(0.05, 0.13, r) * sA * Math.abs(fx) * w;
+  // parado: perna esticada embaixo do quadril (mistura suave entre parado e andando)
+  if (w < 1) { const k = w; for (const n of ['hipA', 'hipB', 'kneeA', 'kneeB', 'footA', 'footB', 'hbA', 'hbB']) o[n] *= k; }
 }
 // arma do protagonista neste quadro (r3d.js põe antes de desenhar ele): tipo, mirando e coice
 export const playerGun = { kind: null, aim: false, kick: 0 };
-export function putPerson(x, y, z, a, scale, L, pose, ph) {
+// who: o objeto da pessoa (jogador, pedestre...). Com ele a passada é medida pelo quanto a pessoa andou de verdade.
+export function putPerson(x, y, z, a, scale, L, pose, ph, who = null) {
   if (!IM || IM.torso.n >= MAXP) return;
   const down = pose === 'down', me = L === PLAYER_LOOK, gun = me && pose !== 'sit' && pose !== 'down' ? playerGun.kind : null;
+  const meshy = me && PLAYER_MODEL && pose !== 'sit';
+  let gt = null;
+  if (who && !down && pose !== 'sit') { gt = gaitOf(who, x, y, a, scale, meshy ? LEG_MESHY : LEG_PIECE, gun && playerGun.aim); if (pose === 'punch') gt.punch = ph; a = gt.yaw; }
+  else if (who) gaits.delete(who);
   e.set(0, -a, down ? Math.PI / 2 : 0, 'YXZ'); q.setFromEuler(e);
   B.compose(v.set(x, down ? z + 0.14 * scale : z, y), q, s3.set(scale, scale, scale));
-  const P = poseAngles(pose, ph, gun, gun && playerGun.aim, playerGun.kick);
+  const P = poseAngles(pose, ph, gun, gun && playerGun.aim, playerGun.kick, gt);
   const { hipA, hipB, kneeA, kneeB, shA, shB, elA, elB, lean, bob, sideR, shR, shYA, shYB } = P;
-  if (me && PLAYER_MODEL && pose !== 'sit') { posePlayer(B, pose, P, gun); return; }
-  // corpo (quadril pra cima): balanço e inclinação
-  body.multiplyMatrices(B, J.makeTranslation(0, bob, 0)).multiply(R.makeTranslation(0, 0.56, 0)).multiply(rotZ(lean)).multiply(M.makeTranslation(0, -0.56, 0));
+  if (meshy) { posePlayer(B, pose, P, gun); return; }
+  // corpo (quadril pra cima): balanço, torção do peito e inclinação
+  body.multiplyMatrices(B, J.makeTranslation(0, bob, 0)).multiply(R.makeTranslation(0, 0.56, 0)).multiply(M.makeRotationY(P.twT)).multiply(rotZ(lean)).multiply(M.makeTranslation(0, -0.56, 0));
+  // quadril: gira um pouco pro lado da perna que vai à frente (as pernas saem dele)
+  const legBase = pose === 'sit' ? body : tmpB.multiplyMatrices(B, J.makeTranslation(0, bob, 0)).multiply(M.makeRotationY(P.twP));
   const skin = L.skin;
-  put('pelvis', body, L.pants); put('torso', body, L.top); put('head', body, skin);
+  put('pelvis', legBase, L.pants); put('torso', body, L.top); put('head', body, skin);
   put('stripe', L.stripe ? body : ZERO, L.stripe || skin);
   const hel = L.helmet; // de capacete não aparece cabelo nem boné
   put('hair', L.cap || hel ? ZERO : body, L.hair); put('cap', L.cap && !hel ? body : ZERO, L.cap || skin); put('long', L.long && !hel ? body : ZERO, L.hair);
   put('helmet', hel ? body : ZERO, hel || skin); put('visor', hel ? body : ZERO, col('#16181c'));
   // pernas: do quadril (no corpo sem inclinação, pra não "sentar" ao correr)
-  const legBase = pose === 'sit' ? body : tmpB.multiplyMatrices(B, J.makeTranslation(0, bob, 0));
-  for (const [zz, ha, ka] of [[sideR * 0.62, hipA, kneeA], [-sideR * 0.62, hipB, kneeB]]) {
-    joint(tmpA, legBase, 0, 0.56, zz, ha); put('thigh', tmpA, L.pants);
+  for (const [zz, ha, ka, fa, hb] of [[sideR * 0.62, hipA, kneeA, P.footA, P.hbA], [-sideR * 0.62, hipB, kneeB, P.footB, P.hbB]]) {
+    joint(tmpA, legBase, 0, 0.56, zz, ha, hb); put('thigh', tmpA, L.pants);
     joint(M, tmpA, 0, -0.26, 0, ka); put('shin', M, L.shins);
-    joint(tmpA, M, 0, -0.25, 0, pose === 'sit' ? 0.1 : -ka * 0.4 - ha * 0.3); put('foot', tmpA, L.feet);
+    joint(tmpA, M, 0, -0.25, 0, fa); put('foot', tmpA, L.feet);
   }
   // braços: do ombro, abertos um pouco pro lado
   for (const [zz, sa, ea, open, yw] of [[0.2, shA, elA, -0.08 - shR, shYA], [-0.2, shB, elB, 0.08, shYB]]) {
@@ -230,14 +359,15 @@ function posePlayer(Bm, pose, g, gun) {
   let pm = playerMeshes.get(IM);
   if (!pm) { const sc = sceneOf.get(IM); if (!sc) return; pm = makePlayerMesh(sc); playerMeshes.set(IM, pm); }
   const bn = pm.bones; pm.mesh.visible = true;
-  m4.multiplyMatrices(Bm, J.makeTranslation(0, g.bob, 0)); m4.decompose(bn[0].position, bn[0].quaternion, bn[0].scale);
-  bn[1].quaternion.setFromAxisAngle(new THREE.Vector3(0, 0, 1), g.lean);
-  const legs = [[g.hipA, g.kneeA], [g.hipB, g.kneeB]];
+  // raiz = quadril (gira um pouco com a passada); corpo = peito (torce pro outro lado e inclina)
+  m4.multiplyMatrices(Bm, J.makeTranslation(0, g.bob, 0)).multiply(M.makeRotationY(g.twP)); m4.decompose(bn[0].position, bn[0].quaternion, bn[0].scale);
+  e.set(0, g.twT - g.twP, g.lean, 'YXZ'); bn[1].quaternion.setFromEuler(e);
+  const legs = [[g.hipA, g.kneeA, g.footA, g.hbA], [g.hipB, g.kneeB, g.footB, g.hbB]];
   for (const s of [0, 1]) {
     const sg = s ? -1 : 1, L = 2 + s * 3, A = 8 + s * 2, lo = -sg * LEG_OPEN, ao = -sg * ARM_OPEN;
-    const [ha, ka] = legs[s];
-    limbRot(bn[L].quaternion, ha, 0, lo); childRot(bn[L + 1].quaternion, ka, lo);
-    childRot(bn[L + 2].quaternion, pose === 'sit' ? 0.1 : -ka * 0.4 - ha * 0.3, lo);
+    const [ha, ka, fa, hb] = legs[s];
+    limbRot(bn[L].quaternion, ha, hb, lo); childRot(bn[L + 1].quaternion, ka, lo);
+    childRot(bn[L + 2].quaternion, fa, lo);
     const sa = s ? g.shB : g.shA, ea = s ? g.elB : g.elA, op = s ? 0.08 : -0.08 - g.shR;
     limbRot(bn[A].quaternion, sa, op, ao, s ? g.shYB : g.shYA); childRot(bn[A + 1].quaternion, ea, ao);
   }
